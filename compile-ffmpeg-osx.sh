@@ -824,58 +824,6 @@ fi
 
 cd $LOCALBUILDDIR
 
-do_git "git://git.videolan.org/libdvdread.git" libdvdread-git
-
-if [[ $compile == "true" ]]; then
-
-	if [[ ! -f "configure" ]]; then
-		autoreconf -fiv
-	else
-		make uninstall
-		make clean
-	fi
-
-	./configure --prefix=$LOCALDESTDIR --disable-shared --disable-apidoc
-
-	make -j $cpuCount
-	make install
-
-	do_checkIfExist libdvdread-git libdvdread.a
-	compile="false"
-else
-	echo -------------------------------------------------
-	echo "libdvdread-git is already up to date"
-	echo -------------------------------------------------
-fi
-
-cd $LOCALBUILDDIR
-
-do_git "git://git.videolan.org/libdvdnav.git" libdvdnav-git
-
-if [[ $compile == "true" ]]; then
-
-	if [[ ! -f "configure" ]]; then
-		autoreconf -fiv
-	else
-		make uninstall
-		make clean
-	fi
-
-		./configure --prefix=$LOCALDESTDIR --disable-shared DVDREAD_LIBS="-L$LOCALDESTDIR/lib" DVDREAD_CFLAGS="-I$LOCALDESTDIR/include"
-
-		make -j $cpuCount
-		make install
-
-		do_checkIfExist libdvdnav-git libdvdnav.a
-		compile="false"
-else
-	echo -------------------------------------------------
-	echo "libdvdnav-git is already up to date"
-	echo -------------------------------------------------
-fi
-
-cd $LOCALBUILDDIR
-
 do_git "git://git.videolan.org/libbluray.git" libbluray-git
 
 if [[ $compile == "true" ]]; then
