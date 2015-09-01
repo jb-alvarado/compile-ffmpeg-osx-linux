@@ -932,7 +932,7 @@ fi
 
 cd $LOCALBUILDDIR
 
-if [ ! -f "$LOCALDESTDIR/include/decklink/DeckLinkAPI.h" ]; then
+if [ -f "$LOCALDESTDIR/include/decklink/DeckLinkAPI.h" ]; then
 	echo -------------------------------------------------
 	echo "DeckLinkAPI is already downloaded"
 	echo -------------------------------------------------
