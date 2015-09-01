@@ -943,15 +943,15 @@ if [ -f "$LOCALDESTDIR/include/decklink/DeckLinkAPI.h" ]; then
     mkdir decklink
     cd decklink
 
-    do_wget https://raw.githubusercontent.com/jb-alvarado/media-autobuild_suite/master/decklink/DeckLinkAPI.h
-    do_wget https://raw.githubusercontent.com/jb-alvarado/media-autobuild_suite/master/decklink/DeckLinkAPIConfiguration.h
-    do_wget https://raw.githubusercontent.com/jb-alvarado/media-autobuild_suite/master/decklink/DeckLinkAPIDeckControl.h
-    do_wget https://raw.githubusercontent.com/jb-alvarado/media-autobuild_suite/master/decklink/DeckLinkAPIDiscovery.h
-    do_wget https://raw.githubusercontent.com/jb-alvarado/media-autobuild_suite/master/decklink/DeckLinkAPIModes.h
-    do_wget https://raw.githubusercontent.com/jb-alvarado/media-autobuild_suite/master/decklink/DeckLinkAPIStreaming.h
-    do_wget https://raw.githubusercontent.com/jb-alvarado/media-autobuild_suite/master/decklink/DeckLinkAPITypes.h
-    do_wget https://raw.githubusercontent.com/jb-alvarado/media-autobuild_suite/master/decklink/DeckLinkAPIVersion.h
-    do_wget https://raw.githubusercontent.com/jb-alvarado/media-autobuild_suite/master/decklink/DeckLinkAPIDispatch.cpp
+    do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink/DeckLinkAPI.h
+    do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink/DeckLinkAPIConfiguration.h
+    do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink/DeckLinkAPIDeckControl.h
+    do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink/DeckLinkAPIDiscovery.h
+    do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink/DeckLinkAPIModes.h
+    do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink/DeckLinkAPIStreaming.h
+    do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink/DeckLinkAPITypes.h
+    do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink/DeckLinkAPIVersion.h
+    do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink/DeckLinkAPIDispatch.cpp
 
     sed -i '' "s/void	InitDeckLinkAPI (void)/static void	InitDeckLinkAPI (void)/" DeckLinkAPIDispatch.cpp
     sed -i '' "s/bool		IsDeckLinkAPIPresent (void)/static bool		IsDeckLinkAPIPresent (void)/" DeckLinkAPIDispatch.cpp
