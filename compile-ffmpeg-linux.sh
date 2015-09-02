@@ -956,7 +956,7 @@ if [[ $compile = "true" ]]; then
         rm -rf $LOCALDESTDIR/include/gpac
     fi
     [[ -f config.mak ]] && make distclean
-    ./configure --prefix=$LOCALDESTDIR --static-mp4box --extra-libs="-lz"
+    ./configure --prefix=$LOCALDESTDIR --static-mp4box --extra-libs="-lz -lm"
     make -j $cpuCount
     make install-lib
     cp bin/gcc/MP4Box $LOCALDESTDIR/bin/
