@@ -1,5 +1,5 @@
 /* -LICENSE-START-
-** Copyright (c) 2014 Blackmagic Design
+** Copyright (c) 2015 Blackmagic Design
 **
 ** Permission is hereby granted, free of charge, to any person or organization
 ** obtaining a copy of the software and accompanying documentation covered by
@@ -124,6 +124,10 @@ enum _BMDDeckLinkConfigurationID {
     bmdDeckLinkConfigVideoInputSVideoLumaGain                    = 'islg',
     bmdDeckLinkConfigVideoInputSVideoChromaGain                  = 'iscg',
 
+    /* Audio Input Flags */
+
+    bmdDeckLinkConfigMicrophonePhantomPower                      = 'mphp',
+
     /* Audio Input Integers */
 
     bmdDeckLinkConfigAudioInputConnection                        = 'aicn',
@@ -135,6 +139,7 @@ enum _BMDDeckLinkConfigurationID {
     bmdDeckLinkConfigAnalogAudioInputScaleChannel3               = 'ais3',
     bmdDeckLinkConfigAnalogAudioInputScaleChannel4               = 'ais4',
     bmdDeckLinkConfigDigitalAudioInputScale                      = 'dais',
+    bmdDeckLinkConfigMicrophoneInputGain                         = 'micg',
 
     /* Audio Output Integers */
 
@@ -147,6 +152,7 @@ enum _BMDDeckLinkConfigurationID {
     bmdDeckLinkConfigAnalogAudioOutputScaleChannel3              = 'aos3',
     bmdDeckLinkConfigAnalogAudioOutputScaleChannel4              = 'aos4',
     bmdDeckLinkConfigDigitalAudioOutputScale                     = 'daos',
+    bmdDeckLinkConfigHeadphoneVolume                             = 'hvol',
 
     /* Device Information Strings */
 
@@ -155,7 +161,11 @@ enum _BMDDeckLinkConfigurationID {
     bmdDeckLinkConfigDeviceInformationCompany                    = 'dico',
     bmdDeckLinkConfigDeviceInformationPhone                      = 'diph',
     bmdDeckLinkConfigDeviceInformationEmail                      = 'diem',
-    bmdDeckLinkConfigDeviceInformationDate                       = 'dida'
+    bmdDeckLinkConfigDeviceInformationDate                       = 'dida',
+
+    /* Deck Control Integers */
+
+    bmdDeckLinkConfigDeckControlConnection                       = 'dcco'
 };
 
 // Forward Declarations

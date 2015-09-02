@@ -1,5 +1,5 @@
 /* -LICENSE-START-
-** Copyright (c) 2014 Blackmagic Design
+** Copyright (c) 2015 Blackmagic Design
 **
 ** Permission is hereby granted, free of charge, to any person or organization
 ** obtaining a copy of the software and accompanying documentation covered by
@@ -124,6 +124,10 @@ enum _BMDDeckLinkConfigurationID {
     bmdDeckLinkConfigVideoInputSVideoLumaGain                    = /* 'islg' */ 0x69736C67,
     bmdDeckLinkConfigVideoInputSVideoChromaGain                  = /* 'iscg' */ 0x69736367,
 
+    /* Audio Input Flags */
+
+    bmdDeckLinkConfigMicrophonePhantomPower                      = /* 'mphp' */ 0x6D706870,
+
     /* Audio Input Integers */
 
     bmdDeckLinkConfigAudioInputConnection                        = /* 'aicn' */ 0x6169636E,
@@ -135,6 +139,7 @@ enum _BMDDeckLinkConfigurationID {
     bmdDeckLinkConfigAnalogAudioInputScaleChannel3               = /* 'ais3' */ 0x61697333,
     bmdDeckLinkConfigAnalogAudioInputScaleChannel4               = /* 'ais4' */ 0x61697334,
     bmdDeckLinkConfigDigitalAudioInputScale                      = /* 'dais' */ 0x64616973,
+    bmdDeckLinkConfigMicrophoneInputGain                         = /* 'micg' */ 0x6D696367,
 
     /* Audio Output Integers */
 
@@ -147,6 +152,7 @@ enum _BMDDeckLinkConfigurationID {
     bmdDeckLinkConfigAnalogAudioOutputScaleChannel3              = /* 'aos3' */ 0x616F7333,
     bmdDeckLinkConfigAnalogAudioOutputScaleChannel4              = /* 'aos4' */ 0x616F7334,
     bmdDeckLinkConfigDigitalAudioOutputScale                     = /* 'daos' */ 0x64616F73,
+    bmdDeckLinkConfigHeadphoneVolume                             = /* 'hvol' */ 0x68766F6C,
 
     /* Device Information Strings */
 
@@ -155,7 +161,11 @@ enum _BMDDeckLinkConfigurationID {
     bmdDeckLinkConfigDeviceInformationCompany                    = /* 'dico' */ 0x6469636F,
     bmdDeckLinkConfigDeviceInformationPhone                      = /* 'diph' */ 0x64697068,
     bmdDeckLinkConfigDeviceInformationEmail                      = /* 'diem' */ 0x6469656D,
-    bmdDeckLinkConfigDeviceInformationDate                       = /* 'dida' */ 0x64696461
+    bmdDeckLinkConfigDeviceInformationDate                       = /* 'dida' */ 0x64696461,
+
+    /* Deck Control Integers */
+
+    bmdDeckLinkConfigDeckControlConnection                       = /* 'dcco' */ 0x6463636F
 };
 
 // Forward Declarations

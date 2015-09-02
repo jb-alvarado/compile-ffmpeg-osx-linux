@@ -1,5 +1,5 @@
 /* -LICENSE-START-
-** Copyright (c) 2014 Blackmagic Design
+** Copyright (c) 2015 Blackmagic Design
 **
 ** Permission is hereby granted, free of charge, to any person or organization
 ** obtaining a copy of the software and accompanying documentation covered by
@@ -320,6 +320,7 @@ enum _BMDDeckLinkAttributeID {
     BMDDeckLinkAudioInputConnections                             = /* 'aicn' */ 0x6169636E,
     BMDDeckLinkDeviceBusyState                                   = /* 'dbst' */ 0x64627374,
     BMDDeckLinkVideoIOSupport                                    = /* 'vios' */ 0x76696F73,	// Returns a BMDVideoIOSupport bit field
+    BMDDeckLinkDeckControlConnections                            = /* 'dccn' */ 0x6463636E,
 
     /* Floats */
 
@@ -327,6 +328,8 @@ enum _BMDDeckLinkAttributeID {
     BMDDeckLinkVideoInputGainMaximum                             = /* 'vigx' */ 0x76696778,
     BMDDeckLinkVideoOutputGainMinimum                            = /* 'vogm' */ 0x766F676D,
     BMDDeckLinkVideoOutputGainMaximum                            = /* 'vogx' */ 0x766F6778,
+    BMDDeckLinkMicrophoneInputGainMinimum                        = /* 'migm' */ 0x6D69676D,
+    BMDDeckLinkMicrophoneInputGainMaximum                        = /* 'migx' */ 0x6D696778,
 
     /* Strings */
 
