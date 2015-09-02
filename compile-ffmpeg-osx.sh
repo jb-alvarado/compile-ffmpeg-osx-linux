@@ -506,9 +506,9 @@ if [[ $compile == "true" ]]; then
 		make clean
 	fi
 
-	make LDFLAGS="$LDFLAGS" prefix=$LOCALDESTDIR CRYPTO=GNUTLS SHARED= SYS=posix install LIBS="$LIBS -lgnutls -lhogweed -lnettle -lgmp -ltasn1 -lz -liconv -Llibrtmp -lrtmp"
+	make LDFLAGS="$LDFLAGS" prefix=$LOCALDESTDIR CRYPTO=GNUTLS SHARED= SYS=posix install LIBS="-Llibrtmp -lrtmp $LIBS -lgnutls -lhogweed -lnettle -lgmp -ltasn1 -lz -liconv"
 
-	sed -i 's/Libs:.*/Libs: -L${libdir} -lrtmp -lwinmm -lz -lgmp/' $LOCALDESTDIR/lib/pkgconfig/librtmp.pc
+	sed -i 's/Libs:.*/Libs: -L${libdir} -lrtmp -lz -lgmp/' $LOCALDESTDIR/lib/pkgconfig/librtmp.pc
 
 	do_checkIfExist rtmpdump librtmp.a
 	compile="false"
