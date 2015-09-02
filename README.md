@@ -10,3 +10,5 @@ Warning: the ffmpeg version is "nonfree", you are not allow to redistribute or s
 This scripts are mostly for private use - there wil be no support and please don't send requests.
 
 Feel free to fork and modify it in the way the license allow it.
+
+Are more active windows version you found here: https://github.com/jb-alvarado/media-autobuild_suite/blob/master/media-suite_compile.sh
