@@ -485,7 +485,7 @@ if [ -f "$LOCALDESTDIR/lib/libgnutls.a" ]; then
 		make -j $cpuCount
 		make install
 
-		sed -i 's/-lgnutls *$/-lgnutls -lnettle -lhogweed -liconv -lcrypt32 -lws2_32 -lz -lgmp -lintl/' $LOCALDESTDIR/lib/pkgconfig/gnutls.pc
+		sed -i 's/-lgnutls *$/-lgnutls -lnettle -lhogweed -liconv -lz -lgmp/' $LOCALDESTDIR/lib/pkgconfig/gnutls.pc
 
 		do_checkIfExist gnutls-3.3.11 libgnutls.a
 fi
