@@ -967,6 +967,63 @@ fi
 
 cd $LOCALBUILDDIR
 
+do_git "https://github.com/MediaArea/ZenLib" libzen-git
+if [[ $compile = "true" ]]; then
+    cd Project/GNU/Library
+    [[ ! -f "configure" ]] && ./autogen.sh || make distclean
+    if [[ -d $LOCALDESTDIR/include/ZenLib ]]; then
+        rm -rf $LOCALDESTDIR/include/ZenLib $LOCALDESTDIR/bin-global/libzen-config
+        rm -f $LOCALDESTDIR/lib/libzen.{l,}a $LOCALDESTDIR/lib/pkgconfig/libzen.pc
+    fi
+    ./configure --prefix=$LOCALDESTDIR --disable-shared
+
+		make -j $cpuCount
+    make install
+
+    [[ -f "$LOCALDESTDIR/bin/libzen-config" ]] && rm $LOCALDESTDIR/bin/libzen-config
+    do_checkIfExist libzen-git libzen.a
+    buildMediaInfo="true"
+fi
+
+cd $LOCALBUILDDIR
+
+do_git "https://github.com/MediaArea/MediaInfoLib" libmediainfo-git
+if [[ $compile = "true" || $buildMediaInfo = "true" ]]; then
+    cd Project/GNU/Library
+    [[ ! -f "configure" ]] && ./autogen.sh || make distclean
+    if [[ -d $LOCALDESTDIR/include/MediaInfo ]]; then
+        rm -rf $LOCALDESTDIR/include/MediaInfo{,DLL}
+        rm -f $LOCALDESTDIR/lib/libmediainfo.{l,}a $LOCALDESTDIR/lib/pkgconfig/libmediainfo.pc
+        rm -f $LOCALDESTDIR/bin-global/libmediainfo-config
+    fi
+    ./configure --prefix=$LOCALDESTDIR --disable-shared
+
+		make -j $cpuCount
+    make install
+
+    cp libmediainfo.pc $LOCALDESTDIR/lib/pkgconfig/
+    do_checkIfExist libmediainfo-git libmediainfo.a
+    buildMediaInfo="true"
+fi
+
+cd $LOCALBUILDDIR
+
+do_git "https://github.com/MediaArea/MediaInfo" mediainfo-git
+if [[ $compile = "true" || $buildMediaInfo = "true" ]]; then
+    cd Project/GNU/CLI
+    [[ ! -f "configure" ]] && ./autogen.sh || make distclean
+    [[ -d $LOCALDESTDIR/bin/mediainfo ]] && rm -rf $LOCALDESTDIR/bin/mediainfo
+
+    ./configure --prefix=$LOCALDESTDIR --disable-shared --enable-staticlibs
+
+		make -j $cpuCount
+    make install
+
+    do_checkIfExist mediainfo-git bin/mediainfo
+fi
+
+cd $LOCALBUILDDIR
+
 do_git "git://git.videolan.org/x264.git" x264-git noDepth
 
 if [[ $compile == "true" ]]; then
@@ -1114,7 +1171,7 @@ echo -ne "\033]0;strip binaries\007"
 echo
 echo "-------------------------------------------------------------------------------"
 echo
-FILES=`find bin -type f -mmin -600 ! \( -name '*-config' -o -name '.DS_Store' \)`
+FILES=`find bin -type f -mmin -600 ! \( -name '*-config' -o -name '.DS_Store' -o -name '*.lua' \)`
 
 for f in $FILES; do
  strip $f
