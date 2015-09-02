@@ -11,4 +11,4 @@ This scripts are mostly for private use - there wil be no support and please don
 
 Feel free to fork and modify it in the way the license allow it.
 
-Are more active windows version you found here: https://github.com/jb-alvarado/media-autobuild_suite/blob/master/media-suite_compile.sh
+Are more active windows version you found here: https://github.com/jb-alvarado/media-autobuild_suite
