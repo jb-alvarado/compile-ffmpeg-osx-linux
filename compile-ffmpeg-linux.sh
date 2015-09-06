@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cpuCount=3
+cpuCount=4
 compile="false"
 buildFFmpeg="false"
 
@@ -353,139 +353,21 @@ fi
 #----------------------
 cd $LOCALBUILDDIR
 
-if [ -f "$LOCALDESTDIR/lib/libgpg-error.a" ]; then
+if [ -f "$LOCALDESTDIR/lib/libssl.a" ]; then
 	echo -------------------------------------------------
-	echo "libgpg-error-1.12 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile libgpg-error 64Bit\007"
-
-		do_wget "ftp://ftp.gnupg.org/gcrypt/libgpg-error/libgpg-error-1.12.tar.bz2"
-
-		./configure --prefix=$LOCALDESTDIR --disable-shared --with-gnu-ld
-
-		sed -i 's/iconv --silent/iconv -s/g' potomo
-
-		make -j $cpuCount
-		make install
-
-		do_checkIfExist libgpg-error-1.12 libgpg-error.a
-fi
-
-cd $LOCALBUILDDIR
-
-if [ -f "$LOCALDESTDIR/lib/libiconv.a" ]; then
-	echo -------------------------------------------------
-	echo "libiconv-1.14 is already compiled"
+	echo "openssl-1.0.2d is already compiled"
 	echo -------------------------------------------------
 	else
-		echo -ne "\033]0;compile libiconv 64Bit\007"
+		echo -ne "\033]0;compile openssl 64Bit\007"
 
-		do_wget "http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz"
+		do_wget "https://www.openssl.org/source/openssl-1.0.2d.tar.gz"
 
-		./configure --prefix=$LOCALDESTDIR --enable-shared=no --enable-static=yes
-		make -j $cpuCount
+		./Configure --prefix=$LOCALDESTDIR linux-x86_64 no-shared zlib enable-camellia enable-idea enable-mdc2 enable-tlsext enable-rfc3779
+
+		make depend all
 		make install
 
-		do_checkIfExist libiconv-1.14 libiconv.a
-fi
-
-cd $LOCALBUILDDIR
-
-if [ -f "$LOCALDESTDIR/lib/libgcrypt.a" ]; then
-	echo -------------------------------------------------
-	echo "libgcrypt-1.6.2 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile libgcrypt\007"
-
-		do_wget "ftp://ftp.gnupg.org/gcrypt/libgcrypt/libgcrypt-1.6.2.tar.bz2"
-
-		./configure --prefix=$LOCALDESTDIR --disable-shared --with-gpg-error-prefix=$LOCALDESTDIR --disable-asm --disable-padlock-support
-
-    make -j $cpuCount
-		make install
-
-		do_checkIfExist libgcrypt-1.6.2 libgcrypt.a
-fi
-
-cd $LOCALBUILDDIR
-
-if [ -f "$LOCALDESTDIR/lib/libgmp.a" ]; then
-	echo -------------------------------------------------
-	echo "gmp-5.1.3 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile gmp 64Bit\007"
-
-		do_wget "ftp://ftp.gnu.org/gnu/gmp/gmp-5.1.3.tar.bz2"
-
-		./configure --prefix=$LOCALDESTDIR --enable-cxx --disable-shared --with-gnu-ld
-
-		make -j $cpuCount
-		make install
-
-		do_checkIfExist gmp-5.1.3 libgmp.a
-fi
-
-cd $LOCALBUILDDIR
-
-if [ -f "$LOCALDESTDIR/lib/libtasn1.a" ]; then
-	echo -------------------------------------------------
-	echo "libtasn1 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile gmp 64Bit\007"
-
-		do_wget "http://ftp.gnu.org/gnu/libtasn1/libtasn1-4.5.tar.gz"
-
-		./configure --prefix=$LOCALDESTDIR --disable-shared
-
-		make -j $cpuCount
-		make install
-
-		do_checkIfExist libtasn1-4.5 libtasn1.a
-fi
-
-
-cd $LOCALBUILDDIR
-
-if [ -f "$LOCALDESTDIR/lib/libnettle.a" ]; then
-	echo -------------------------------------------------
-	echo "nettle-2.7.1 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile nettle 64Bit\007"
-
-		do_wget "http://ftp.gnu.org/gnu/nettle/nettle-2.7.1.tar.gz"
-
-		./configure --prefix=$LOCALDESTDIR --disable-shared
-
-		make -j $cpuCount
-		make install
-
-		do_checkIfExist nettle-2.7.1 libnettle.a
-fi
-
-cd $LOCALBUILDDIR
-
-if [ -f "$LOCALDESTDIR/lib/libgnutls.a" ]; then
-	echo -------------------------------------------------
-	echo "gnutls-3.3.11 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile gnutls\007"
-
-		do_wget "ftp://ftp.gnutls.org/gcrypt/gnutls/v3.3/gnutls-3.3.11.tar.xz"
-
-		./configure --prefix=$LOCALDESTDIR --disable-guile --enable-cxx --disable-doc --disable-tests --disable-shared --with-zlib --without-p11-kit --disable-rpath --disable-gtk-doc --disable-libdane --enable-local-libopts
-
-		make -j $cpuCount
-		make install
-
-		sed -i 's/-lgnutls *$/-lgnutls -lnettle -lhogweed -liconv -lz -lgmp/' $LOCALDESTDIR/lib/pkgconfig/gnutls.pc
-
-		do_checkIfExist gnutls-3.3.11 libgnutls.a
+		do_checkIfExist openssl-1.0.2d libssl.a
 fi
 
 cd $LOCALBUILDDIR
@@ -504,9 +386,7 @@ if [[ $compile == "true" ]]; then
 		make clean
 	fi
 
-	make LDFLAGS="$LDFLAGS" prefix=$LOCALDESTDIR CRYPTO=GNUTLS SHARED= SYS=posix install LIBS="-Llibrtmp -lrtmp $LIBS -lgnutls -lhogweed -lnettle -lgmp -ltasn1 -lz -liconv"
-
-	sed -i 's/Libs:.*/Libs: -L${libdir} -lrtmp -lz -lgmp/' $LOCALDESTDIR/lib/pkgconfig/librtmp.pc
+	make LDFLAGS="$LDFLAGS" prefix=$LOCALDESTDIR SHARED= SYS=posix install LIBS="-Llibrtmp -lrtmp $LIBS -lssl -lcrypto -ldl -lz"
 
 	do_checkIfExist rtmpdump librtmp.a
 	compile="false"
@@ -822,32 +702,6 @@ fi
 
 cd $LOCALBUILDDIR
 
-do_git "git://git.videolan.org/libbluray.git" libbluray-git
-
-if [[ $compile == "true" ]]; then
-
-  if [[ ! -f "configure" ]]; then
-		autoreconf -fiv
-	else
-		make uninstall
-		make clean
-	fi
-
-	./configure --prefix=$LOCALDESTDIR --disable-shared --enable-static --disable-examples --disable-bdjava --disable-doxygen-doc --disable-doxygen-dot LIBXML2_LIBS="-L$LOCALDESTDIR/lib -lxml2" LIBXML2_CFLAGS="-I$LOCALDESTDIR/include/libxml2 -DLIBXML_STATIC"
-
-	make -j $cpuCount
-	make install
-
-	do_checkIfExist libbluray-git libbluray.a
-	compile="false"
-else
-	echo -------------------------------------------------
-	echo "libbluray-git is already up to date"
-	echo -------------------------------------------------
-fi
-
-cd $LOCALBUILDDIR
-
 do_git "https://github.com/libass/libass.git" libass-git
 
 if [[ $compile == "true" ]]; then
@@ -1116,11 +970,11 @@ if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f $LOCALDES
 		make distclean
 	fi
 
-	./configure --prefix=$LOCALDESTDIR --disable-debug --disable-shared --disable-doc --disable-ffplay --disable-sdl --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-bzlib --enable-zlib --enable-librtmp --enable-gnutls --enable-libopenjpeg --enable-libmp3lame --enable-libtwolame --enable-libvpx --enable-libx264 --enable-libx265 --enable-nonfree --enable-libfdk-aac --enable-decklink --extra-cflags='-I$LOCALDESTDIR/include/decklink' --extra-ldflags='-L$LOCALDESTDIR/include/decklink' --extra-cflags='-DLIBTWOLAME_STATIC' --extra-libs='-lxml2 -lstdc++ -lpng -lm -lexpat -lhogweed -lnettle -lgmp -ltasn1 -lgcrypt -lz -liconv' # pkg_config='pkg-config --static'
+	./configure --prefix=$LOCALDESTDIR --disable-debug --disable-shared --disable-doc --disable-ffplay --disable-sdl --enable-gpl --enable-version3 --enable-openssl --enable-runtime-cpudetect --enable-avfilter --enable-bzlib --enable-zlib --enable-libopenjpeg --enable-libmp3lame --enable-librtmp --enable-libtwolame --enable-libvpx --enable-libx264 --enable-nonfree --enable-libfdk-aac --extra-cflags='-DLIBTWOLAME_STATIC' --extra-libs='-ldl -lz'
 
-	# --enable-libbluray --enable-fontconfig --enable-libfreetype --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libvo-amrwbenc --enable-libsoxr --enable-libspeex --enable-libtheora --enable-libvorbis --enable-libvo-aacenc --enable-opengl --enable-libopus --enable-libxvid
+	# --enable-fontconfig --enable-libfreetype --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libvo-amrwbenc --enable-libsoxr --enable-libspeex --enable-libtheora --enable-libvorbis --enable-libvo-aacenc --enable-opengl --enable-libopus  --enable-libx265 --enable-libxvid --enable-decklink --extra-cflags='-I$LOCALDESTDIR/include/decklink' --extra-ldflags='-L$LOCALDESTDIR/include/decklink' --extra-libs='-lpng -lm'
 
-  sed -i '' "s/ -std=c99//" config.mak
+  #sed -i '' "s/ -std=c99//" config.mak
 
 	make -j $cpuCount
 	make install
