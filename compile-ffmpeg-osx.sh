@@ -1140,7 +1140,7 @@ cd $LOCALBUILDDIR
 
 do_git "https://github.com/mpv-player/mpv.git" mpv-git
 
-if [[ $compile == "true" ]] || [[ $newFfmpeg == "yes" ]]; then
+if [[ $compile == "true" ]] || [[ $newFfmpeg == "yes" ]] || [[ ! -f bin/mpv/bin/mpv ]]; then
 	if [ ! -f waf ]; then
 		./bootstrap.py
 	else
@@ -1148,7 +1148,7 @@ if [[ $compile == "true" ]] || [[ $newFfmpeg == "yes" ]]; then
 		rm waf
 		rm -rf .waf-*
 		rm -rf $LOCALDESTDIR/bin/mpv
-		python2 ./bootstrap.py
+		./bootstrap.py
 	fi
 
 	./waf configure --prefix=$LOCALDESTDIR/bin/mpv --disable-debug-build --enable-static-build --disable-manpage-build --disable-pdf-build
