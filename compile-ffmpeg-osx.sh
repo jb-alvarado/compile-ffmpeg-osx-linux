@@ -1164,7 +1164,7 @@ cd $LOCALBUILDDIR
 
 do_git "https://github.com/mpv-player/mpv.git" mpv-git
 
-if [[ $compile == "true" ]] || [[ $newFfmpeg == "yes" ]] || [[ ! -d $LOCALDESTDIR/bin/mpv/bin/mpv ]]; then
+if [[ $compile == "true" ]] || [[ $newFfmpeg == "yes" ]] || [[ ! -f $LOCALDESTDIR/bin/mpv/bin/mpv ]]; then
 	if [ ! -f waf ]; then
 		./bootstrap.py
 	else
@@ -1180,7 +1180,7 @@ if [[ $compile == "true" ]] || [[ $newFfmpeg == "yes" ]] || [[ ! -d $LOCALDESTDI
 	./waf build -j $cpuCount
 	./waf install
 
-	cp TOOLS/osxbundle/mpv.app $LOCALDESTDIR/bin
+	cp -R TOOLS/osxbundle/mpv.app $LOCALDESTDIR/bin
 	cp $LOCALDESTDIR/bin/mpv/bin/mpv $LOCALDESTDIR/bin/mpv.app
 
 	do_checkIfExist mpv-git bin/mpv/bin/mpv
@@ -1192,7 +1192,7 @@ echo -ne "\033]0;strip binaries\007"
 echo
 echo "-------------------------------------------------------------------------------"
 echo
-FILES=`find bin -type f -mmin -600 ! \( -name '*-config' -o -name '.DS_Store' -o -name '*.lua' \)`
+FILES=`find bin -type f -mmin -600 ! \( -name '*-config' -o -name '.DS_Store' -o -name '*.lua' -o -name '*.conf' -o -name '*.png' -o -name '*.desktop' \)`
 
 for f in $FILES; do
  strip $f
