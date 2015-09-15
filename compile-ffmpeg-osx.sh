@@ -1180,6 +1180,9 @@ if [[ $compile == "true" ]] || [[ $newFfmpeg == "yes" ]] || [[ ! -d $LOCALDESTDI
 	./waf build -j $cpuCount
 	./waf install
 
+	cp TOOLS/osxbundle/mpv.app $LOCALDESTDIR/bin
+	cp $LOCALDESTDIR/bin/mpv/bin/mpv $LOCALDESTDIR/bin/mpv.app
+
 	do_checkIfExist mpv-git bin/mpv/bin/mpv
 fi
 
