@@ -148,13 +148,14 @@ do_checkIfExist() {
 	local packetName="$1"
 	local fileName="$2"
 	local fileExtension=${fileName##*.}
-	if [[ "$fileExtension" = "exe" ]]; then
+	if [[ "$fileExtension" != "a" ]]; then
 		if [ -f "$LOCALDESTDIR/$fileName" ]; then
 			echo -
 			echo -------------------------------------------------
 			echo "build $packetName done..."
 			echo -------------------------------------------------
 			echo -
+			compile="false"
 			else
 				echo -------------------------------------------------
 				echo "Build $packetName failed..."
@@ -163,13 +164,14 @@ do_checkIfExist() {
 				read -p ""
 				sleep 5
 		fi
-	elif [[ "$fileExtension" = "a" ]]; then
+	else
 		if [ -f "$LOCALDESTDIR/lib/$fileName" ]; then
 			echo -
 			echo -------------------------------------------------
 			echo "build $packetName done..."
 			echo -------------------------------------------------
 			echo -
+			compile="false"
 			else
 				echo -------------------------------------------------
 				echo "build $packetName failed..."
@@ -511,7 +513,6 @@ if [[ $compile == "true" ]]; then
 	sed -i 's/Libs:.*/Libs: -L${libdir} -lrtmp -lz -lgmp/' $LOCALDESTDIR/lib/pkgconfig/librtmp.pc
 
 	do_checkIfExist rtmpdump librtmp.a
-	compile="false"
 else
 	echo -------------------------------------------------
 	echo "rtmpdump is already up to date"
@@ -736,7 +737,6 @@ if [[ $compile == "true" ]]; then
 	make install
 
 	do_checkIfExist fdk-aac-git libfdk-aac.a
-	compile="false"
 else
 	echo -------------------------------------------------
 	echo "fdk-aac is already up to date"
@@ -814,7 +814,7 @@ if [[ $compile == "true" ]]; then
 	make install
 
 	do_checkIfExist libvpx-git libvpx.a
-	compile="false"
+
 	buildFFmpeg="true"
 else
 	echo -------------------------------------------------
@@ -841,7 +841,6 @@ if [[ $compile == "true" ]]; then
 	make install
 
 	do_checkIfExist libbluray-git libbluray.a
-	compile="false"
 else
 	echo -------------------------------------------------
 	echo "libbluray-git is already up to date"
@@ -870,7 +869,6 @@ if [[ $compile == "true" ]]; then
 	sed -i 's/-lass -lm/-lass -lfribidi -lm/' "$LOCALDESTDIR/lib/pkgconfig/libass.pc"
 
 	do_checkIfExist libass-git libass.a
-	compile="false"
 	buildFFmpeg="true"
 else
 	echo -------------------------------------------------
@@ -1044,7 +1042,6 @@ if [[ $compile == "true" ]]; then
 	make install
 
 	do_checkIfExist x264-git libx264.a
-	compile="false"
 	buildFFmpeg="true"
 else
 	echo -------------------------------------------------
@@ -1071,7 +1068,6 @@ if [[ $compile == "true" ]]; then
 	make install
 
 	do_checkIfExist x265-git libx265.a
-	compile="false"
 	buildFFmpeg="true"
 else
 	echo -------------------------------------------------
@@ -1128,7 +1124,6 @@ if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f $LOCALDES
 
 	do_checkIfExist ffmpeg-git libavcodec.a
 
-	compile="false"
   newFfmpeg="yes"
 else
 	echo -------------------------------------------------
@@ -1138,9 +1133,38 @@ fi
 
 cd $LOCALBUILDDIR
 
+do_git "http://luajit.org/git/luajit-2.0.git" luajit-git noDepth
+
+if [[ $compile = "true" ]]; then
+    if [[ -f "$LOCALDESTDIR/lib/libluajit-5.1.a" ]]; then
+        rm -rf $LOCALDESTDIR/include/luajit-2.0 $LOCALDESTDIR/bin/luajit* $LOCALDESTDIR/lib/lua
+        rm -rf $LOCALDESTDIR/lib/libluajit-5.1.a $LOCALDESTDIR/lib/pkgconfig/luajit.pc
+    fi
+
+    [[ -f "src/luajit" ]] && make clean
+    make BUILDMODE=static amalg
+    make BUILDMODE=static PREFIX=$LOCALDESTDIR FILE_T=luajit INSTALL_TNAME='luajit-$(VERSION)' INSTALL_TSYMNAME=luajit install
+    # luajit comes with a broken .pc file
+    sed -i '' "s/Libs.private: -Wl,-E -lm -ldl/Libs.private: -lm -ldl -liconv/" $LOCALDESTDIR/lib/pkgconfig/luajit.pc
+    do_checkIfExist luajit-git libluajit-5.1.a
+fi
+
+cd $LOCALBUILDDIR
+
+do_git "https://github.com/lachs0r/rubberband.git" rubberband-git
+
+if [[ $compile = "true" ]]; then
+    [[ -f $LOCALDESTDIR/lib/librubberband.a ]] && make PREFIX=$LOCALDESTDIR uninstall
+    [[ -f "lib/librubberband.a" ]] && make clean
+    make PREFIX=$LOCALDESTDIR install-static
+    do_checkIfExist rubberband-git librubberband.a
+fi
+
+cd $LOCALBUILDDIR
+
 do_git "https://github.com/mpv-player/mpv.git" mpv-git
 
-if [[ $compile == "true" ]] || [[ $newFfmpeg == "yes" ]]; then
+if [[ $compile == "true" ]] || [[ $newFfmpeg == "yes" ]] || [[ ! -d $LOCALDESTDIR/bin/mpv/bin/mpv ]]; then
 	if [ ! -f waf ]; then
 		./bootstrap.py
 	else
@@ -1148,21 +1172,15 @@ if [[ $compile == "true" ]] || [[ $newFfmpeg == "yes" ]]; then
 		rm waf
 		rm -rf .waf-*
 		rm -rf $LOCALDESTDIR/bin/mpv
-		python2 ./bootstrap.py
+		./bootstrap.py
 	fi
 
-	./waf configure --prefix=$LOCALDESTDIR/bin/mpv --disable-debug-build --enable-static-build --disable-manpage-build --disable-pdf-build
+	LDFLAGS="$LDFLAGS -pagezero_size 10000 -image_base 100000000" ./waf configure --prefix=$LOCALDESTDIR/bin/mpv --disable-debug-build --enable-static-build --disable-manpage-build --disable-pdf-build --lua=luajit
 
 	./waf build -j $cpuCount
 	./waf install
 
-	if [ ! -d "$LOCALDESTDIR/bin/mpv/lua" ]; then
-		mkdir $LOCALDESTDIR/bin/mpv/lua
-		cp player/lua/*.lua $LOCALDESTDIR/bin/mpv/lua
-	fi
-
 	do_checkIfExist mpv-git bin/mpv/bin/mpv
-	compile="false"
 fi
 
 cd $LOCALDESTDIR
