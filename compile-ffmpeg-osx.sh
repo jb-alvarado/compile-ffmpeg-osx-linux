@@ -1164,11 +1164,7 @@ cd $LOCALBUILDDIR
 
 do_git "https://github.com/mpv-player/mpv.git" mpv-git
 
-<<<<<<< HEAD
 if [[ $compile == "true" ]] || [[ $newFfmpeg == "yes" ]] || [[ ! -d $LOCALDESTDIR/bin/mpv/bin/mpv ]]; then
-=======
-if [[ $compile == "true" ]] || [[ $newFfmpeg == "yes" ]] || [[ ! -f bin/mpv/bin/mpv ]]; then
->>>>>>> fa079b9c334440f977b43b2c2dcccd834b8e6501
 	if [ ! -f waf ]; then
 		./bootstrap.py
 	else
