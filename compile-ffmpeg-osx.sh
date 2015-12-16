@@ -12,13 +12,19 @@ export LOCALBUILDDIR LOCALDESTDIR
 
 PKG_CONFIG_PATH="${LOCALDESTDIR}/lib/pkgconfig"
 CPPFLAGS="-I${LOCALDESTDIR}/include"
-CFLAGS="-I${LOCALDESTDIR}/include -mtune=generic -O2 -pipe"
+CFLAGS="-I${LOCALDESTDIR}/include -mtune=generic -O2 -pipe -mmacosx-version-min=10.8"
 CXXFLAGS="${CFLAGS}"
-LDFLAGS="-L${LOCALDESTDIR}/lib -pipe"
+LDFLAGS="-L${LOCALDESTDIR}/lib -pipe -mmacosx-version-min=10.8"
 export PKG_CONFIG_PATH CPPFLAGS CFLAGS CXXFLAGS LDFLAGS
 
 [ -d $LOCALBUILDDIR ] || mkdir $LOCALBUILDDIR
 [ -d $LOCALDESTDIR ] || mkdir $LOCALDESTDIR
+
+do_prompt() {
+    # from http://superuser.com/a/608509
+    while read -s -e -t 0.1; do : ; done
+    read -p "$1"
+}
 
 # get git clone, or update
 do_git() {
@@ -33,9 +39,9 @@ if [ ! -d $gitFolder ]; then
 		git clone --depth 1 $gitURL $gitFolder
 	fi
 	compile="true"
-	cd $gitFolder
+	cd $gitFolder || exit
 else
-	cd $gitFolder
+	cd $gitFolder || exit
 	oldHead=`git rev-parse HEAD`
 	git reset --hard @{u}
 	git pull origin master
@@ -55,9 +61,9 @@ echo -ne "\033]0;compile $svnFolder\007"
 if [ ! -d $svnFolder ]; then
 	svn checkout $svnURL $svnFolder
 	compile="true"
-	cd $svnFolder
+	cd $svnFolder || exit
 else
-	cd $svnFolder
+	cd $svnFolder || exit
 	oldRevision=`svnversion`
 	svn update
 	newRevision=`svnversion`
@@ -76,9 +82,9 @@ echo -ne "\033]0;compile $hgFolder\007"
 if [ ! -d $hgFolder ]; then
 	hg clone $hgURL $hgFolder
 	compile="true"
-	cd $hgFolder
+	cd $hgFolder || exit
 else
-	cd $hgFolder
+	cd $hgFolder || exit
 	oldHead=`hg id --id`
 	hg pull
 	hg update
@@ -101,7 +107,7 @@ do_wget() {
         archive=${archive##*/}
     fi
 
-    local response_code=$(curl --retry 20 --retry-max-time 5 -L -k -f -w "%{response_code}" -o "$archive" "$url")
+    local -r response_code=$(curl --retry 20 --retry-max-time 5 -L -k -f -w "%{response_code}" -o "$archive" "$url")
 
     if [[ $response_code = "200" || $response_code = "226" ]]; then
       case "$archive" in
@@ -184,7 +190,7 @@ do_checkIfExist() {
 }
 
 buildProcess() {
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit || exit
 echo "-------------------------------------------------------------------------------"
 echo
 echo "compile global tools"
@@ -210,7 +216,7 @@ if [ -f "$LOCALDESTDIR/lib/libopenjpeg.a" ]; then
 		cp $LOCALDESTDIR/include/openjpeg-1.5/openjpeg.h $LOCALDESTDIR/include
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 if [ -f "$LOCALDESTDIR/lib/libexpat.a" ]; then
 	echo -------------------------------------------------
@@ -229,7 +235,7 @@ if [ -f "$LOCALDESTDIR/lib/libexpat.a" ]; then
 		do_checkIfExist expat-2.1.0 libexpat.a
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 if [ -f "$LOCALDESTDIR/lib/libfreetype.a" ]; then
 	echo -------------------------------------------------
@@ -247,7 +253,7 @@ if [ -f "$LOCALDESTDIR/lib/libfreetype.a" ]; then
 		do_checkIfExist freetype-2.6 libfreetype.a
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 if [ -f "$LOCALDESTDIR/lib/libfontconfig.a" ]; then
 	echo -------------------------------------------------
@@ -268,7 +274,7 @@ if [ -f "$LOCALDESTDIR/lib/libfontconfig.a" ]; then
 		do_checkIfExist fontconfig-2.11.94 libfontconfig.a
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 if [ -f "$LOCALDESTDIR/lib/libfribidi.a" ]; then
 	echo -------------------------------------------------
@@ -307,7 +313,7 @@ fi
 	do_checkIfExist fribidi-0.19.6 libfribidi.a
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 if [ -f "$LOCALDESTDIR/lib/libSDL.a" ]; then
 	echo -------------------------------------------------
@@ -333,166 +339,49 @@ if [ -f "$LOCALDESTDIR/lib/libSDL.a" ]; then
     unset CFLAGS
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 if [ -f "$LOCALDESTDIR/lib/libpng.a" ]; then
 	echo -------------------------------------------------
-	echo "libpng-1.6.18 is already compiled"
+	echo "libpng-1.6.20 is already compiled"
 	echo -------------------------------------------------
 	else
 		echo -ne "\033]0;compile libpng 64Bit\007"
 
-		do_wget "http://downloads.sourceforge.net/project/libpng/libpng16/1.6.18/libpng-1.6.18.tar.gz"
+		do_wget "http://downloads.sourceforge.net/project/libpng/libpng16/1.6.20/libpng-1.6.20.tar.gz"
 
 		./configure --prefix=$LOCALDESTDIR --disable-shared
 
 		make -j $cpuCount
 		make install
 
-		do_checkIfExist libpng-1.6.18 libpng.a
+		do_checkIfExist libpng-1.6.20 libpng.a
 fi
+
+cd $LOCALBUILDDIR || exit
 
 #----------------------
 # crypto engine
 #----------------------
-cd $LOCALBUILDDIR
 
-if [ -f "$LOCALDESTDIR/lib/libgpg-error.a" ]; then
+if [ -f "$LOCALDESTDIR/lib/libssl.a" ]; then
 	echo -------------------------------------------------
-	echo "libgpg-error-1.12 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile libgpg-error 64Bit\007"
-
-		do_wget "ftp://ftp.gnupg.org/gcrypt/libgpg-error/libgpg-error-1.12.tar.bz2"
-
-		./configure --prefix=$LOCALDESTDIR --disable-shared --with-gnu-ld
-
-		sed -i 's/iconv --silent/iconv -s/g' potomo
-
-		make -j $cpuCount
-		make install
-
-		do_checkIfExist libgpg-error-1.12 libgpg-error.a
-fi
-
-cd $LOCALBUILDDIR
-
-if [ -f "$LOCALDESTDIR/lib/libiconv.a" ]; then
-	echo -------------------------------------------------
-	echo "libiconv-1.14 is already compiled"
+	echo "openssl-1.0.2e is already compiled"
 	echo -------------------------------------------------
 	else
-		echo -ne "\033]0;compile libiconv 64Bit\007"
+		echo -ne "\033]0;compile openssl 64Bit\007"
 
-		do_wget "http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz"
+		do_wget "https://www.openssl.org/source/openssl-1.0.2e.tar.gz"
 
-		./configure --prefix=$LOCALDESTDIR --enable-shared=no --enable-static=yes
-		make -j $cpuCount
+		./Configure --prefix=$LOCALDESTDIR darwin64-x86_64-cc no-shared zlib enable-camellia enable-idea enable-mdc2 enable-tlsext enable-rfc3779
+
+		make depend all
 		make install
 
-		do_checkIfExist libiconv-1.14 libiconv.a
+		do_checkIfExist openssl-1.0.2e libssl.a
 fi
 
-cd $LOCALBUILDDIR
-
-if [ -f "$LOCALDESTDIR/lib/libgcrypt.a" ]; then
-	echo -------------------------------------------------
-	echo "libgcrypt-1.6.2 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile libgcrypt\007"
-
-		do_wget "ftp://ftp.gnupg.org/gcrypt/libgcrypt/libgcrypt-1.6.2.tar.bz2"
-
-		./configure --prefix=$LOCALDESTDIR --disable-shared --with-gpg-error-prefix=$LOCALDESTDIR --disable-asm --disable-padlock-support
-
-    make -j $cpuCount
-		make install
-
-		do_checkIfExist libgcrypt-1.6.2 libgcrypt.a
-fi
-
-cd $LOCALBUILDDIR
-
-if [ -f "$LOCALDESTDIR/lib/libgmp.a" ]; then
-	echo -------------------------------------------------
-	echo "gmp-5.1.3 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile gmp 64Bit\007"
-
-		do_wget "ftp://ftp.gnu.org/gnu/gmp/gmp-5.1.3.tar.bz2"
-
-		./configure --prefix=$LOCALDESTDIR --enable-cxx --disable-shared --with-gnu-ld
-
-		make -j $cpuCount
-		make install
-
-		do_checkIfExist gmp-5.1.3 libgmp.a
-fi
-
-cd $LOCALBUILDDIR
-
-if [ -f "$LOCALDESTDIR/lib/libtasn1.a" ]; then
-	echo -------------------------------------------------
-	echo "libtasn1 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile gmp 64Bit\007"
-
-		do_wget "http://ftp.gnu.org/gnu/libtasn1/libtasn1-4.5.tar.gz"
-
-		./configure --prefix=$LOCALDESTDIR --disable-shared
-
-		make -j $cpuCount
-		make install
-
-		do_checkIfExist libtasn1-4.5 libtasn1.a
-fi
-
-
-cd $LOCALBUILDDIR
-
-if [ -f "$LOCALDESTDIR/lib/libnettle.a" ]; then
-	echo -------------------------------------------------
-	echo "nettle-2.7.1 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile nettle 64Bit\007"
-
-		do_wget "http://ftp.gnu.org/gnu/nettle/nettle-2.7.1.tar.gz"
-
-		./configure --prefix=$LOCALDESTDIR --disable-shared
-
-		make -j $cpuCount
-		make install
-
-		do_checkIfExist nettle-2.7.1 libnettle.a
-fi
-
-cd $LOCALBUILDDIR
-
-if [ -f "$LOCALDESTDIR/lib/libgnutls.a" ]; then
-	echo -------------------------------------------------
-	echo "gnutls-3.3.11 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile gnutls\007"
-
-		do_wget "ftp://ftp.gnutls.org/gcrypt/gnutls/v3.3/gnutls-3.3.11.tar.xz"
-
-		./configure --prefix=$LOCALDESTDIR --disable-guile --enable-cxx --disable-doc --disable-tests --disable-shared --with-zlib --without-p11-kit --disable-rpath --disable-gtk-doc --disable-libdane --enable-local-libopts
-
-		make -j $cpuCount
-		make install
-
-		sed -i 's/-lgnutls *$/-lgnutls -lnettle -lhogweed -liconv -lz -lgmp/' $LOCALDESTDIR/lib/pkgconfig/gnutls.pc
-
-		do_checkIfExist gnutls-3.3.11 libgnutls.a
-fi
-
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 do_git "git://git.ffmpeg.org/rtmpdump" rtmpdump-git noDepth
 
@@ -508,18 +397,17 @@ if [[ $compile == "true" ]]; then
 		make clean
 	fi
 
-	make LDFLAGS="$LDFLAGS" prefix=$LOCALDESTDIR CRYPTO=GNUTLS SHARED= SYS=posix install LIBS="-Llibrtmp -lrtmp $LIBS -lgnutls -lhogweed -lnettle -lgmp -ltasn1 -lz -liconv"
-
-	sed -i 's/Libs:.*/Libs: -L${libdir} -lrtmp -lz -lgmp/' $LOCALDESTDIR/lib/pkgconfig/librtmp.pc
+	make LDFLAGS="$LDFLAGS" prefix=$LOCALDESTDIR SHARED= SYS=posix install LIBS="-Llibrtmp -lrtmp $LIBS -lssl -lcrypto -ldl -lz"
 
 	do_checkIfExist rtmpdump librtmp.a
+	compile="false"
 else
 	echo -------------------------------------------------
 	echo "rtmpdump is already up to date"
 	echo -------------------------------------------------
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 if [ -f "$LOCALDESTDIR/lib/libxml2.a" ]; then
 	echo -------------------------------------------------
@@ -544,7 +432,7 @@ echo "compile global tools done..."
 echo
 echo "-------------------------------------------------------------------------------"
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 echo "-------------------------------------------------------------------------------"
 echo
 echo "compile audio tools"
@@ -568,7 +456,7 @@ if [ -f "$LOCALDESTDIR/lib/libmp3lame.a" ]; then
 		do_checkIfExist lame-3.99.5 libmp3lame.a
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 if [ -f "$LOCALDESTDIR/lib/libtwolame.a" ]; then
 	echo -------------------------------------------------
@@ -587,7 +475,7 @@ if [ -f "$LOCALDESTDIR/lib/libtwolame.a" ]; then
 		do_checkIfExist twolame-0.3.13 libtwolame.a
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 if [ -f "$LOCALDESTDIR/lib/libogg.a" ]; then
 	echo -------------------------------------------------
@@ -605,7 +493,7 @@ if [ -f "$LOCALDESTDIR/lib/libogg.a" ]; then
 		do_checkIfExist libogg-1.3.1 libogg.a
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 if [ -f "$LOCALDESTDIR/lib/libvorbis.a" ]; then
 	echo -------------------------------------------------
@@ -624,7 +512,7 @@ if [ -f "$LOCALDESTDIR/lib/libvorbis.a" ]; then
 		do_checkIfExist libvorbis-1.3.3 libvorbis.a
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 if [ -f "$LOCALDESTDIR/lib/libtheora.a" ]; then
 	echo -------------------------------------------------
@@ -643,7 +531,7 @@ if [ -f "$LOCALDESTDIR/lib/libtheora.a" ]; then
 		do_checkIfExist libtheora-1.1.1 libtheora.a
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 if [ -f "$LOCALDESTDIR/lib/libspeex.a" ]; then
 	echo -------------------------------------------------
@@ -662,7 +550,7 @@ if [ -f "$LOCALDESTDIR/lib/libspeex.a" ]; then
 		do_checkIfExist speex-1.2rc1 libspeex.a
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 if [ -f "$LOCALDESTDIR/lib/libvo-aacenc.a" ]; then
 	echo -------------------------------------------------
@@ -681,7 +569,7 @@ if [ -f "$LOCALDESTDIR/lib/libvo-aacenc.a" ]; then
 		do_checkIfExist vo-aacenc-0.1.3 libvo-aacenc.a
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 if [ -f "$LOCALDESTDIR/lib/libopencore-amrnb.a" ]; then
 	echo -------------------------------------------------
@@ -700,7 +588,7 @@ if [ -f "$LOCALDESTDIR/lib/libopencore-amrnb.a" ]; then
 		do_checkIfExist opencore-amr-0.1.3 libopencore-amrnb.a
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 if [ -f "$LOCALDESTDIR/lib/libvo-amrwbenc.a" ]; then
 	echo -------------------------------------------------
@@ -719,7 +607,7 @@ if [ -f "$LOCALDESTDIR/lib/libvo-amrwbenc.a" ]; then
 		do_checkIfExist vo-amrwbenc-0.1.2 libvo-amrwbenc.a
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 do_git "https://github.com/mstorsjo/fdk-aac" fdk-aac-git
 
@@ -743,7 +631,7 @@ else
 	echo -------------------------------------------------
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 if [ -f "$LOCALDESTDIR/lib/libopus.a" ]; then
     echo -------------------------------------------------
@@ -762,7 +650,7 @@ if [ -f "$LOCALDESTDIR/lib/libopus.a" ]; then
 		do_checkIfExist opus-1.1 libopus.a
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 if [ -f "$LOCALDESTDIR/lib/libsoxr.a" ]; then
 	echo -------------------------------------------------
@@ -774,7 +662,7 @@ if [ -f "$LOCALDESTDIR/lib/libsoxr.a" ]; then
 		do_wget "http://sourceforge.net/projects/soxr/files/soxr-0.1.1-Source.tar.xz"
 
 		mkdir build
-		cd build
+		cd build || exit
 
 		cmake .. -DCMAKE_INSTALL_PREFIX=$LOCALDESTDIR -DHAVE_WORDS_BIGENDIAN_EXITCODE=0 -DBUILD_SHARED_LIBS:bool=off -DBUILD_TESTS:BOOL=OFF -DWITH_OPENMP:BOOL=OFF -DUNIX:BOOL=on -Wno-dev
 
@@ -790,7 +678,7 @@ echo "compile audio tools done..."
 echo
 echo "-------------------------------------------------------------------------------"
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 sleep 3
 echo "-------------------------------------------------------------------------------"
 echo
@@ -798,7 +686,7 @@ echo "compile video tools"
 echo
 echo "-------------------------------------------------------------------------------"
 
-do_git "https://git.chromium.org/git/webm/libvpx.git" libvpx-git noDepth
+do_git "https://github.com/webmproject/libvpx.git" libvpx-git noDepth
 
 if [[ $compile == "true" ]]; then
 	if [ -d $LOCALDESTDIR/include/vpx ]; then
@@ -822,7 +710,7 @@ else
 	echo -------------------------------------------------
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 do_git "git://git.videolan.org/libbluray.git" libbluray-git
 
@@ -835,7 +723,7 @@ if [[ $compile == "true" ]]; then
 		make clean
 	fi
 
-	./configure --prefix=$LOCALDESTDIR --disable-shared --enable-static --disable-examples --disable-bdjava --disable-doxygen-doc --disable-doxygen-dot LIBXML2_LIBS="-L$LOCALDESTDIR/lib -lxml2" LIBXML2_CFLAGS="-I$LOCALDESTDIR/include/libxml2 -DLIBXML_STATIC"
+	./configure --prefix=$LOCALDESTDIR --disable-shared --enable-static --disable-examples --disable-bdjava --disable-doxygen-doc --disable-doxygen-dot --without-libxml2 --without-fontconfig --without-freetype --disable-udf LIBXML2_LIBS="-L$LOCALDESTDIR/lib -lxml2" LIBXML2_CFLAGS="-I$LOCALDESTDIR/include/libxml2 -DLIBXML_STATIC"
 
 	make -j $cpuCount
 	make install
@@ -847,7 +735,7 @@ else
 	echo -------------------------------------------------
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 do_git "https://github.com/libass/libass.git" libass-git
 
@@ -876,7 +764,7 @@ else
 	echo -------------------------------------------------
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 if [ -f "$LOCALDESTDIR/include/decklink/DeckLinkAPI.h" ]; then
 	echo -------------------------------------------------
@@ -885,9 +773,9 @@ if [ -f "$LOCALDESTDIR/include/decklink/DeckLinkAPI.h" ]; then
 	else
 	echo -ne "\033]0;download DeckLinkAPI\007"
 
-		cd $LOCALDESTDIR/include
+		cd $LOCALDESTDIR/include || exit
     mkdir decklink
-    cd decklink
+    cd decklink || exit
 
     do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink-osx/DeckLinkAPI.h
     do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink-osx/DeckLinkAPIConfiguration.h
@@ -919,7 +807,7 @@ if [ -f "$LOCALDESTDIR/include/decklink/DeckLinkAPI.h" ]; then
 		fi
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 if [ -f "$LOCALDESTDIR/lib/libxvidcore.a" ]; then
 	echo -------------------------------------------------
@@ -931,7 +819,7 @@ if [ -f "$LOCALDESTDIR/lib/libxvidcore.a" ]; then
 
 		do_wget "http://downloads.xvid.org/downloads/xvidcore-1.3.4.tar.gz"
 
-		cd xvidcore/build/generic
+		cd xvidcore/build/generic || exit
 
 		./configure --disable-assembly --prefix=$LOCALDESTDIR
 
@@ -947,7 +835,7 @@ fi
 # final tools
 #------------------------------------------------
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 do_git "https://github.com/gpac/gpac.git" gpac-git noDepth
 if [[ $compile = "true" ]]; then
@@ -963,11 +851,11 @@ if [[ $compile = "true" ]]; then
     do_checkIfExist gpac-git bin/MP4Box
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 do_git "https://github.com/MediaArea/ZenLib" libzen-git
 if [[ $compile = "true" ]]; then
-    cd Project/GNU/Library
+    cd Project/GNU/Library || exit
     [[ ! -f "configure" ]] && ./autogen.sh || make distclean
     if [[ -d $LOCALDESTDIR/include/ZenLib ]]; then
         rm -rf $LOCALDESTDIR/include/ZenLib $LOCALDESTDIR/bin-global/libzen-config
@@ -983,11 +871,11 @@ if [[ $compile = "true" ]]; then
     buildMediaInfo="true"
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 do_git "https://github.com/MediaArea/MediaInfoLib" libmediainfo-git
 if [[ $compile = "true" || $buildMediaInfo = "true" ]]; then
-    cd Project/GNU/Library
+    cd Project/GNU/Library || exit
     [[ ! -f "configure" ]] && ./autogen.sh || make distclean
     if [[ -d $LOCALDESTDIR/include/MediaInfo ]]; then
         rm -rf $LOCALDESTDIR/include/MediaInfo{,DLL}
@@ -1004,11 +892,11 @@ if [[ $compile = "true" || $buildMediaInfo = "true" ]]; then
     buildMediaInfo="true"
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 do_git "https://github.com/MediaArea/MediaInfo" mediainfo-git
 if [[ $compile = "true" || $buildMediaInfo = "true" ]]; then
-    cd Project/GNU/CLI
+    cd Project/GNU/CLI || exit
     [[ ! -f "configure" ]] && ./autogen.sh || make distclean
     [[ -d $LOCALDESTDIR/bin/mediainfo ]] && rm -rf $LOCALDESTDIR/bin/mediainfo
 
@@ -1020,7 +908,7 @@ if [[ $compile = "true" || $buildMediaInfo = "true" ]]; then
     do_checkIfExist mediainfo-git bin/mediainfo
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 do_git "git://git.videolan.org/x264.git" x264-git noDepth
 
@@ -1049,12 +937,12 @@ else
 	echo -------------------------------------------------
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 do_hg "https://bitbucket.org/multicoreware/x265" x265-hg
 
 if [[ $compile == "true" ]]; then
-	cd build/xcode
+	cd build || exit/xcode
 	rm -rf *
 	rm -f $LOCALDESTDIR/bin/x265
 	rm -f $LOCALDESTDIR/include/x265.h
@@ -1062,7 +950,7 @@ if [[ $compile == "true" ]]; then
 	rm -f $LOCALDESTDIR/lib/libx265.a
 	rm -f $LOCALDESTDIR/lib/pkgconfig/x265.pc
 
-	cmake ../../source -DCMAKE_INSTALL_PREFIX=$LOCALDESTDIR -DENABLE_SHARED:BOOLEAN=OFF -DCMAKE_CXX_FLAGS_RELEASE:STRING="-O3 -DNDEBUG $CXXFLAGS"
+	cmake ../source -DCMAKE_INSTALL_PREFIX=$LOCALDESTDIR -DENABLE_SHARED:BOOLEAN=OFF -DCMAKE_CXX_FLAGS_RELEASE:STRING="-O3 -DNDEBUG $CXXFLAGS"
 
 	make -j $cpuCount
 	make install
@@ -1075,7 +963,7 @@ else
 	echo -------------------------------------------------
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 echo "-------------------------------------------------------------------------------"
 echo "compile ffmpeg"
 echo "-------------------------------------------------------------------------------"
@@ -1114,7 +1002,7 @@ if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f $LOCALDES
 		make distclean
 	fi
 
-	./configure --arch=x86_64 --prefix=$LOCALDESTDIR --disable-debug --disable-shared --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-bzlib --enable-zlib --enable-librtmp --enable-gnutls --enable-libbluray --enable-libopenjpeg --enable-fontconfig --enable-libfreetype --enable-libass --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libvo-amrwbenc --enable-libsoxr --enable-libtwolame --enable-libspeex --enable-libtheora --enable-libvorbis --enable-libvo-aacenc --enable-opengl --enable-libopus --enable-libvpx --enable-libx264 --enable-libx265 --enable-libxvid --enable-nonfree --enable-libfdk-aac --enable-decklink --extra-cflags='-I$LOCALDESTDIR/include/decklink' --extra-ldflags='-L$LOCALDESTDIR/include/decklink' --extra-cflags='-DLIBTWOLAME_STATIC' --extra-libs='-lxml2 -llzma -lstdc++ -lpng -lm -lexpat -lhogweed -lnettle -lgmp -ltasn1 -lgcrypt -lz -liconv' pkg_config='pkg-config --static'
+	./configure --arch=x86_64 --prefix=$LOCALDESTDIR --disable-debug --disable-shared --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-bzlib --enable-zlib --enable-libbluray --enable-libopenjpeg --enable-fontconfig --enable-libfreetype --enable-openssl --enable-librtmp --enable-libass --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libvo-amrwbenc --enable-libsoxr --enable-libtwolame --enable-libspeex --enable-libtheora --enable-libvorbis --enable-libvo-aacenc --enable-opengl --enable-libopus --enable-libvpx --enable-libx264 --enable-libx265 --enable-libxvid --enable-nonfree --enable-libfdk-aac --enable-decklink --extra-cflags='-I$LOCALDESTDIR/include/decklink' --extra-ldflags='-L$LOCALDESTDIR/include/decklink' --extra-cflags='-DLIBTWOLAME_STATIC' --extra-libs='-lxml2 -llzma -lstdc++ -lpng -lm -lexpat -liconv' pkg_config='pkg-config --static'
 
   sed -i '' "s/ -std=c99//" config.mak
 
@@ -1131,7 +1019,7 @@ else
 	echo -------------------------------------------------
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 do_git "http://luajit.org/git/luajit-2.0.git" luajit-git noDepth
 
@@ -1149,7 +1037,7 @@ if [[ $compile = "true" ]]; then
     do_checkIfExist luajit-git libluajit-5.1.a
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 do_git "https://github.com/lachs0r/rubberband.git" rubberband-git
 
@@ -1160,7 +1048,7 @@ if [[ $compile = "true" ]]; then
     do_checkIfExist rubberband-git librubberband.a
 fi
 
-cd $LOCALBUILDDIR
+cd $LOCALBUILDDIR || exit
 
 do_git "https://github.com/mpv-player/mpv.git" mpv-git
 
@@ -1186,7 +1074,7 @@ if [[ $compile == "true" ]] || [[ $newFfmpeg == "yes" ]] || [[ ! -f $LOCALDESTDI
 	do_checkIfExist mpv-git bin/mpv/bin/mpv
 fi
 
-cd $LOCALDESTDIR
+cd $LOCALDESTDIR || exit
 
 echo -ne "\033]0;strip binaries\007"
 echo
