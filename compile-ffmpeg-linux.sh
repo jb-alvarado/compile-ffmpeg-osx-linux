@@ -312,7 +312,7 @@ if [ -f "$LOCALDESTDIR/lib/libSDL.a" ]; then
 	else
 		echo -ne "\033]0;compile SDL\007"
 
-		do_wget "http://www.libsdl.org/release/SDL-1.2.15.tar.gz"
+		do_wget "https://www.libsdl.org/release/SDL-1.2.15.tar.gz"
 
     sed -i '' "s:CGDirectPaletteRef palette;:/* CGDirectPaletteRef palette; */:" "src/video/quartz/SDL_QuartzVideo.h"
 
@@ -338,7 +338,7 @@ if [ -f "$LOCALDESTDIR/lib/libpng.a" ]; then
 	else
 		echo -ne "\033]0;compile libpng 64Bit\007"
 
-		do_wget "http://downloads.sourceforge.net/project/libpng/libpng16/1.6.18/libpng-1.6.18.tar.gz"
+		do_wget "ftp://ftp.simplesystems.org/pub/png/src/libpng16/libpng-1.6.21.tar.gz"
 
 		./configure --prefix=$LOCALDESTDIR --disable-shared
 
@@ -676,7 +676,7 @@ echo "compile video tools"
 echo
 echo "-------------------------------------------------------------------------------"
 
-do_git "https://git.chromium.org/git/webm/libvpx.git" libvpx-git noDepth
+do_git "https://github.com/webmproject/libvpx.git" libvpx-git noDepth
 
 if [[ $compile == "true" ]]; then
 	if [ -d $LOCALDESTDIR/include/vpx ]; then
@@ -970,7 +970,7 @@ if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f $LOCALDES
 		make distclean
 	fi
 
-	./configure --prefix=$LOCALDESTDIR --disable-debug --disable-shared --disable-doc --disable-ffplay --disable-sdl --enable-gpl --enable-version3 --enable-openssl --enable-runtime-cpudetect --enable-avfilter --enable-bzlib --enable-zlib --enable-libopenjpeg --enable-libmp3lame --enable-librtmp --enable-libtwolame --enable-libvpx --enable-libx264 --enable-nonfree --enable-libfdk-aac --extra-cflags='-DLIBTWOLAME_STATIC' --extra-libs='-ldl -lz'
+	./configure --prefix=$LOCALDESTDIR --disable-debug --disable-shared --disable-doc --enable-gpl --enable-version3  --enable-nonfree --enable-openssl --enable-runtime-cpudetect --enable-avfilter --enable-bzlib --enable-zlib --enable-libopenjpeg --enable-libmp3lame --enable-librtmp --enable-libtwolame --enable-libvpx --enable-libx264 --enable-libx265 --extra-cflags='-DLIBTWOLAME_STATIC' --extra-libs='-lstdc++ -lm -lrt -ldl -lz'
 
 	# --enable-fontconfig --enable-libfreetype --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libvo-amrwbenc --enable-libsoxr --enable-libspeex --enable-libtheora --enable-libvorbis --enable-libvo-aacenc --enable-opengl --enable-libopus  --enable-libx265 --enable-libxvid --enable-decklink --extra-cflags='-I$LOCALDESTDIR/include/decklink' --extra-ldflags='-L$LOCALDESTDIR/include/decklink' --extra-libs='-lpng -lm'
 
