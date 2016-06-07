@@ -1,5 +1,5 @@
 /* -LICENSE-START-
-** Copyright (c) 2015 Blackmagic Design
+** Copyright (c) 2016 Blackmagic Design
 **
 ** Permission is hereby granted, free of charge, to any person or organization
 ** obtaining a copy of the software and accompanying documentation covered by
@@ -43,6 +43,7 @@
 // Interface ID Declarations
 
 BMD_CONST REFIID IID_IDeckLinkConfiguration                       = /* CB71734A-FE37-4E8D-8E13-802133A1C3F2 */ {0xCB,0x71,0x73,0x4A,0xFE,0x37,0x4E,0x8D,0x8E,0x13,0x80,0x21,0x33,0xA1,0xC3,0xF2};
+BMD_CONST REFIID IID_IDeckLinkEncoderConfiguration                = /* 138050E5-C60A-4552-BF3F-0F358049327E */ {0x13,0x80,0x50,0xE5,0xC6,0x0A,0x45,0x52,0xBF,0x3F,0x0F,0x35,0x80,0x49,0x32,0x7E};
 
 /* Enum BMDDeckLinkConfigurationID - DeckLink Configuration ID */
 
@@ -62,6 +63,7 @@ enum _BMDDeckLinkConfigurationID {
     bmdDeckLinkConfigHDMI3DPackingFormat                         = /* '3dpf' */ 0x33647066,
     bmdDeckLinkConfigBypass                                      = /* 'byps' */ 0x62797073,
     bmdDeckLinkConfigClockTimingAdjustment                       = /* 'ctad' */ 0x63746164,
+    bmdDeckLinkConfigDuplexMode                                  = /* 'dupx' */ 0x64757078,
 
     /* Audio Input/Output Flags */
 
@@ -102,6 +104,7 @@ enum _BMDDeckLinkConfigurationID {
 
     bmdDeckLinkConfigVideoInputScanning                          = /* 'visc' */ 0x76697363,	// Applicable to H264 Pro Recorder only
     bmdDeckLinkConfigUseDedicatedLTCInput                        = /* 'dltc' */ 0x646C7463,	// Use timecode from LTC input instead of SDI stream
+    bmdDeckLinkConfigSDIInput3DPayloadOverride                   = /* '3dds' */ 0x33646473,
 
     /* Video Input Integers */
 
@@ -168,9 +171,38 @@ enum _BMDDeckLinkConfigurationID {
     bmdDeckLinkConfigDeckControlConnection                       = /* 'dcco' */ 0x6463636F
 };
 
+/* Enum BMDDeckLinkEncoderConfigurationID - DeckLink Encoder Configuration ID */
+
+typedef uint32_t BMDDeckLinkEncoderConfigurationID;
+enum _BMDDeckLinkEncoderConfigurationID {
+
+    /* Video Encoder Integers */
+
+    bmdDeckLinkEncoderConfigPreferredBitDepth                    = /* 'epbr' */ 0x65706272,
+    bmdDeckLinkEncoderConfigFrameCodingMode                      = /* 'efcm' */ 0x6566636D,
+
+    /* HEVC/H.265 Encoder Integers */
+
+    bmdDeckLinkEncoderConfigH265TargetBitrate                    = /* 'htbr' */ 0x68746272,
+
+    /* DNxHR/DNxHD Compression ID */
+
+    bmdDeckLinkEncoderConfigDNxHRCompressionID                   = /* 'dcid' */ 0x64636964,
+
+    /* DNxHR/DNxHD Level */
+
+    bmdDeckLinkEncoderConfigDNxHRLevel                           = /* 'dlev' */ 0x646C6576,
+
+    /* Encoded Sample Decriptions */
+
+    bmdDeckLinkEncoderConfigMPEG4SampleDescription               = /* 'stsE' */ 0x73747345,	// Full MPEG4 sample description (aka SampleEntry of an 'stsd' atom-box). Useful for MediaFoundation, QuickTime, MKV and more
+    bmdDeckLinkEncoderConfigMPEG4CodecSpecificDesc               = /* 'esds' */ 0x65736473	// Sample description extensions only (atom stream, each with size and fourCC header). Useful for AVFoundation, VideoToolbox, MKV and more
+};
+
 // Forward Declarations
 
 class IDeckLinkConfiguration;
+class IDeckLinkEncoderConfiguration;
 
 /* Interface IDeckLinkConfiguration - DeckLink Configuration interface */
 
@@ -189,6 +221,25 @@ public:
 
 protected:
     virtual ~IDeckLinkConfiguration () {} // call Release method to drop reference count
+};
+
+/* Interface IDeckLinkEncoderConfiguration - DeckLink Encoder Configuration interface. Obtained from IDeckLinkEncoderInput */
+
+class IDeckLinkEncoderConfiguration : public IUnknown
+{
+public:
+    virtual HRESULT SetFlag (/* in */ BMDDeckLinkEncoderConfigurationID cfgID, /* in */ bool value) = 0;
+    virtual HRESULT GetFlag (/* in */ BMDDeckLinkEncoderConfigurationID cfgID, /* out */ bool *value) = 0;
+    virtual HRESULT SetInt (/* in */ BMDDeckLinkEncoderConfigurationID cfgID, /* in */ int64_t value) = 0;
+    virtual HRESULT GetInt (/* in */ BMDDeckLinkEncoderConfigurationID cfgID, /* out */ int64_t *value) = 0;
+    virtual HRESULT SetFloat (/* in */ BMDDeckLinkEncoderConfigurationID cfgID, /* in */ double value) = 0;
+    virtual HRESULT GetFloat (/* in */ BMDDeckLinkEncoderConfigurationID cfgID, /* out */ double *value) = 0;
+    virtual HRESULT SetString (/* in */ BMDDeckLinkEncoderConfigurationID cfgID, /* in */ const char *value) = 0;
+    virtual HRESULT GetString (/* in */ BMDDeckLinkEncoderConfigurationID cfgID, /* out */ const char **value) = 0;
+    virtual HRESULT GetBytes (/* in */ BMDDeckLinkEncoderConfigurationID cfgID, /* out */ void *buffer /* optional */, /* in, out */ uint32_t *bufferSize) = 0;
+
+protected:
+    virtual ~IDeckLinkEncoderConfiguration () {} // call Release method to drop reference count
 };
 
 /* Functions */

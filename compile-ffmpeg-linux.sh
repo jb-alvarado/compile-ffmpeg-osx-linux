@@ -755,7 +755,6 @@ if [ -f "$LOCALDESTDIR/include/decklink/DeckLinkAPI.h" ]; then
 
     sed -i '' "s/void	InitDeckLinkAPI (void)/static void	InitDeckLinkAPI (void)/" DeckLinkAPIDispatch.cpp
     sed -i '' "s/bool		IsDeckLinkAPIPresent (void)/static bool		IsDeckLinkAPIPresent (void)/" DeckLinkAPIDispatch.cpp
-    sed -i '' "s/void InitBMDStreamingAPI(void)/static void InitBMDStreamingAPI(void)/" DeckLinkAPIDispatch.cpp
 
 		if [ ! -f "$LOCALDESTDIR/include/decklink/DeckLinkAPI.h" ]; then
 			echo -------------------------------------------------
@@ -970,7 +969,7 @@ if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f $LOCALDES
 		make distclean
 	fi
 
-	./configure --prefix=$LOCALDESTDIR --disable-debug --disable-shared --disable-doc --enable-gpl --enable-version3  --enable-nonfree --enable-openssl --enable-runtime-cpudetect --enable-avfilter --enable-bzlib --enable-zlib --enable-libopenjpeg --enable-libmp3lame --enable-librtmp --enable-libtwolame --enable-libvpx --enable-libx264 --enable-libx265 --extra-cflags='-DLIBTWOLAME_STATIC' --extra-libs='-lstdc++ -lm -lrt -ldl -lz'
+	./configure --prefix=$LOCALDESTDIR --disable-debug --disable-shared --disable-doc --enable-gpl --enable-version3  --enable-nonfree --enable-openssl --enable-runtime-cpudetect --enable-avfilter --enable-bzlib --enable-zlib --enable-libmp3lame --enable-decklink --enable-libvpx --enable-libx264 --enable-libx265 --extra-libs='-lstdc++ -lm -lrt -ldl -lz' --extra-cflags='-I$LOCALDESTDIR/include/decklink' --extra-ldflags='-L$LOCALDESTDIR/include/decklink'
 
 	# --enable-fontconfig --enable-libfreetype --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libvo-amrwbenc --enable-libsoxr --enable-libspeex --enable-libtheora --enable-libvorbis --enable-libvo-aacenc --enable-opengl --enable-libopus  --enable-libx265 --enable-libxvid --enable-decklink --extra-cflags='-I$LOCALDESTDIR/include/decklink' --extra-ldflags='-L$LOCALDESTDIR/include/decklink' --extra-libs='-lpng -lm'
 
