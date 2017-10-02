@@ -375,8 +375,9 @@ if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f $LOCALDES
 		make distclean
 	fi
 
-	./configure --prefix=$LOCALDESTDIR --enable-shared --disable-debug --disable-doc --enable-gpl --enable-version3  \
-	--enable-nonfree --enable-runtime-cpudetect --enable-avfilter --enable-decklink --enable-opengl \
+	./configure --prefix=$LOCALDESTDIR --enable-shared --disable-debug --disable-ffserver --disable-doc \
+	--enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter \
+	--enable-nonfree --enable-decklink --enable-opengl \
 	--enable-libzimg --enable-libfdk-aac \
 	--enable-libx264 --enable-libx265
 
@@ -394,10 +395,7 @@ else
 	echo -------------------------------------------------
 fi
 
-
-git clone --recursive https://github.com/jp9000/obs-studio.git
-  cd obs-studio
-
+cd $LOCALBUILDDIR
 
 do_git "https://github.com/jp9000/obs-studio.git" obs-studio-git noDepth --recursive
 
@@ -419,6 +417,10 @@ else
 	echo -------------------------------------------------
 fi
 
+cd $LOCALBUILDDIR
+
+sudo chown $USER. *.deb
+sudo ldconfig
 
 }
 
