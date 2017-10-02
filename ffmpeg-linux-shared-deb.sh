@@ -312,15 +312,10 @@ fi
 
 cd $LOCALBUILDDIR
 
-do_git "git://git.videolan.org/x264.git" x264-git noDepth
+do_git "https://github.com/mirror/x264.git" x264-git noDepth
 
 if [[ $compile == "true" ]]; then
 	echo -ne "\033]0;compile x264-git\007"
-
-	if [ -f "$LOCALDESTDIR/lib/libx264.so" ]; then
-		rm -f $LOCALDESTDIR/include/x264.h $LOCALDESTDIR/include/x264_config.h $LOCALDESTDIR/lib/libx264.so
-		rm -f $LOCALDESTDIR/bin/x264 $LOCALDESTDIR/lib/pkgconfig/x264.pc
-	fi
 
 	if [ -f "libx264.so" ]; then
 		make distclean
@@ -347,13 +342,8 @@ cd $LOCALBUILDDIR
 do_hg "https://bitbucket.org/multicoreware/x265" x265-hg
 
 if [[ $compile == "true" ]]; then
-	cd build/xcode
+	cd build/linux
 	rm -rf *
-	rm -f $LOCALDESTDIR/bin/x265
-	rm -f $LOCALDESTDIR/include/x265.h
-	rm -f $LOCALDESTDIR/include/x265_config.h
-	sudo rm -rf $LOCALDESTDIR/lib/libx265.so
-	sudo rm -rf $LOCALDESTDIR/lib/pkgconfig/x265.pc
 
 	cmake ../../source -DCMAKE_INSTALL_PREFIX=$LOCALDESTDIR -DENABLE_SHARED:BOOLEAN=ON -DCMAKE_CXX_FLAGS_RELEASE:STRING="-O3 -DNDEBUG $CXXFLAGS"
 
