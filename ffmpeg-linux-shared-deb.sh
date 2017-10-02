@@ -145,38 +145,20 @@ do_wget() {
 do_checkIfExist() {
 	local packetName="$1"
 	local fileName="$2"
-	local fileExtension=${fileName##*.}
-	if [[ "$fileExtension" = "exe" ]]; then
-		if [ -f "$LOCALDESTDIR/$fileName" ]; then
+		if [ -f "$LOCALBUILDDIR/$fileName" ]; then
 			echo -
 			echo -------------------------------------------------
 			echo "build $packetName done..."
 			echo -------------------------------------------------
 			echo -
-			else
-				echo -------------------------------------------------
-				echo "Build $packetName failed..."
-				echo "Delete the source folder under '$LOCALBUILDDIR' and start again,"
-				echo "or if you know there is no dependences hit enter for continue it."
-				read -p ""
-				sleep 5
-		fi
-	elif [[ "$fileExtension" = "a" ]]; then
-		if [ -f "$LOCALDESTDIR/lib/$fileName" ]; then
-			echo -
+		else
 			echo -------------------------------------------------
-			echo "build $packetName done..."
-			echo -------------------------------------------------
-			echo -
-			else
-				echo -------------------------------------------------
-				echo "build $packetName failed..."
-				echo "delete the source folder under '$LOCALBUILDDIR' and start again,"
-				echo "or if you know there is no dependences hit enter for continue it"
-				read -p "first close the batch window, then the shell window"
-				sleep 5
+			echo "Build $packetName failed..."
+			echo "Delete the source folder under '$LOCALBUILDDIR' and start again,"
+			echo "or if you know there is no dependences hit enter for continue it."
+			read -p ""
+			sleep 5
 		fi
-	fi
 }
 
 buildProcess() {
@@ -202,8 +184,6 @@ if [ -f "$LOCALDESTDIR/bin/nasm" ]; then
 
 		make -j $cpuCount
 		sudo make install
-
-		do_checkIfExist nasm-2.13.01.tar.gz libnasm.a
 fi
 
 cd $LOCALBUILDDIR
@@ -220,9 +200,11 @@ if [[ $compile == "true" ]]; then
 	./configure --prefix=$LOCALDESTDIR --disable-static --enable-shared
 
 	make -j $cpuCount
-	sudo checkinstall --maintainer="$USER" --pkgname=zimg --fstrans=no --backup=no --pkgversion="$(date +%Y%-m-%d)-git" --deldoc=yes
+	checkinstall --maintainer="$USER" --pkgname=zimg --install=no --fstrans=yes --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --deldoc=yes -y
 
-	do_checkIfExist zimg-git libzimg.so
+	mv *.deb ..
+
+	do_checkIfExist zimg-git "zimg_$(date +%Y-%m-%d)-git-1_amd64.deb"
 else
 	echo -------------------------------------------------
 	echo "zimg-git is already up to date"
@@ -243,25 +225,6 @@ echo "compile audio tools"
 echo
 echo "-------------------------------------------------------------------------------"
 
-if [ -f "$LOCALDESTDIR/lib/libmp3lame.so" ]; then
-	echo -------------------------------------------------
-	echo "lame-3.99.5 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile lame\007"
-
-		do_wget "http://sourceforge.net/projects/lame/files/lame/3.99/lame-3.99.5.tar.gz/download" lame-3.99.5.tar.gz
-
-		./configure --prefix=$LOCALDESTDIR --enable-expopt=full --enable-shared=yes --enable-static=no
-
-		make -j $cpuCount
-		sudo checkinstall --maintainer="$USER" --pkgname=libmp3lame --fstrans=no --backup=no --pkgversion="3.99.5" --deldoc=yes
-
-		do_checkIfExist lame-3.99.5 libmp3lame.so
-fi
-
-cd $LOCALBUILDDIR
-
 do_git "https://github.com/mstorsjo/fdk-aac" fdk-aac-git
 
 if [[ $compile == "true" ]]; then
@@ -275,9 +238,11 @@ if [[ $compile == "true" ]]; then
 	./configure --prefix=$LOCALDESTDIR --enable-shared=yes --enable-static=no
 
 	make -j $cpuCount
-	sudo checkinstall --maintainer="$USER" --pkgname=fdk-aac --fstrans=no --backup=no --pkgversion="$(date +%Y%-m-%d)-git" --deldoc=yes
+	checkinstall --maintainer="$USER" --pkgname=fdk-aac --install=no --fstrans=yes --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --deldoc=yes -y
 
-	do_checkIfExist fdk-aac-git libfdk-aac.so
+	mv *.deb ..
+
+	do_checkIfExist fdk-aac-git "fdk-aac_$(date +%Y-%m-%d)-git-1_amd64.deb"
 	compile="false"
 else
 	echo -------------------------------------------------
@@ -324,7 +289,6 @@ Description: Decklink Includes, needing for ffmpeg
 EOT
 
 		dpkg-deb --build decklink
-		sudo dpkg -i decklink.deb
 
 		if [ ! -f "$LOCALDESTDIR/include/DeckLinkAPI.h" ]; then
 			echo -------------------------------------------------
@@ -365,9 +329,11 @@ if [[ $compile == "true" ]]; then
 	./configure --prefix=$LOCALDESTDIR --enable-shared
 
 	make -j $cpuCount
-	sudo checkinstall --maintainer="$USER" --pkgname=x264 --fstrans=no --backup=no --pkgversion="$(date +%Y%-m-%d)-git" --deldoc=yes
+	checkinstall --maintainer="$USER" --pkgname=x264 --install=no --fstrans=yes --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --deldoc=yes -y
 
-	do_checkIfExist x264-git libx264.so
+	mv *.deb ..
+
+	do_checkIfExist x264-git "x264_$(date +%Y-%m-%d)-git-1_amd64.deb"
 	compile="false"
 	buildFFmpeg="true"
 else
@@ -392,9 +358,11 @@ if [[ $compile == "true" ]]; then
 	cmake ../../source -DCMAKE_INSTALL_PREFIX=$LOCALDESTDIR -DENABLE_SHARED:BOOLEAN=ON -DCMAKE_CXX_FLAGS_RELEASE:STRING="-O3 -DNDEBUG $CXXFLAGS"
 
 	make -j $cpuCount
-	sudo checkinstall --maintainer="$USER" --pkgname=x265 --fstrans=no --backup=no --pkgversion="$(date +%Y%-m-%d)-git" --deldoc=yes
+	checkinstall --maintainer="$USER" --pkgname=x265 --install=no --fstrans=yes --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --deldoc=yes -y
 
-	do_checkIfExist x265-git libx265.so
+	mv *.deb ..
+
+	do_checkIfExist x265-git "x265_$(date +%Y-%m-%d)-git-1_amd64.deb"
 	compile="false"
 	buildFFmpeg="true"
 else
@@ -419,17 +387,15 @@ if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f $LOCALDES
 
 	./configure --prefix=$LOCALDESTDIR --enable-shared --disable-debug --disable-doc --enable-gpl --enable-version3  \
 	--enable-nonfree --enable-runtime-cpudetect --enable-avfilter --enable-decklink --enable-opengl \
-	--enable-libzimg --enable-libfdk-aac --enable-libmp3lame \
+	--enable-libzimg --enable-libfdk-aac \
 	--enable-libx264 --enable-libx265
 
 	make -j $cpuCount
-	sudo checkinstall --maintainer="$USER" --pkgname=FFmpeg --fstrans=no --backup=no --pkgversion="$(date +%Y%-m-%d)-git" --requires="libsdl2-dev" --deldoc=yes
+	checkinstall --maintainer="$USER" --pkgname=ffmpeg --install=no --fstrans=yes --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --requires="libsdl2-dev" --deldoc=yes -y
 
+	mv *.deb ..
 
-	#make install
-
-
-	do_checkIfExist ffmpeg-git libavcodec.so
+	do_checkIfExist ffmpeg-git "ffmpeg_$(date +%Y-%m-%d)-git-1_amd64.deb"
 
 	compile="false"
 else
@@ -449,11 +415,13 @@ if [[ $compile == "true" ]]; then
 	mkdir build && cd build
   cmake -DUNIX_STRUCTURE=1 -DCMAKE_INSTALL_PREFIX=$LOCALDESTDIR ..
   make -j $cpuCount
-  sudo checkinstall --maintainer="$USER" --pkgname=obs-studio --fstrans=no --backup=no \
-         --pkgversion="$(date +%Y%-m-%d)-git" \
-				 --requires="libv4l-dev,libxcb-xinerama0,libxcb-xinerama0,libcurl4-openssl-dev,libqt5widgets5" --deldoc=yes
+  checkinstall --maintainer="$USER" --pkgname=obs-studio --install=no --fstrans=yes --backup=no \
+         --pkgversion="$(date +%Y-%m-%d)-git" \
+				 --requires="libv4l-dev,libxcb-xinerama0,libxcb-xinerama0,libcurl4-openssl-dev,libqt5widgets5" --deldoc=yes -y
 
-	do_checkIfExist obs-studio-git bin/obs
+	mv *.deb ..
+
+	do_checkIfExist obs-studio-git "obs-studio_$(date +%Y-%m-%d)-git-1_amd64.deb"
 	compile="false"
 else
 	echo -------------------------------------------------
