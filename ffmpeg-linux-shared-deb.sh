@@ -22,10 +22,11 @@ do_git() {
 local gitURL="$1"
 local gitFolder="$2"
 local gitDepth="$3"
+local gitVar="$4"
 echo -ne "\033]0;compile $gitFolder\007"
 if [ ! -d $gitFolder ]; then
 	if [[ $gitDepth == "noDepth" ]]; then
-		git clone $gitURL $gitFolder
+		git clone $gitVar $gitURL $gitFolder
 	else
 		git clone --depth 1 $gitURL $gitFolder
 	fi
@@ -179,7 +180,7 @@ do_checkIfExist() {
 }
 
 buildProcess() {
-	sudo apt install libsdl2-dev libv4l-dev libxcb-xinerama0 libxcb-xinerama0 libcurl4-openssl-dev libqt5widgets5 checkinstall
+	sudo apt install checkinstall
 
 cd $LOCALBUILDDIR
 echo "-------------------------------------------------------------------------------"
@@ -219,7 +220,7 @@ if [[ $compile == "true" ]]; then
 	./configure --prefix=$LOCALDESTDIR --disable-static --enable-shared
 
 	make -j $cpuCount
-	sudo checkinstall --maintainer="jb@amazing-discoveries.org" --pkgname=zimg --fstrans=no --backup=no --pkgversion="$(date +%Y%m%d)-git" --deldoc=yes
+	sudo checkinstall --maintainer="$USER" --pkgname=zimg --fstrans=no --backup=no --pkgversion="$(date +%Y%-m-%d)-git" --deldoc=yes
 
 	do_checkIfExist zimg-git libzimg.so
 else
@@ -254,7 +255,7 @@ if [ -f "$LOCALDESTDIR/lib/libmp3lame.so" ]; then
 		./configure --prefix=$LOCALDESTDIR --enable-expopt=full --enable-shared=yes --enable-static=no
 
 		make -j $cpuCount
-		sudo checkinstall --maintainer="jb@amazing-discoveries.org" --pkgname=libmp3lame --fstrans=no --backup=no --pkgversion="3.99.5" --deldoc=yes
+		sudo checkinstall --maintainer="$USER" --pkgname=libmp3lame --fstrans=no --backup=no --pkgversion="3.99.5" --deldoc=yes
 
 		do_checkIfExist lame-3.99.5 libmp3lame.so
 fi
@@ -274,7 +275,7 @@ if [[ $compile == "true" ]]; then
 	./configure --prefix=$LOCALDESTDIR --enable-shared=yes --enable-static=no
 
 	make -j $cpuCount
-	sudo checkinstall --maintainer="jb@amazing-discoveries.org" --pkgname=fdk-aac --fstrans=no --backup=no --pkgversion="$(date +%Y%m%d)-git" --deldoc=yes
+	sudo checkinstall --maintainer="$USER" --pkgname=fdk-aac --fstrans=no --backup=no --pkgversion="$(date +%Y%-m-%d)-git" --deldoc=yes
 
 	do_checkIfExist fdk-aac-git libfdk-aac.so
 	compile="false"
@@ -300,7 +301,7 @@ echo "--------------------------------------------------------------------------
 
 cd $LOCALBUILDDIR
 
-if [ -f "$LOCALDESTDIR/include/decklink/DeckLinkAPI.h" ]; then
+if [ -f "$LOCALDESTDIR/include/DeckLinkAPI.h" ]; then
 	echo -------------------------------------------------
 	echo "DeckLinkAPI is already downloaded"
 	echo -------------------------------------------------
@@ -308,24 +309,24 @@ if [ -f "$LOCALDESTDIR/include/decklink/DeckLinkAPI.h" ]; then
 	echo -ne "\033]0;download DeckLinkAPI\007"
 
 		cd $LOCALDESTDIR/include
-    mkdir decklink
-    cd decklink
+    mkdir -p decklink/usr/local/include
+    cp ../decklink-nix/* decklink/usr/local/include/
+		mkdir decklink/DEBIAN
+		cat <<EOT >> decklink/DEBIAN/control
+Package: decklink-dev-inc
+Version: 10.9.5
+Section: base
+Priority: optional
+Architecture: amd64
+Maintainer: local maintanier<local@example.org>
+Description: Decklink Includes, needing for ffmpeg
 
-    do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink-nix/DeckLinkAPI.h
-    do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink-nix/DeckLinkAPIConfiguration.h
-    do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink-nix/DeckLinkAPIDeckControl.h
-    do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink-nix/DeckLinkAPIDiscovery.h
-    do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink-nix/DeckLinkAPIModes.h
-    do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink-nix/DeckLinkAPIStreaming.h
-    do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink-nix/DeckLinkAPITypes.h
-    do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink-nix/DeckLinkAPIVersion.h
-    do_wget https://raw.githubusercontent.com/jb-alvarado/compile-ffmpeg-osx/master/decklink-nix/DeckLinkAPIDispatch.cpp
+EOT
 
-    sed -i '' "s/void	InitDeckLinkAPI (void)/static void	InitDeckLinkAPI (void)/" DeckLinkAPIDispatch.cpp
-    sed -i '' "s/bool		IsDeckLinkAPIPresent (void)/static bool		IsDeckLinkAPIPresent (void)/" DeckLinkAPIDispatch.cpp
-    sed -i '' "s/void InitBMDStreamingAPI(void)/static void InitBMDStreamingAPI(void)/" DeckLinkAPIDispatch.cpp
+		dpkg-deb --build decklink
+		sudo dpkg -i decklink.deb
 
-		if [ ! -f "$LOCALDESTDIR/include/decklink/DeckLinkAPI.h" ]; then
+		if [ ! -f "$LOCALDESTDIR/include/DeckLinkAPI.h" ]; then
 			echo -------------------------------------------------
 			echo "DeckLinkAPI.h download failed..."
 			echo "if you know there is no dependences hit enter for continue it,"
@@ -364,7 +365,7 @@ if [[ $compile == "true" ]]; then
 	./configure --prefix=$LOCALDESTDIR --enable-shared
 
 	make -j $cpuCount
-	sudo checkinstall --maintainer="jb@amazing-discoveries.org" --pkgname=x264 --fstrans=no --backup=no --pkgversion="$(date +%Y%m%d)-git" --deldoc=yes
+	sudo checkinstall --maintainer="$USER" --pkgname=x264 --fstrans=no --backup=no --pkgversion="$(date +%Y%-m-%d)-git" --deldoc=yes
 
 	do_checkIfExist x264-git libx264.so
 	compile="false"
@@ -391,7 +392,7 @@ if [[ $compile == "true" ]]; then
 	cmake ../../source -DCMAKE_INSTALL_PREFIX=$LOCALDESTDIR -DENABLE_SHARED:BOOLEAN=ON -DCMAKE_CXX_FLAGS_RELEASE:STRING="-O3 -DNDEBUG $CXXFLAGS"
 
 	make -j $cpuCount
-	sudo checkinstall --maintainer="jb@amazing-discoveries.org" --pkgname=x265 --fstrans=no --backup=no --pkgversion="$(date +%Y%m%d)-git" --deldoc=yes
+	sudo checkinstall --maintainer="$USER" --pkgname=x265 --fstrans=no --backup=no --pkgversion="$(date +%Y%-m-%d)-git" --deldoc=yes
 
 	do_checkIfExist x265-git libx265.so
 	compile="false"
@@ -410,49 +411,19 @@ echo "--------------------------------------------------------------------------
 do_git "https://github.com/FFmpeg/FFmpeg.git" ffmpeg-git
 
 if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f $LOCALDESTDIR/bin/ffmpeg ]]; then
-	if [ -f "$LOCALDESTDIR/lib/libavcodec.so" ]; then
-		sudo rm -rf $LOCALDESTDIR/include/libavutil
-		sudo rm -rf $LOCALDESTDIR/include/libavcodec
-		sudo rm -rf $LOCALDESTDIR/include/libpostproc
-		sudo rm -rf $LOCALDESTDIR/include/libswresample
-		sudo rm -rf $LOCALDESTDIR/include/libswscale
-		sudo rm -rf $LOCALDESTDIR/include/libavdevice
-		sudo rm -rf $LOCALDESTDIR/include/libavfilter
-		sudo rm -rf $LOCALDESTDIR/include/libavformat
-		sudo rm -rf $LOCALDESTDIR/lib/libavutil.so
-		sudo rm -rf $LOCALDESTDIR/lib/libswresample.so
-		sudo rm -rf $LOCALDESTDIR/lib/libswscale.so
-		sudo rm -rf $LOCALDESTDIR/lib/libavcodec.so
-		sudo rm -rf $LOCALDESTDIR/lib/libavdevice.so
-		sudo rm -rf $LOCALDESTDIR/lib/libavfilter.so
-		sudo rm -rf $LOCALDESTDIR/lib/libavformat.so
-		sudo rm -rf $LOCALDESTDIR/lib/libpostproc.so
-		sudo rm -rf $LOCALDESTDIR/lib/pkgconfig/libavcodec.pc
-		sudo rm -rf $LOCALDESTDIR/lib/pkgconfig/libavutil.pc
-		sudo rm -rf $LOCALDESTDIR/lib/pkgconfig/libpostproc.pc
-		sudo rm -rf $LOCALDESTDIR/lib/pkgconfig/libswresample.pc
-		sudo rm -rf $LOCALDESTDIR/lib/pkgconfig/libswscale.pc
-		sudo rm -rf $LOCALDESTDIR/lib/pkgconfig/libavdevice.pc
-		sudo rm -rf $LOCALDESTDIR/lib/pkgconfig/libavfilter.pc
-		sudo rm -rf $LOCALDESTDIR/lib/pkgconfig/libavformat.pc
-	fi
+
 
 	if [ -f "config.mak" ]; then
 		make distclean
 	fi
-	sudo make uninstall
 
 	./configure --prefix=$LOCALDESTDIR --enable-shared --disable-debug --disable-doc --enable-gpl --enable-version3  \
 	--enable-nonfree --enable-runtime-cpudetect --enable-avfilter --enable-decklink --enable-opengl \
 	--enable-libzimg --enable-libfdk-aac --enable-libmp3lame \
-	--enable-libx264 --enable-libx265 #--extra-libs='-lstdc++ -lm -lrt -ldl -lz -lpng -lm'
-
-	# --enable-libvpx --enable-fontconfig --enable-libfreetype --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libvo-amrwbenc --enable-libsoxr --enable-libspeex --enable-libtheora --enable-libvorbis --enable-libvo-aacenc --enable-libopus  --enable-libx265 --enable-libxvid --enable-decklink --extra-cflags='-I$LOCALDESTDIR/include/decklink' --extra-ldflags='-L$LOCALDESTDIR/include/decklink' --extra-libs='-lpng -lm'
-
-  #sed -i '' "s/ -std=c99//" config.mak
+	--enable-libx264 --enable-libx265
 
 	make -j $cpuCount
-	sudo checkinstall --maintainer="jb@amazing-discoveries.org" --pkgname=FFmpeg --fstrans=no --backup=no --pkgversion="$(date +%Y%m%d)-git" --deldoc=yes
+	sudo checkinstall --maintainer="$USER" --pkgname=FFmpeg --fstrans=no --backup=no --pkgversion="$(date +%Y%-m-%d)-git" --requires="libsdl2-dev" --deldoc=yes
 
 
 	#make install
@@ -467,35 +438,30 @@ else
 	echo -------------------------------------------------
 fi
 
-cd $LOCALBUILDDIR || exit
 
 git clone --recursive https://github.com/jp9000/obs-studio.git
   cd obs-studio
-  mkdir build && cd build
+
+
+do_git "https://github.com/jp9000/obs-studio.git" obs-studio-git noDepth --recursive
+
+if [[ $compile == "true" ]]; then
+	mkdir build && cd build
   cmake -DUNIX_STRUCTURE=1 -DCMAKE_INSTALL_PREFIX=$LOCALDESTDIR ..
   make -j $cpuCount
-  sudo checkinstall --maintainer="jb@amazing-discoveries.org" --pkgname=obs-studio --fstrans=no --backup=no \
-         --pkgversion="$(date +%Y%m%d)-git" --deldoc=yes
+  sudo checkinstall --maintainer="$USER" --pkgname=obs-studio --fstrans=no --backup=no \
+         --pkgversion="$(date +%Y%-m-%d)-git" \
+				 --requires="libv4l-dev,libxcb-xinerama0,libxcb-xinerama0,libcurl4-openssl-dev,libqt5widgets5" --deldoc=yes
 
-cd $LOCALBUILDDIR || exit
+	do_checkIfExist obs-studio-git bin/obs
+	compile="false"
+else
+	echo -------------------------------------------------
+	echo "ops-studio is already up to date"
+	echo -------------------------------------------------
+fi
 
 
-echo -ne "\033]0;strip binaries\007"
-echo
-echo "-------------------------------------------------------------------------------"
-echo
-FILES=`find bin -type f -mmin -600 ! \( -name '*-config' -o -name '.DS_Store' -o -name '*.lua' \)`
-
-for f in $FILES; do
- strip $f
- echo "strip $f done..."
-done
-
-#echo -ne "\033]0;deleting source folders\007"
-#echo
-#echo "deleting source folders..."
-#echo
-#find $LOCALBUILDDIR -mindepth 1 -maxdepth 1 -type d ! \( -name '*-git' -o -name '*-svn' -o -name '*-hg' \) -print0 | xargs -0 rm -rf
 }
 
 buildProcess
