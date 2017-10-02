@@ -38,7 +38,7 @@ do_git() {
         git reset --hard @{u}
         git pull origin master
         newHead=`git rev-parse HEAD`
-        
+
         if [[ "$oldHead" != "$newHead" ]]; then
             compile="true"
         fi
@@ -59,7 +59,7 @@ do_svn() {
         oldRevision=`svnversion`
         svn update
         newRevision=`svnversion`
-        
+
         if [[ "$oldRevision" != "$newRevision" ]]; then
             compile="true"
         fi
@@ -81,7 +81,7 @@ do_hg() {
         hg pull
         hg update
         newHead=`hg id --id`
-        
+
         if [[ "$oldHead" != "$newHead" ]]; then
             compile="true"
         fi
@@ -98,9 +98,9 @@ do_wget() {
         archive=${url%%\?*}
         archive=${archive##*/}
     fi
-    
+
     local response_code=$(curl --retry 20 --retry-max-time 5 -L -k -f -w "%{response_code}" -o "$archive" "$url")
-    
+
     if [[ $response_code = "200" || $response_code = "226" ]]; then
         case "$archive" in
             *.tar.gz)
@@ -163,70 +163,70 @@ do_checkIfExist() {
 
 buildProcess() {
     sudo apt install sudo checkinstall
-    
+
     cd $LOCALBUILDDIR
     echo "-------------------------------------------------------------------------------"
     echo
     echo "compile global tools"
     echo
     echo "-------------------------------------------------------------------------------"
-    
+
     if [ -f "$LOCALDESTDIR/bin/nasm" ]; then
         echo -------------------------------------------------
         echo "nasm-2.13.01 is already compiled"
         echo -------------------------------------------------
     else
         echo -ne "\033]0;compile nasm 64Bit\007"
-        
+
         do_wget "http://www.nasm.us/pub/nasm/releasebuilds/2.13.01/nasm-2.13.01.tar.gz" nasm-2.13.01.tar.gz
-        
+
         ./configure --prefix=$LOCALDESTDIR
-        
+
         make -j $cpuCount
         sudo make install
     fi
-    
+
     cd $LOCALBUILDDIR
-    
+
     do_git "https://github.com/sekrit-twc/zimg.git" zimg-git noDepth
-    
+
     if [[ $compile == "true" ]]; then
         if [ -d $LOCALDESTDIR/include/zimg.h ]; then
             make distclean
             make clean
         fi
         ./autogen.sh
-        
+
         ./configure --prefix=$LOCALDESTDIR --disable-static --enable-shared
-        
+
         make -j $cpuCount
         sudo checkinstall --maintainer="$USER" --pkgname=zimg --fstrans=no --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --deldoc=yes -y
-        
+
         mv *.deb ..
-        
+
         do_checkIfExist zimg-git "zimg_$(date +%Y-%m-%d)-git-1_amd64.deb"
     else
         echo -------------------------------------------------
         echo "zimg-git is already up to date"
         echo -------------------------------------------------
     fi
-    
-    
+
+
     echo "-------------------------------------------------------------------------------"
     echo
     echo "compile global tools done..."
     echo
     echo "-------------------------------------------------------------------------------"
-    
+
     cd $LOCALBUILDDIR
     echo "-------------------------------------------------------------------------------"
     echo
     echo "compile audio tools"
     echo
     echo "-------------------------------------------------------------------------------"
-    
+
     do_git "https://github.com/mstorsjo/fdk-aac" fdk-aac-git
-    
+
     if [[ $compile == "true" ]]; then
         if [[ ! -f ./configure ]]; then
             ./autogen.sh
@@ -234,14 +234,14 @@ buildProcess() {
             sudo make uninstall
             make clean
         fi
-        
+
         ./configure --prefix=$LOCALDESTDIR --enable-shared=yes --enable-static=no
-        
+
         make -j $cpuCount
         sudo checkinstall --maintainer="$USER" --pkgname=fdk-aac --fstrans=no --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --deldoc=yes -y
-        
+
         mv *.deb ..
-        
+
         do_checkIfExist fdk-aac-git "fdk-aac_$(date +%Y-%m-%d)-git-1_amd64.deb"
         compile="false"
     else
@@ -249,13 +249,13 @@ buildProcess() {
         echo "fdk-aac is already up to date"
         echo -------------------------------------------------
     fi
-    
+
     echo "-------------------------------------------------------------------------------"
     echo
     echo "compile audio tools done..."
     echo
     echo "-------------------------------------------------------------------------------"
-    
+
     cd $LOCALBUILDDIR
     sleep 3
     echo "-------------------------------------------------------------------------------"
@@ -263,17 +263,16 @@ buildProcess() {
     echo "compile video tools"
     echo
     echo "-------------------------------------------------------------------------------"
-    
+
     cd $LOCALBUILDDIR
-    
+
     if [ -f "$LOCALDESTDIR/include/DeckLinkAPI.h" ]; then
         echo -------------------------------------------------
         echo "DeckLinkAPI is already downloaded"
         echo -------------------------------------------------
     else
         echo -ne "\033]0;download DeckLinkAPI\007"
-        
-        cd $LOCALDESTDIR/include
+
         mkdir -p decklink/usr/local/include
         cp ../decklink-nix/* decklink/usr/local/include/
         mkdir decklink/DEBIAN
@@ -287,9 +286,10 @@ Maintainer: local maintanier<local@example.org>
 Description: Decklink Includes, needing for ffmpeg
 
 EOT
-        
+
         dpkg-deb --build decklink
-        
+				sudo dpkg -i decklink.deb
+
         if [ ! -f "$LOCALDESTDIR/include/DeckLinkAPI.h" ]; then
             echo -------------------------------------------------
             echo "DeckLinkAPI.h download failed..."
@@ -305,29 +305,29 @@ EOT
             echo -
         fi
     fi
-    
+
     #------------------------------------------------
     # final tools
     #------------------------------------------------
-    
+
     cd $LOCALBUILDDIR
-    
+
     do_git "https://github.com/mirror/x264.git" x264-git noDepth
-    
+
     if [[ $compile == "true" ]]; then
         echo -ne "\033]0;compile x264-git\007"
-        
+
         if [ -f "libx264.a" ]; then
             make distclean
         fi
-        
+
         ./configure --prefix=$LOCALDESTDIR --enable-shared
-        
+
         make -j $cpuCount
         sudo sudo checkinstall --maintainer="$USER" --pkgname=x264 --fstrans=no --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --deldoc=yes -y
-        
+
         mv *.deb ..
-        
+
         do_checkIfExist x264-git "x264_$(date +%Y-%m-%d)-git-1_amd64.deb"
         compile="false"
         buildFFmpeg="true"
@@ -336,22 +336,22 @@ EOT
         echo "x264 is already up to date"
         echo -------------------------------------------------
     fi
-    
+
     cd $LOCALBUILDDIR
-    
+
     do_hg "https://bitbucket.org/multicoreware/x265" x265-hg
-    
+
     if [[ $compile == "true" ]]; then
         cd build/linux
         rm -rf *
-        
+
         cmake ../../source -DCMAKE_INSTALL_PREFIX=$LOCALDESTDIR -DENABLE_SHARED:BOOLEAN=ON -DCMAKE_CXX_FLAGS_RELEASE:STRING="-O3 -DNDEBUG $CXXFLAGS"
-        
+
         make -j $cpuCount
         sudo checkinstall --maintainer="$USER" --pkgname=x265 --fstrans=no --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --deldoc=yes -y
-        
+
         mv *.deb ../..
-        
+
         do_checkIfExist x265-git "x265_$(date +%Y-%m-%d)-git-1_amd64.deb"
         compile="false"
         buildFFmpeg="true"
@@ -360,45 +360,45 @@ EOT
         echo "x265 is already up to date"
         echo -------------------------------------------------
     fi
-    
+
     cd $LOCALBUILDDIR
     echo "-------------------------------------------------------------------------------"
     echo "compile ffmpeg"
     echo "-------------------------------------------------------------------------------"
-    
+
     do_git "https://github.com/FFmpeg/FFmpeg.git" ffmpeg-git
-    
+
     if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f $LOCALDESTDIR/bin/ffmpeg ]]; then
-        
-        
+
+
         if [ -f "config.mak" ]; then
             make distclean
         fi
-        
+
         ./configure --prefix=$LOCALDESTDIR --enable-shared --disable-debug --disable-ffserver --disable-doc \
         --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter \
         --enable-nonfree --enable-decklink --enable-opengl \
         --enable-libzimg --enable-libfdk-aac \
         --enable-libx264 --enable-libx265
-        
+
         make -j $cpuCount
         sudo checkinstall --maintainer="$USER" --pkgname=ffmpeg --fstrans=no --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --requires="libsdl2-dev" --deldoc=yes -y
-        
+
         mv *.deb ..
-        
+
         do_checkIfExist ffmpeg-git "ffmpeg_$(date +%Y-%m-%d)-git-1_amd64.deb"
-        
+
         compile="false"
     else
         echo -------------------------------------------------
         echo "ffmpeg is already up to date"
         echo -------------------------------------------------
     fi
-    
+
     cd $LOCALBUILDDIR
-    
+
     do_git "https://github.com/jp9000/obs-studio.git" obs-studio-git noDepth --recursive
-    
+
     if [[ $compile == "true" ]]; then
         mkdir build && cd build
         cmake -DUNIX_STRUCTURE=1 -DCMAKE_INSTALL_PREFIX=$LOCALDESTDIR ..
@@ -406,9 +406,9 @@ EOT
         sudo checkinstall --maintainer="$USER" --pkgname=obs-studio --fstrans=no --backup=no \
         --pkgversion="$(date +%Y-%m-%d)-git" \
         --requires="libv4l-dev,libxcb-xinerama0,libxcb-xinerama0,libcurl4-openssl-dev,libqt5widgets5" --deldoc=yes -y
-        
+
         mv *.deb ..
-        
+
         do_checkIfExist obs-studio-git "obs-studio_$(date +%Y-%m-%d)-git-1_amd64.deb"
         compile="false"
     else
@@ -416,12 +416,12 @@ EOT
         echo "ops-studio is already up to date"
         echo -------------------------------------------------
     fi
-    
+
     cd $LOCALBUILDDIR
-    
+
     sudo chown $USER. *.deb
     sudo ldconfig
-    
+
 }
 
 buildProcess
