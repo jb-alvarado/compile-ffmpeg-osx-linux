@@ -162,7 +162,7 @@ do_checkIfExist() {
 }
 
 buildProcess() {
-	sudo apt install checkinstall
+	sudo apt install sudo checkinstall
 
 cd $LOCALBUILDDIR
 echo "-------------------------------------------------------------------------------"
@@ -200,7 +200,7 @@ if [[ $compile == "true" ]]; then
 	./configure --prefix=$LOCALDESTDIR --disable-static --enable-shared
 
 	make -j $cpuCount
-	checkinstall --maintainer="$USER" --pkgname=zimg --install=no --fstrans=yes --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --deldoc=yes -y
+	sudo checkinstall --maintainer="$USER" --pkgname=zimg --fstrans=no --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --deldoc=yes -y
 
 	mv *.deb ..
 
@@ -238,7 +238,7 @@ if [[ $compile == "true" ]]; then
 	./configure --prefix=$LOCALDESTDIR --enable-shared=yes --enable-static=no
 
 	make -j $cpuCount
-	checkinstall --maintainer="$USER" --pkgname=fdk-aac --install=no --fstrans=yes --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --deldoc=yes -y
+	sudo checkinstall --maintainer="$USER" --pkgname=fdk-aac --fstrans=no --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --deldoc=yes -y
 
 	mv *.deb ..
 
@@ -317,14 +317,14 @@ do_git "https://github.com/mirror/x264.git" x264-git noDepth
 if [[ $compile == "true" ]]; then
 	echo -ne "\033]0;compile x264-git\007"
 
-	if [ -f "libx264.so" ]; then
+	if [ -f "libx264.a" ]; then
 		make distclean
 	fi
 
 	./configure --prefix=$LOCALDESTDIR --enable-shared
 
 	make -j $cpuCount
-	checkinstall --maintainer="$USER" --pkgname=x264 --install=no --fstrans=yes --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --deldoc=yes -y
+	sudo sudo checkinstall --maintainer="$USER" --pkgname=x264 --fstrans=no --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --deldoc=yes -y
 
 	mv *.deb ..
 
@@ -348,9 +348,9 @@ if [[ $compile == "true" ]]; then
 	cmake ../../source -DCMAKE_INSTALL_PREFIX=$LOCALDESTDIR -DENABLE_SHARED:BOOLEAN=ON -DCMAKE_CXX_FLAGS_RELEASE:STRING="-O3 -DNDEBUG $CXXFLAGS"
 
 	make -j $cpuCount
-	checkinstall --maintainer="$USER" --pkgname=x265 --install=no --fstrans=yes --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --deldoc=yes -y
+	sudo checkinstall --maintainer="$USER" --pkgname=x265 --fstrans=no --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --deldoc=yes -y
 
-	mv *.deb ..
+	mv *.deb ../..
 
 	do_checkIfExist x265-git "x265_$(date +%Y-%m-%d)-git-1_amd64.deb"
 	compile="false"
@@ -381,7 +381,7 @@ if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f $LOCALDES
 	--enable-libx264 --enable-libx265
 
 	make -j $cpuCount
-	checkinstall --maintainer="$USER" --pkgname=ffmpeg --install=no --fstrans=yes --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --requires="libsdl2-dev" --deldoc=yes -y
+	sudo checkinstall --maintainer="$USER" --pkgname=ffmpeg --fstrans=no --backup=no --pkgversion="$(date +%Y-%m-%d)-git" --requires="libsdl2-dev" --deldoc=yes -y
 
 	mv *.deb ..
 
@@ -405,7 +405,7 @@ if [[ $compile == "true" ]]; then
 	mkdir build && cd build
   cmake -DUNIX_STRUCTURE=1 -DCMAKE_INSTALL_PREFIX=$LOCALDESTDIR ..
   make -j $cpuCount
-  checkinstall --maintainer="$USER" --pkgname=obs-studio --install=no --fstrans=yes --backup=no \
+  sudo checkinstall --maintainer="$USER" --pkgname=obs-studio --fstrans=no --backup=no \
          --pkgversion="$(date +%Y-%m-%d)-git" \
 				 --requires="libv4l-dev,libxcb-xinerama0,libxcb-xinerama0,libcurl4-openssl-dev,libqt5widgets5" --deldoc=yes -y
 
