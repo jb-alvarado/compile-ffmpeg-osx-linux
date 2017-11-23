@@ -804,7 +804,7 @@ echo -ne "\033]0;strip binaries\007"
 echo
 echo "-------------------------------------------------------------------------------"
 echo
-FILES=$(find bin -type f -mmin -600 ! \( -name '*-config' -o -name '.DS_Store' -o -name '*.lua' -o -name '*.conf' -o -name '*.png' -o -name '*.desktop' \))
+FILES=$(find bin -type f -mmin -600 ! \( -name '*-config' -o -name '.DS_Store' -o -name '*.conf' -o -name '*.png' -o -name '*.desktop' \))
 
 for f in $FILES; do
  strip "$f"
@@ -815,7 +815,7 @@ echo -ne "\033]0;deleting source folders\007"
 echo
 echo "deleting source folders..."
 echo
-find "$LOCALDESTDIR" -mindepth 1 -maxdepth 1 -type d ! \( -name '*-git' -o -name '*-svn' -o -name '*-hg' \) -print0 | xargs -0 rm -rf
+find "$LOCALBUILDDIR" -mindepth 1 -maxdepth 1 -type d ! \( -name '*-git' -o -name '*-svn' -o -name '*-hg' \) -print0 | xargs -0 rm -rf
 }
 
 buildProcess
