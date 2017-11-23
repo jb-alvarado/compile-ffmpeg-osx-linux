@@ -4,14 +4,20 @@
 system=$( uname -s )
 if [[ "$system" == "Darwin" ]]; then
 	osExtra="-mmacosx-version-min=10.10"
-    osString="osx"
-    cpuCount=$( sysctl hw.ncpu | awk '{ print $2 - 1 }' )
-    compNasm="no"
+  osString="osx"
+  cpuCount=$( sysctl hw.ncpu | awk '{ print $2 - 1 }' )
+  compNasm="no"
+	osFlag=""
+	osLibs="-liconv"
+	arch="--arch=x86_64"
 else
 	osExtra=""
-    osString="nix"
-    cpuCount=$( nproc | awk '{ print $1 - 1 }' )
-    compNasm="yes"
+  osString="nix"
+  cpuCount=$( nproc | awk '{ print $1 - 1 }' )
+  compNasm="yes"
+	osFlag="--enable-pic"
+	osLibs="-lpthread"
+	arch=""
 fi
 
 compile="false"
@@ -208,7 +214,7 @@ echo "compile global tools"
 echo
 echo "-------------------------------------------------------------------------------"
 
-if [ ! -f "$LOCALDESTDIR/bin/nasm" ] && [[ $compNasm == "yes" ]]; then
+if [ ! -f "/usr/local/bin/nasm" ] && [[ $compNasm == "yes" ]]; then
     echo -ne "\033]0;compile nasm 64Bit\007"
 
     do_wget "http://www.nasm.us/pub/nasm/releasebuilds/2.13.01/nasm-2.13.01.tar.gz" nasm-2.13.01.tar.gz
@@ -216,7 +222,8 @@ if [ ! -f "$LOCALDESTDIR/bin/nasm" ] && [[ $compNasm == "yes" ]]; then
     ./configure --prefix="$LOCALDESTDIR"
 
     make -j "$cpuCount"
-    sudo make install
+    make install
+		sudo cp $LOCALDESTDIR/bin/nasm $LOCALDESTDIR/bin/ndisasm /usr/local/bin/
 else
     echo -------------------------------------------------
     echo "nasm-2.13.01 is already compiled, or not needed"
@@ -512,7 +519,7 @@ if [[ $compile == "true" ]]; then
 		make clean
 	fi
 
-		./configure --prefix="$LOCALDESTDIR" --disable-shared --enable-static --disable-unit-tests --disable-docs --enable-postproc --enable-vp9-postproc --enable-runtime-cpu-detect
+		./configure --prefix="$LOCALDESTDIR" --disable-shared --enable-static --disable-unit-tests --disable-docs --enable-postproc --enable-vp9-postproc --enable-runtime-cpu-detect $osFlag
 
 	make -j "$cpuCount"
 	make install
@@ -533,14 +540,14 @@ do_git "git://git.videolan.org/libbluray.git" libbluray-git
 if [[ $compile == "true" ]]; then
 
   if [[ ! -f "configure" ]]; then
-        git submodule update --init
+    git submodule update --init
 		autoreconf -fiv
 	else
 		make uninstall
 		make clean
 	fi
 
-	./configure --prefix="$LOCALDESTDIR" --disable-shared --enable-static --disable-examples --disable-bdjava --disable-doxygen-doc --disable-doxygen-dot --without-libxml2 --without-fontconfig --without-freetype --disable-udf LIBXML2_LIBS="-L$LOCALDESTDIR/lib -lxml2" LIBXML2_CFLAGS="-I$LOCALDESTDIR/include/libxml2 -DLIBXML_STATIC"
+	./configure --prefix="$LOCALDESTDIR" --disable-shared --enable-static --disable-examples --disable-bdjava-jar --disable-doxygen-doc --disable-doxygen-dot --without-fontconfig --without-freetype LIBXML2_LIBS="-L$LOCALDESTDIR/lib -lxml2" LIBXML2_CFLAGS="-I$LOCALDESTDIR/include/libxml2 -DLIBXML_STATIC"
 
 	make -j "$cpuCount"
 	make install
@@ -594,9 +601,11 @@ else
 
     cp ../../decklink-${osString}/* .
 
-    sed -i '' "s/void	InitDeckLinkAPI (void)/static void	InitDeckLinkAPI (void)/" DeckLinkAPIDispatch.cpp
-    sed -i '' "s/bool		IsDeckLinkAPIPresent (void)/static bool		IsDeckLinkAPIPresent (void)/" DeckLinkAPIDispatch.cpp
-    sed -i '' "s/void InitBMDStreamingAPI(void)/static void InitBMDStreamingAPI(void)/" DeckLinkAPIDispatch.cpp
+		if [[ $osString == "osx" ]]; then
+	    sed -i '' "s/void	InitDeckLinkAPI (void)/static void	InitDeckLinkAPI (void)/" DeckLinkAPIDispatch.cpp
+	    sed -i '' "s/bool		IsDeckLinkAPIPresent (void)/static bool		IsDeckLinkAPIPresent (void)/" DeckLinkAPIDispatch.cpp
+	    sed -i '' "s/void InitBMDStreamingAPI(void)/static void InitBMDStreamingAPI(void)/" DeckLinkAPIDispatch.cpp
+		fi
 fi
 
 #------------------------------------------------
@@ -612,7 +621,7 @@ if [[ $compile = "true" ]]; then
         rm -rf "$LOCALDESTDIR/include/gpac"
     fi
     [[ -f config.mak ]] && make distclean
-    ./configure --prefix="$LOCALDESTDIR" --static-mp4box --extra-libs="-lz"
+    ./configure --prefix="$LOCALDESTDIR" --static-mp4box --extra-libs="-lz -lm"
     make -j "$cpuCount"
     make install-lib
     cp bin/gcc/MP4Box "$LOCALDESTDIR/bin/"
@@ -698,7 +707,7 @@ if [[ $compile == "true" ]]; then
 		make distclean
 	fi
 
-	./configure --prefix="$LOCALDESTDIR" --enable-static
+	./configure --prefix="$LOCALDESTDIR" --enable-static $osFlag
 
 	make -j "$cpuCount"
 	make install
@@ -776,7 +785,7 @@ if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f "$LOCALDE
 		make distclean
 	fi
 
-	./configure --arch=x86_64 --prefix="$LOCALDESTDIR" --disable-debug --disable-shared --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-bzlib --enable-zlib --enable-libbluray --enable-fontconfig --enable-libfreetype --enable-libass --enable-libtwolame --enable-libmp3lame --enable-libsoxr --enable-opengl --enable-libopus --enable-libvpx --enable-libx264 --enable-libx265 --enable-nonfree --enable-libfdk-aac --enable-decklink --extra-cflags='-DLIBTWOLAME_STATIC' --extra-libs='-lxml2 -llzma -lstdc++ -lpng -lm -lexpat -liconv' pkg_config='pkg-config --static'
+	./configure $arch --prefix="$LOCALDESTDIR" --disable-debug --disable-shared --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib --enable-libbluray --enable-fontconfig --enable-libfreetype --enable-libass --enable-libtwolame --enable-libmp3lame --enable-libsoxr --enable-opengl --enable-libopus --enable-libvpx --enable-libx264 --enable-libx265 --enable-nonfree --enable-libfdk-aac --enable-decklink $osFlag --extra-cflags='-DLIBTWOLAME_STATIC' --extra-libs="-lxml2 -llzma -lstdc++ -lpng -lm -lexpat $osLibs" pkg_config='pkg-config --static'
 
 	make -j "$cpuCount"
 	make install
