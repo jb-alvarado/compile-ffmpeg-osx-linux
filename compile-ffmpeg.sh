@@ -1,5 +1,42 @@
 #!/bin/bash
 
+libbluray=""
+fontconfig=""
+libfreetype=""
+libass=""
+libtwolame=""
+libmp3lame=""
+libogg=""
+libsoxr=""
+libopus=""
+libvpx=""
+libx264=""
+libx265=""
+nonfree=""
+libfdk_aac=""
+decklink=""
+
+# --------------------------------------------------
+# --------------------------------------------------
+# enable / disable library:
+
+#libbluray="--enable-libbluray"
+fontconfig="--enable-fontconfig"
+libfreetype="--enable-libfreetype"
+#libass="--enable-libass"
+#libtwolame="--enable-libtwolame --extra-cflags=-DLIBTWOLAME_STATIC"
+libmp3lame="--enable-libmp3lame"
+#libogg="--enable-libogg"
+#libsoxr="--enable-libsoxr"
+#libopus="--enable-libopus"
+#libvpx="--enable-libvpx"
+libx264="--enable-libx264"
+libx265="--enable-libx265"
+nonfree="--enable-nonfree"
+libfdk_aac="--enable-libfdk-aac"
+decklink="--enable-decklink"
+# --------------------------------------------------
+
 # check system
 system=$( uname -s )
 if [[ "$system" == "Darwin" ]]; then
@@ -223,85 +260,91 @@ if [ ! -f "/usr/local/bin/nasm" ] && [[ $compNasm == "yes" ]]; then
 
     make -j "$cpuCount"
     make install
-		sudo cp $LOCALDESTDIR/bin/nasm $LOCALDESTDIR/bin/ndisasm /usr/local/bin/
+	sudo cp "$LOCALDESTDIR/bin/nasm" "$LOCALDESTDIR/bin/ndisasm" /usr/local/bin/
 else
     echo -------------------------------------------------
     echo "nasm-2.13.01 is already compiled, or not needed"
     echo -------------------------------------------------
 fi
 
-if [ -f "$LOCALDESTDIR/lib/libexpat.a" ]; then
-	echo -------------------------------------------------
-	echo "expat-2.2.5 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile expat 64Bit\007"
+if [[ -n "$fontconfig" ]]; then
+	if [ -f "$LOCALDESTDIR/lib/libexpat.a" ]; then
+		echo -------------------------------------------------
+		echo "expat-2.2.5 is already compiled"
+		echo -------------------------------------------------
+		else
+			echo -ne "\033]0;compile expat 64Bit\007"
 
-		do_wget "https://downloads.sourceforge.net/project/expat/expat/2.2.5/expat-2.2.5.tar.bz2"
+			do_wget "https://downloads.sourceforge.net/project/expat/expat/2.2.5/expat-2.2.5.tar.bz2"
 
-		./configure --prefix="$LOCALDESTDIR" --enable-shared=no
+			./configure --prefix="$LOCALDESTDIR" --enable-shared=no
 
-		make -j "$cpuCount"
-		make install
+			make -j "$cpuCount"
+			make install
 
-		do_checkIfExist expat-2.2.5 libexpat.a
+			do_checkIfExist expat-2.2.5 libexpat.a
+	fi
+
+	cd "$LOCALBUILDDIR" || exit
+
+	if [ -f "$LOCALDESTDIR/lib/libfreetype.a" ]; then
+		echo -------------------------------------------------
+		echo "freetype-2.6 is already compiled"
+		echo -------------------------------------------------
+		else
+			echo -ne "\033]0;compile freetype\007"
+
+			do_wget "https://downloads.sourceforge.net/project/freetype/freetype2/2.8.1/freetype-2.8.1.tar.gz"
+
+			./configure --prefix="$LOCALDESTDIR" --disable-shared --with-harfbuzz=no
+			make -j "$cpuCount"
+			make install
+
+			do_checkIfExist freetype-2.6 libfreetype.a
+	fi
 fi
 
 cd "$LOCALBUILDDIR" || exit
 
-if [ -f "$LOCALDESTDIR/lib/libfreetype.a" ]; then
-	echo -------------------------------------------------
-	echo "freetype-2.6 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile freetype\007"
+if [[ -n "$libfreetype" ]]; then
+	if [ -f "$LOCALDESTDIR/lib/libfontconfig.a" ]; then
+		echo -------------------------------------------------
+		echo "fontconfig-2.12.6 is already compiled"
+		echo -------------------------------------------------
+		else
+			echo -ne "\033]0;compile fontconfig\007"
 
-		do_wget "https://downloads.sourceforge.net/project/freetype/freetype2/2.8.1/freetype-2.8.1.tar.gz"
+			do_wget "https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.12.6.tar.gz"
 
-		./configure --prefix="$LOCALDESTDIR" --disable-shared --with-harfbuzz=no
-		make -j "$cpuCount"
-		make install
+			./configure --prefix="$LOCALDESTDIR" --enable-shared=no
 
-		do_checkIfExist freetype-2.6 libfreetype.a
+			make -j "$cpuCount"
+			make install
+
+			do_checkIfExist fontconfig-2.12.6 libfontconfig.a
+	fi
 fi
 
 cd "$LOCALBUILDDIR" || exit
 
-if [ -f "$LOCALDESTDIR/lib/libfontconfig.a" ]; then
-	echo -------------------------------------------------
-	echo "fontconfig-2.12.6 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile fontconfig\007"
+if [[ -n "$libass" ]]; then
+	if [ -f "$LOCALDESTDIR/lib/libfribidi.a" ]; then
+		echo -------------------------------------------------
+		echo "fribidi-0.19.7 is already compiled"
+		echo -------------------------------------------------
+		else
+			echo -ne "\033]0;compile fribidi\007"
 
-		do_wget "https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.12.6.tar.gz"
+			do_wget "https://github.com/fribidi/fribidi/archive/0.19.7.tar.gz" fribidi-0.19.7.tar.gz
 
-		./configure --prefix="$LOCALDESTDIR" --enable-shared=no
+	        ./bootstrap
+			./configure --prefix="$LOCALDESTDIR" --enable-shared=no --with-glib=no
 
-		make -j "$cpuCount"
-		make install
+			make -j "$cpuCount"
+			make install
 
-		do_checkIfExist fontconfig-2.12.6 libfontconfig.a
-fi
-
-cd "$LOCALBUILDDIR" || exit
-
-if [ -f "$LOCALDESTDIR/lib/libfribidi.a" ]; then
-	echo -------------------------------------------------
-	echo "fribidi-0.19.7 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile fribidi\007"
-
-		do_wget "https://github.com/fribidi/fribidi/archive/0.19.7.tar.gz" fribidi-0.19.7.tar.gz
-
-        ./bootstrap
-		./configure --prefix="$LOCALDESTDIR" --enable-shared=no --with-glib=no
-
-		make -j "$cpuCount"
-		make install
-
-	do_checkIfExist fribidi-0.19.7 libfribidi.a
+		do_checkIfExist fribidi-0.19.7 libfribidi.a
+	fi
 fi
 
 cd "$LOCALBUILDDIR" || exit
@@ -376,123 +419,135 @@ echo "compile audio tools"
 echo
 echo "-------------------------------------------------------------------------------"
 
-if [ -f "$LOCALDESTDIR/lib/libmp3lame.a" ]; then
-	echo -------------------------------------------------
-	echo "lame-3.99.5 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile lame\007"
+if [[ -n "$libmp3lame" ]]; then
+	if [ -f "$LOCALDESTDIR/lib/libmp3lame.a" ]; then
+		echo -------------------------------------------------
+		echo "lame-3.99.5 is already compiled"
+		echo -------------------------------------------------
+		else
+			echo -ne "\033]0;compile lame\007"
 
-		do_wget "http://sourceforge.net/projects/lame/files/lame/3.99/lame-3.99.5.tar.gz/download" lame-3.99.5.tar.gz
+			do_wget "http://sourceforge.net/projects/lame/files/lame/3.99/lame-3.99.5.tar.gz/download" lame-3.99.5.tar.gz
 
-		./configure --prefix="$LOCALDESTDIR" --enable-expopt=full --enable-shared=no
+			./configure --prefix="$LOCALDESTDIR" --enable-expopt=full --enable-shared=no
 
-		make -j "$cpuCount"
-		make install
+			make -j "$cpuCount"
+			make install
 
-		do_checkIfExist lame-3.99.5 libmp3lame.a
+			do_checkIfExist lame-3.99.5 libmp3lame.a
+	fi
 fi
 
 cd "$LOCALBUILDDIR" || exit
 
-if [ -f "$LOCALDESTDIR/lib/libtwolame.a" ]; then
-	echo -------------------------------------------------
-	echo "twolame-0.3.13 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile twolame 64Bit\007"
+if [[ -n "$libtwolame" ]]; then
+	if [ -f "$LOCALDESTDIR/lib/libtwolame.a" ]; then
+		echo -------------------------------------------------
+		echo "twolame-0.3.13 is already compiled"
+		echo -------------------------------------------------
+		else
+			echo -ne "\033]0;compile twolame 64Bit\007"
 
-		do_wget "http://sourceforge.net/projects/twolame/files/twolame/0.3.13/twolame-0.3.13.tar.gz/download" twolame-0.3.13.tar.gz
+			do_wget "http://sourceforge.net/projects/twolame/files/twolame/0.3.13/twolame-0.3.13.tar.gz/download" twolame-0.3.13.tar.gz
 
-		./configure --prefix="$LOCALDESTDIR" --disable-shared CPPFLAGS="$CPPFLAGS -DLIBTWOLAME_STATIC"
+			./configure --prefix="$LOCALDESTDIR" --disable-shared CPPFLAGS="$CPPFLAGS -DLIBTWOLAME_STATIC"
 
-		make -j "$cpuCount"
-		make install
+			make -j "$cpuCount"
+			make install
 
-		do_checkIfExist twolame-0.3.13 libtwolame.a
+			do_checkIfExist twolame-0.3.13 libtwolame.a
+	fi
 fi
 
 cd "$LOCALBUILDDIR" || exit
 
-if [ -f "$LOCALDESTDIR/lib/libogg.a" ]; then
-	echo -------------------------------------------------
-	echo "libogg-1.3.3 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile libogg 64Bit\007"
+if [[ -n "$libogg" ]]; then
+	if [ -f "$LOCALDESTDIR/lib/libogg.a" ]; then
+		echo -------------------------------------------------
+		echo "libogg-1.3.3 is already compiled"
+		echo -------------------------------------------------
+		else
+			echo -ne "\033]0;compile libogg 64Bit\007"
 
-		do_wget "https://ftp.osuosl.org/pub/xiph/releases/ogg/libogg-1.3.3.tar.gz"
+			do_wget "https://ftp.osuosl.org/pub/xiph/releases/ogg/libogg-1.3.3.tar.gz"
+
+			./configure --prefix="$LOCALDESTDIR" --enable-shared=no
+			make -j "$cpuCount"
+			make install
+
+			do_checkIfExist libogg-1.3.3 libogg.a
+	fi
+fi
+
+cd "$LOCALBUILDDIR" || exit
+
+if [[ -n "$libfdk_aac" ]]; then
+	do_git "https://github.com/mstorsjo/fdk-aac" fdk-aac-git
+
+	if [[ $compile == "true" ]]; then
+		if [[ ! -f ./configure ]]; then
+			./autogen.sh
+		else
+			make uninstall
+			make clean
+		fi
 
 		./configure --prefix="$LOCALDESTDIR" --enable-shared=no
+
 		make -j "$cpuCount"
 		make install
 
-		do_checkIfExist libogg-1.3.3 libogg.a
-fi
-
-cd "$LOCALBUILDDIR" || exit
-
-do_git "https://github.com/mstorsjo/fdk-aac" fdk-aac-git
-
-if [[ $compile == "true" ]]; then
-	if [[ ! -f ./configure ]]; then
-		./autogen.sh
+		do_checkIfExist fdk-aac-git libfdk-aac.a
 	else
-		make uninstall
-		make clean
+		echo -------------------------------------------------
+		echo "fdk-aac is already up to date"
+		echo -------------------------------------------------
 	fi
-
-	./configure --prefix="$LOCALDESTDIR" --enable-shared=no
-
-	make -j "$cpuCount"
-	make install
-
-	do_checkIfExist fdk-aac-git libfdk-aac.a
-else
-	echo -------------------------------------------------
-	echo "fdk-aac is already up to date"
-	echo -------------------------------------------------
 fi
 
 cd "$LOCALBUILDDIR" || exit
 
-if [ -f "$LOCALDESTDIR/lib/libopus.a" ]; then
-    echo -------------------------------------------------
-    echo "opus-1.2.1 is already compiled"
-    echo -------------------------------------------------
-    else
-		echo -ne "\033]0;compile opus\007"
+if [[ -n "$libopus" ]]; then
+	if [ -f "$LOCALDESTDIR/lib/libopus.a" ]; then
+	    echo -------------------------------------------------
+	    echo "opus-1.2.1 is already compiled"
+	    echo -------------------------------------------------
+	    else
+			echo -ne "\033]0;compile opus\007"
 
-		do_wget "https://ftp.osuosl.org/pub/xiph/releases/opus/opus-1.2.1.tar.gz"
+			do_wget "https://ftp.osuosl.org/pub/xiph/releases/opus/opus-1.2.1.tar.gz"
 
-    ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --enable-static --disable-doc
+	    ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --enable-static --disable-doc
 
-    make -j "$cpuCount"
-		make install
+	    make -j "$cpuCount"
+			make install
 
-		do_checkIfExist opus-1.2.1 libopus.a
+			do_checkIfExist opus-1.2.1 libopus.a
+	fi
 fi
 
 cd "$LOCALBUILDDIR" || exit
 
-if [ -f "$LOCALDESTDIR/lib/libsoxr.a" ]; then
-	echo -------------------------------------------------
-	echo "soxr-0.1.2 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile soxr-0.1.1\007"
+if [[ -n "$libsoxr" ]]; then
+	if [ -f "$LOCALDESTDIR/lib/libsoxr.a" ]; then
+		echo -------------------------------------------------
+		echo "soxr-0.1.2 is already compiled"
+		echo -------------------------------------------------
+		else
+			echo -ne "\033]0;compile soxr-0.1.1\007"
 
-		do_wget "https://downloads.sourceforge.net/project/soxr/soxr-0.1.2-Source.tar.xz"
+			do_wget "https://downloads.sourceforge.net/project/soxr/soxr-0.1.2-Source.tar.xz"
 
-		mkdir build
-		cd build || exit
+			mkdir build
+			cd build || exit
 
-		cmake .. -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DHAVE_WORDS_BIGENDIAN_EXITCODE=0 -DBUILD_SHARED_LIBS:bool=off -DBUILD_TESTS:BOOL=OFF -DWITH_OPENMP:BOOL=OFF -DUNIX:BOOL=on -Wno-dev
+			cmake .. -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DHAVE_WORDS_BIGENDIAN_EXITCODE=0 -DBUILD_SHARED_LIBS:bool=off -DBUILD_TESTS:BOOL=OFF -DWITH_OPENMP:BOOL=OFF -DUNIX:BOOL=on -Wno-dev
 
-		make -j "$cpuCount"
-		make install
+			make -j "$cpuCount"
+			make install
 
-		do_checkIfExist soxr-0.1.2-Source libsoxr.a
+			do_checkIfExist soxr-0.1.2-Source libsoxr.a
+	fi
 fi
 
 echo "-------------------------------------------------------------------------------"
@@ -509,103 +564,111 @@ echo "compile video tools"
 echo
 echo "-------------------------------------------------------------------------------"
 
+if [[ -n "$libvpx" ]]; then
 do_git "https://github.com/webmproject/libvpx.git" libvpx-git noDepth
 
-if [[ $compile == "true" ]]; then
-	if [ -d "$LOCALDESTDIR/include/vpx" ]; then
-		rm -rf "$LOCALDESTDIR/include/vpx"
-		rm -f "$LOCALDESTDIR/lib/pkgconfig/vpx.pc"
-		rm -f "$LOCALDESTDIR/lib/libvpx.a"
-		make clean
-	fi
-
-		./configure --prefix="$LOCALDESTDIR" --disable-shared --enable-static --disable-unit-tests --disable-docs --enable-postproc --enable-vp9-postproc --enable-runtime-cpu-detect $osFlag
-
-	make -j "$cpuCount"
-	make install
-
-	do_checkIfExist libvpx-git libvpx.a
-
-	buildFFmpeg="true"
-else
-	echo -------------------------------------------------
-	echo "libvpx-git is already up to date"
-	echo -------------------------------------------------
-fi
-
-cd "$LOCALBUILDDIR" || exit
-
-do_git "git://git.videolan.org/libbluray.git" libbluray-git
-
-if [[ $compile == "true" ]]; then
-
-  if [[ ! -f "configure" ]]; then
-    git submodule update --init
-		autoreconf -fiv
-	else
-		make uninstall
-		make clean
-	fi
-
-	./configure --prefix="$LOCALDESTDIR" --disable-shared --enable-static --disable-examples --disable-bdjava-jar --disable-doxygen-doc --disable-doxygen-dot --without-fontconfig --without-freetype LIBXML2_LIBS="-L$LOCALDESTDIR/lib -lxml2" LIBXML2_CFLAGS="-I$LOCALDESTDIR/include/libxml2 -DLIBXML_STATIC"
-
-	make -j "$cpuCount"
-	make install
-
-	do_checkIfExist libbluray-git libbluray.a
-else
-	echo -------------------------------------------------
-	echo "libbluray-git is already up to date"
-	echo -------------------------------------------------
-fi
-
-cd "$LOCALBUILDDIR" || exit
-
-do_git "https://github.com/libass/libass.git" libass-git
-
-if [[ $compile == "true" ]]; then
-	if [ -f "$LOCALDESTDIR/lib/libass.a" ]; then
-		make uninstall
-		make clean
-	fi
-
-	if [[ ! -f "configure" ]]; then
-		./autogen.sh
-	fi
-
-	./configure --prefix="$LOCALDESTDIR" --enable-shared=no --disable-harfbuzz FRIBIDI_LIBS="-L$LOCALDESTDIR/lib" FRIBIDI_CFLAGS="-I$LOCALDESTDIR/include/fribidi"
-
-	make -j "$cpuCount"
-	make install
-
-	sed -i 's/-lass -lm/-lass -lfribidi -lm/' "$LOCALDESTDIR/lib/pkgconfig/libass.pc"
-
-	do_checkIfExist libass-git libass.a
-	buildFFmpeg="true"
-else
-	echo -------------------------------------------------
-	echo "libass is already up to date"
-	echo -------------------------------------------------
-fi
-
-cd "$LOCALBUILDDIR" || exit
-
-if [ -f "$LOCALDESTDIR/include/DeckLinkAPI.h" ]; then
-	echo -------------------------------------------------
-	echo "DeckLinkAPI is already in place"
-	echo -------------------------------------------------
-else
-	echo -ne "\033]0;download DeckLinkAPI\007"
-
-	cd "$LOCALDESTDIR/include" || exit
-
-    cp ../../decklink-${osString}/* .
-
-		if [[ $osString == "osx" ]]; then
-	    sed -i '' "s/void	InitDeckLinkAPI (void)/static void	InitDeckLinkAPI (void)/" DeckLinkAPIDispatch.cpp
-	    sed -i '' "s/bool		IsDeckLinkAPIPresent (void)/static bool		IsDeckLinkAPIPresent (void)/" DeckLinkAPIDispatch.cpp
-	    sed -i '' "s/void InitBMDStreamingAPI(void)/static void InitBMDStreamingAPI(void)/" DeckLinkAPIDispatch.cpp
+	if [[ $compile == "true" ]]; then
+		if [ -d "$LOCALDESTDIR/include/vpx" ]; then
+			rm -rf "$LOCALDESTDIR/include/vpx"
+			rm -f "$LOCALDESTDIR/lib/pkgconfig/vpx.pc"
+			rm -f "$LOCALDESTDIR/lib/libvpx.a"
+			make clean
 		fi
+
+			./configure --prefix="$LOCALDESTDIR" --disable-shared --enable-static --disable-unit-tests --disable-docs --enable-postproc --enable-vp9-postproc --enable-runtime-cpu-detect $osFlag
+
+		make -j "$cpuCount"
+		make install
+
+		do_checkIfExist libvpx-git libvpx.a
+
+		buildFFmpeg="true"
+	else
+		echo -------------------------------------------------
+		echo "libvpx-git is already up to date"
+		echo -------------------------------------------------
+	fi
+fi
+
+cd "$LOCALBUILDDIR" || exit
+
+if [[ -n "$libbluray" ]]; then
+	do_git "git://git.videolan.org/libbluray.git" libbluray-git
+
+	if [[ $compile == "true" ]]; then
+
+	  if [[ ! -f "configure" ]]; then
+	    git submodule update --init
+			autoreconf -fiv
+		else
+			make uninstall
+			make clean
+		fi
+
+		./configure --prefix="$LOCALDESTDIR" --disable-shared --enable-static --disable-examples --disable-bdjava-jar --disable-doxygen-doc --disable-doxygen-dot --without-fontconfig --without-freetype LIBXML2_LIBS="-L$LOCALDESTDIR/lib -lxml2" LIBXML2_CFLAGS="-I$LOCALDESTDIR/include/libxml2 -DLIBXML_STATIC"
+
+		make -j "$cpuCount"
+		make install
+
+		do_checkIfExist libbluray-git libbluray.a
+	else
+		echo -------------------------------------------------
+		echo "libbluray-git is already up to date"
+		echo -------------------------------------------------
+	fi
+fi
+
+cd "$LOCALBUILDDIR" || exit
+
+if [[ -n "$libass" ]]; then
+	do_git "https://github.com/libass/libass.git" libass-git
+
+	if [[ $compile == "true" ]]; then
+		if [ -f "$LOCALDESTDIR/lib/libass.a" ]; then
+			make uninstall
+			make clean
+		fi
+
+		if [[ ! -f "configure" ]]; then
+			./autogen.sh
+		fi
+
+		./configure --prefix="$LOCALDESTDIR" --enable-shared=no --disable-harfbuzz FRIBIDI_LIBS="-L$LOCALDESTDIR/lib" FRIBIDI_CFLAGS="-I$LOCALDESTDIR/include/fribidi"
+
+		make -j "$cpuCount"
+		make install
+
+		sed -i 's/-lass -lm/-lass -lfribidi -lm/' "$LOCALDESTDIR/lib/pkgconfig/libass.pc"
+
+		do_checkIfExist libass-git libass.a
+		buildFFmpeg="true"
+	else
+		echo -------------------------------------------------
+		echo "libass is already up to date"
+		echo -------------------------------------------------
+	fi
+fi
+
+cd "$LOCALBUILDDIR" || exit
+
+if [[ -n "$decklink" ]]; then
+	if [ -f "$LOCALDESTDIR/include/DeckLinkAPI.h" ]; then
+		echo -------------------------------------------------
+		echo "DeckLinkAPI is already in place"
+		echo -------------------------------------------------
+	else
+		echo -ne "\033]0;download DeckLinkAPI\007"
+
+		cd "$LOCALDESTDIR/include" || exit
+
+	    cp ../../decklink-${osString}/* .
+
+			if [[ $osString == "osx" ]]; then
+		    sed -i '' "s/void	InitDeckLinkAPI (void)/static void	InitDeckLinkAPI (void)/" DeckLinkAPIDispatch.cpp
+		    sed -i '' "s/bool		IsDeckLinkAPIPresent (void)/static bool		IsDeckLinkAPIPresent (void)/" DeckLinkAPIDispatch.cpp
+		    sed -i '' "s/void InitBMDStreamingAPI(void)/static void InitBMDStreamingAPI(void)/" DeckLinkAPIDispatch.cpp
+			fi
+	fi
 fi
 
 #------------------------------------------------
@@ -693,57 +756,61 @@ fi
 
 cd "$LOCALBUILDDIR" || exit
 
-do_git "git://git.videolan.org/x264.git" x264-git noDepth
+if [[ -n "$libx264" ]]; then
+	do_git "git://git.videolan.org/x264.git" x264-git noDepth
 
-if [[ $compile == "true" ]]; then
-	echo -ne "\033]0;compile x264-git\007"
+	if [[ $compile == "true" ]]; then
+		echo -ne "\033]0;compile x264-git\007"
 
-	if [ -f "$LOCALDESTDIR/lib/libx264.a" ]; then
-		rm -f "$LOCALDESTDIR/include/x264.h $LOCALDESTDIR/include/x264_config.h $LOCALDESTDIR/lib/libx264.a"
-		rm -f "$LOCALDESTDIR/bin/x264 $LOCALDESTDIR/lib/pkgconfig/x264.pc"
+		if [ -f "$LOCALDESTDIR/lib/libx264.a" ]; then
+			rm -f "$LOCALDESTDIR/include/x264.h $LOCALDESTDIR/include/x264_config.h $LOCALDESTDIR/lib/libx264.a"
+			rm -f "$LOCALDESTDIR/bin/x264 $LOCALDESTDIR/lib/pkgconfig/x264.pc"
+		fi
+
+		if [ -f "libx264.a" ]; then
+			make distclean
+		fi
+
+		./configure --prefix="$LOCALDESTDIR" --enable-static $osFlag
+
+		make -j "$cpuCount"
+		make install
+
+		do_checkIfExist x264-git libx264.a
+		buildFFmpeg="true"
+	else
+		echo -------------------------------------------------
+		echo "x264 is already up to date"
+		echo -------------------------------------------------
 	fi
-
-	if [ -f "libx264.a" ]; then
-		make distclean
-	fi
-
-	./configure --prefix="$LOCALDESTDIR" --enable-static $osFlag
-
-	make -j "$cpuCount"
-	make install
-
-	do_checkIfExist x264-git libx264.a
-	buildFFmpeg="true"
-else
-	echo -------------------------------------------------
-	echo "x264 is already up to date"
-	echo -------------------------------------------------
 fi
 
 cd "$LOCALBUILDDIR" || exit
 
-do_hg "https://bitbucket.org/multicoreware/x265" x265-hg
+if [[ -n "$libx265" ]]; then
+	do_hg "https://bitbucket.org/multicoreware/x265" x265-hg
 
-if [[ $compile == "true" ]]; then
-	cd build || exit/xcode
-	rm -rf ./*
-	rm -f "$LOCALDESTDIR/bin/x265"
-	rm -f "$LOCALDESTDIR/include/x265.h"
-	rm -f "$LOCALDESTDIR/include/x265_config.h"
-	rm -f "$LOCALDESTDIR/lib/libx265.a"
-	rm -f "$LOCALDESTDIR/lib/pkgconfig/x265.pc"
+	if [[ $compile == "true" ]]; then
+		cd build || exit/xcode
+		rm -rf ./*
+		rm -f "$LOCALDESTDIR/bin/x265"
+		rm -f "$LOCALDESTDIR/include/x265.h"
+		rm -f "$LOCALDESTDIR/include/x265_config.h"
+		rm -f "$LOCALDESTDIR/lib/libx265.a"
+		rm -f "$LOCALDESTDIR/lib/pkgconfig/x265.pc"
 
-	cmake ../source -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DENABLE_SHARED:BOOLEAN=OFF -DCMAKE_CXX_FLAGS_RELEASE:STRING="-O3 -DNDEBUG $CXXFLAGS"
+		cmake ../source -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DENABLE_SHARED:BOOLEAN=OFF -DCMAKE_CXX_FLAGS_RELEASE:STRING="-O3 -DNDEBUG $CXXFLAGS"
 
-	make -j "$cpuCount"
-	make install
+		make -j "$cpuCount"
+		make install
 
-	do_checkIfExist x265-git libx265.a
-	buildFFmpeg="true"
-else
-	echo -------------------------------------------------
-	echo "x265 is already up to date"
-	echo -------------------------------------------------
+		do_checkIfExist x265-git libx265.a
+		buildFFmpeg="true"
+	else
+		echo -------------------------------------------------
+		echo "x265 is already up to date"
+		echo -------------------------------------------------
+	fi
 fi
 
 cd "$LOCALBUILDDIR" || exit
@@ -785,7 +852,7 @@ if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f "$LOCALDE
 		make distclean
 	fi
 
-	./configure $arch --prefix="$LOCALDESTDIR" --disable-debug --disable-shared --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib --enable-libbluray --enable-fontconfig --enable-libfreetype --enable-libass --enable-libtwolame --enable-libmp3lame --enable-libsoxr --enable-opengl --enable-libopus --enable-libvpx --enable-libx264 --enable-libx265 --enable-nonfree --enable-libfdk-aac --enable-decklink $osFlag --extra-cflags='-DLIBTWOLAME_STATIC' --extra-libs="-lxml2 -llzma -lstdc++ -lpng -lm -lexpat $osLibs" pkg_config='pkg-config --static'
+	./configure $arch --prefix="$LOCALDESTDIR" --disable-debug --disable-shared --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib --enable-opengl $libbluray $fontconfig $libfreetype $libass $libtwolame $libmp3lame $libsoxr $libopus $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $libogg $osFlag --extra-libs="-lxml2 -llzma -lstdc++ -lpng -lm -lexpat $osLibs" pkg_config='pkg-config --static'
 
 	make -j "$cpuCount"
 	make install
