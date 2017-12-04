@@ -15,14 +15,15 @@ libx265=""
 nonfree=""
 libfdk_aac=""
 decklink=""
+opengl=""
 
 # --------------------------------------------------
 # --------------------------------------------------
 # enable / disable library:
 
 #libbluray="--enable-libbluray"
-fontconfig="--enable-fontconfig"
-libfreetype="--enable-libfreetype"
+#fontconfig="--enable-fontconfig"
+#libfreetype="--enable-libfreetype"
 #libass="--enable-libass"
 #libtwolame="--enable-libtwolame --extra-cflags=-DLIBTWOLAME_STATIC"
 libmp3lame="--enable-libmp3lame"
@@ -35,23 +36,24 @@ libx265="--enable-libx265"
 nonfree="--enable-nonfree"
 libfdk_aac="--enable-libfdk-aac"
 decklink="--enable-decklink"
+#opengl="--enable-opengl"
 # --------------------------------------------------
 
 # check system
 system=$( uname -s )
 if [[ "$system" == "Darwin" ]]; then
 	osExtra="-mmacosx-version-min=10.10"
-  osString="osx"
-  cpuCount=$( sysctl hw.ncpu | awk '{ print $2 - 1 }' )
-  compNasm="no"
+	osString="osx"
+	cpuCount=$( sysctl hw.ncpu | awk '{ print $2 - 1 }' )
+	compNasm="no"
 	osFlag=""
 	osLibs="-liconv"
 	arch="--arch=x86_64"
 else
 	osExtra=""
-  osString="nix"
-  cpuCount=$( nproc | awk '{ print $1 - 1 }' )
-  compNasm="yes"
+	osString="nix"
+	cpuCount=$( nproc | awk '{ print $1 - 1 }' )
+	compNasm="yes"
 	osFlag="--enable-pic"
 	osLibs="-lpthread"
 	arch=""
@@ -97,7 +99,7 @@ if [ ! -d "$gitFolder" ]; then
 else
 	cd "$gitFolder" || exit
 	oldHead=$(git rev-parse HEAD)
-	git reset --hard "@{u}"
+	#git reset --hard "@{u}"
 	git pull origin master
 	newHead=$(git rev-parse HEAD)
 
@@ -349,25 +351,26 @@ fi
 
 cd "$LOCALBUILDDIR" || exit
 
-if [ -f "$LOCALDESTDIR/lib/libSDL2.a" ]; then
-	echo -------------------------------------------------
-	echo "SDL2-2.0.7 is already compiled"
-	echo -------------------------------------------------
-	else
-		echo -ne "\033]0;compile SDL\007"
+if [[ -n "$opengl" ]]; then
+	if [ -f "$LOCALDESTDIR/lib/libSDL2.a" ]; then
+		echo -------------------------------------------------
+		echo "SDL2-2.0.7 is already compiled"
+		echo -------------------------------------------------
+		else
+			echo -ne "\033]0;compile SDL\007"
 
-		do_wget "https://www.libsdl.org/release/SDL2-2.0.7.tar.gz"
+			do_wget "https://www.libsdl.org/release/SDL2-2.0.7.tar.gz"
 
-    ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --disable-video-x11
+	    ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --disable-video-x11
 
-		make -j "$cpuCount"
-		make install
+			make -j "$cpuCount"
+			make install
 
-		do_checkIfExist SDL2-2.0.7 libSDL2.a
+			do_checkIfExist SDL2-2.0.7 libSDL2.a
 
-    unset CFLAGS
+	    unset CFLAGS
+	fi
 fi
-
 cd "$LOCALBUILDDIR" || exit
 
 if [ -f "$LOCALDESTDIR/lib/libpng.a" ]; then
@@ -852,7 +855,7 @@ if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f "$LOCALDE
 		make distclean
 	fi
 
-	./configure $arch --prefix="$LOCALDESTDIR" --disable-debug --disable-shared --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib --enable-opengl $libbluray $fontconfig $libfreetype $libass $libtwolame $libmp3lame $libsoxr $libopus $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $libogg $osFlag --extra-libs="-lxml2 -llzma -lstdc++ -lpng -lm -lexpat $osLibs" pkg_config='pkg-config --static'
+	./configure $arch --prefix="$LOCALDESTDIR" --disable-debug --disable-shared --disable-ffserver --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opengl $libbluray $fontconfig $libfreetype $libass $libtwolame $libmp3lame $libsoxr $libopus $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $libogg $osFlag --extra-libs="-lxml2 -llzma -lstdc++ -lpng -lm -lexpat $osLibs" pkg_config='pkg-config --static'
 
 	make -j "$cpuCount"
 	make install
