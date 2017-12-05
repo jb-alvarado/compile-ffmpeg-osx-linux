@@ -105,7 +105,7 @@ if [ ! -d "$gitFolder" ]; then
 else
 	cd "$gitFolder" || exit
 	oldHead=$(git rev-parse HEAD)
-	#git reset --hard "@{u}"
+	git reset --hard "@{u}"
 	git pull origin master
 	newHead=$(git rev-parse HEAD)
 
