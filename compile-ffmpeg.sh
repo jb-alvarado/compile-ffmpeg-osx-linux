@@ -888,7 +888,7 @@ if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f "$LOCALDE
 		rm -f "$LOCALDESTDIR/lib/pkgconfig/libavformat.pc"
 	fi
 
-	if [ -f "config.mak" ]; then
+	if [ -f "ffbuild/config.mak" ]; then
 		make distclean
 	fi
 
