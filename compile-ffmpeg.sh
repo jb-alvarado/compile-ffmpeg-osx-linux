@@ -16,6 +16,7 @@ nonfree=""
 libfdk_aac=""
 decklink=""
 opengl=""
+zimg=""
 
 mediainfo=""
 mp4box=""
@@ -40,6 +41,7 @@ nonfree="--enable-nonfree"
 libfdk_aac="--enable-libfdk-aac"
 decklink="--enable-decklink"
 #opengl="--enable-opengl"
+zimg="--enable-libzimg"
 mediainfo="yes"
 mp4box="yes"
 
@@ -415,6 +417,32 @@ if [ -f "$LOCALDESTDIR/lib/libxml2.a" ]; then
 		do_checkIfExist libxml2-2.9.7 libxml2.a
 fi
 
+cd "$LOCALBUILDDIR" || exit
+
+if [[ -n "$zimg" ]]; then
+	do_git "https://github.com/sekrit-twc/zimg.git" zimg-git
+
+	if [[ $compile == "true" ]]; then
+		if [[ ! -f ./configure ]]; then
+			./autogen.sh
+		else
+			make uninstall
+			make clean
+		fi
+
+		./configure --prefix="$LOCALDESTDIR" --enable-shared=no
+
+		make -j "$cpuCount"
+		make install
+
+		do_checkIfExist zimg-git libzimg.a
+	else
+		echo -------------------------------------------------
+		echo "zimg is already up to date"
+		echo -------------------------------------------------
+	fi
+fi
+
 echo "-------------------------------------------------------------------------------"
 echo
 echo "compile global tools done..."
@@ -431,19 +459,19 @@ echo "--------------------------------------------------------------------------
 if [[ -n "$libmp3lame" ]]; then
 	if [ -f "$LOCALDESTDIR/lib/libmp3lame.a" ]; then
 		echo -------------------------------------------------
-		echo "lame-3.99.5 is already compiled"
+		echo "lame-3.100 is already compiled"
 		echo -------------------------------------------------
 		else
 			echo -ne "\033]0;compile lame\007"
 
-			do_wget "http://sourceforge.net/projects/lame/files/lame/3.99/lame-3.99.5.tar.gz/download" lame-3.99.5.tar.gz
+			do_wget "https://downloads.sourceforge.net/project/lame/lame/3.100/lame-3.100.tar.gz" lame-3.100.tar.gz
 
 			./configure --prefix="$LOCALDESTDIR" --enable-expopt=full --enable-shared=no
 
 			make -j "$cpuCount"
 			make install
 
-			do_checkIfExist lame-3.99.5 libmp3lame.a
+			do_checkIfExist lame-3.100 libmp3lame.a
 	fi
 fi
 
@@ -864,7 +892,7 @@ if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f "$LOCALDE
 		make distclean
 	fi
 
-	./configure $arch --prefix="$LOCALDESTDIR" --disable-debug --disable-shared --disable-ffserver --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opengl $libbluray $fontconfig $libfreetype $libass $libtwolame $libmp3lame $libsoxr $libopus $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $libogg $osFlag --extra-libs="-lxml2 -llzma -lstdc++ -lpng -lm -lexpat $osLibs" pkg_config='pkg-config --static'
+	./configure $arch --prefix="$LOCALDESTDIR" --disable-debug --disable-shared --disable-ffserver --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opengl $zimg $libbluray $fontconfig $libfreetype $libass $libtwolame $libmp3lame $libsoxr $libopus $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $libogg $osFlag --extra-libs="-lxml2 -llzma -lstdc++ -lpng -lm -lexpat $osLibs" pkg_config='pkg-config --static'
 
 	make -j "$cpuCount"
 	make install
