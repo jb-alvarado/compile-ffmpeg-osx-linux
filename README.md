@@ -3,7 +3,7 @@ Build script for compiling ffmpeg under OSX and linux (ubuntu/debian)
 
 For OSX is needed: Xcode, homebrew with installed: cmake, mercurial, git, wget, curl, pkg-config, nasm, and maybe some more (autogen etc.)
 
-For Linux (ubuntu/debian) is needed: sudo apt-get -y --force-yes install autoconf automake build-essential libtool pkg-config texi2html zlib1g-dev yasm cmake curl mercurial git wget gperf liblzma-dev libsdl2-dev (dedian needs sudo for install nasm to /usr/local/bin/)
+For Linux (ubuntu/debian) is needed: sudo apt-get -y --force-yes install autoconf automake build-essential libtool pkg-config texi2html zlib1g-dev yasm cmake curl mercurial git wget gperf liblzma-dev libexpat-dev libsdl2-dev (dedian needs sudo for install nasm to /usr/local/bin/)
 
 Warning: the ffmpeg version is "nonfree", you are not allow to redistribute or share this version!
 
