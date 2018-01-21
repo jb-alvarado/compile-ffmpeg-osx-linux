@@ -375,7 +375,7 @@ EOT
             make distclean
         fi
 
-        ./configure --prefix=$LOCALDESTDIR --enable-shared --disable-debug --disable-ffserver --disable-doc \
+        ./configure --prefix=$LOCALDESTDIR --enable-shared --disable-debug --disable-doc \
         --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter \
         --enable-nonfree --enable-decklink --enable-opengl \
         --enable-libzimg --enable-libfdk-aac \
