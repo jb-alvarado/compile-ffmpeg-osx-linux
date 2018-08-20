@@ -36,14 +36,14 @@ libmp3lame="--enable-libmp3lame"
 #libopus="--enable-libopus"
 #libvpx="--enable-libvpx"
 libx264="--enable-libx264"
-libx265="--enable-libx265"
+#libx265="--enable-libx265"
 nonfree="--enable-nonfree"
 libfdk_aac="--enable-libfdk-aac"
 decklink="--enable-decklink"
 opengl="--enable-opengl"
-zimg="--enable-libzimg"
-mediainfo="yes"
-mp4box="yes"
+#zimg="--enable-libzimg"
+#mediainfo="yes"
+#mp4box="yes"
 
 # --------------------------------------------------
 

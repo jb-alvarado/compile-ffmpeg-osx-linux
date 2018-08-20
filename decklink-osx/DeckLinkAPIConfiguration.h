@@ -1,5 +1,5 @@
 /* -LICENSE-START-
-** Copyright (c) 2016 Blackmagic Design
+** Copyright (c) 2018 Blackmagic Design
 **
 ** Permission is hereby granted, free of charge, to any person or organization
 ** obtaining a copy of the software and accompanying documentation covered by
@@ -35,6 +35,10 @@
     #else
         #define BMD_CONST static const
     #endif
+#endif
+
+#ifndef BMD_PUBLIC
+	#define BMD_PUBLIC
 #endif
 
 // Type Declarations
@@ -74,6 +78,8 @@ enum _BMDDeckLinkConfigurationID {
     bmdDeckLinkConfigLowLatencyVideoOutput                       = 'llvo',
     bmdDeckLinkConfigDownConversionOnAllAnalogOutput             = 'caao',
     bmdDeckLinkConfigSMPTELevelAOutput                           = 'smta',
+    bmdDeckLinkConfigRec2020Output                               = 'rec2',	// Ensure output is Rec.2020 colorspace
+    bmdDeckLinkConfigQuadLinkSDIVideoOutputSquareDivisionSplit   = 'SDQS',
 
     /* Video Output Flags */
 
@@ -210,7 +216,7 @@ class IDeckLinkEncoderConfiguration;
 
 /* Interface IDeckLinkConfiguration - DeckLink Configuration interface */
 
-class IDeckLinkConfiguration : public IUnknown
+class BMD_PUBLIC IDeckLinkConfiguration : public IUnknown
 {
 public:
     virtual HRESULT SetFlag (/* in */ BMDDeckLinkConfigurationID cfgID, /* in */ bool value) = 0;
@@ -229,7 +235,7 @@ protected:
 
 /* Interface IDeckLinkEncoderConfiguration - DeckLink Encoder Configuration interface. Obtained from IDeckLinkEncoderInput */
 
-class IDeckLinkEncoderConfiguration : public IUnknown
+class BMD_PUBLIC IDeckLinkEncoderConfiguration : public IUnknown
 {
 public:
     virtual HRESULT SetFlag (/* in */ BMDDeckLinkEncoderConfigurationID cfgID, /* in */ bool value) = 0;
