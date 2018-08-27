@@ -7,6 +7,7 @@ libass=""
 libtwolame=""
 libmp3lame=""
 libogg=""
+libsrt=""
 libsoxr=""
 libopus=""
 libvpx=""
@@ -32,18 +33,19 @@ mp4box=""
 #libtwolame="--enable-libtwolame --extra-cflags=-DLIBTWOLAME_STATIC"
 libmp3lame="--enable-libmp3lame"
 #libogg="--enable-libogg"
+libsrt="--enable-libsrt"
 #libsoxr="--enable-libsoxr"
 #libopus="--enable-libopus"
-#libvpx="--enable-libvpx"
+libvpx="--enable-libvpx"
 libx264="--enable-libx264"
-#libx265="--enable-libx265"
+libx265="--enable-libx265"
 nonfree="--enable-nonfree"
 libfdk_aac="--enable-libfdk-aac"
 decklink="--enable-decklink"
 opengl="--enable-opengl"
-#zimg="--enable-libzimg"
-#mediainfo="yes"
-#mp4box="yes"
+zimg="--enable-libzimg"
+mediainfo="yes"
+mp4box="yes"
 
 # --------------------------------------------------
 
@@ -439,6 +441,26 @@ if [[ -n "$zimg" ]]; then
 	else
 		echo -------------------------------------------------
 		echo "zimg is already up to date"
+		echo -------------------------------------------------
+	fi
+fi
+
+if [[ -n "$libsrt" ]]; then
+	do_git "https://github.com/Haivision/srt.git" srt-git
+
+	if [[ $compile == "true" ]]; then
+		mkdir build
+		cd build || exit
+
+		cmake .. -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DENABLE_SHARED:BOOLEAN=OFF -DCMAKE_CXX_FLAGS_RELEASE:STRING="-O3 -DNDEBUG $CXXFLAGS"
+
+		make -j "$cpuCount"
+		make install
+
+		do_checkIfExist srt-git libsrt.a
+	else
+		echo -------------------------------------------------
+		echo "libsrt is already up to date"
 		echo -------------------------------------------------
 	fi
 fi
@@ -892,7 +914,7 @@ if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f "$LOCALDE
 		make distclean
 	fi
 
-	./configure $arch --prefix="$LOCALDESTDIR" --disable-debug --disable-shared --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opengl $zimg $libbluray $fontconfig $libfreetype $libass $libtwolame $libmp3lame $libsoxr $libopus $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $libogg $osFlag --extra-libs="-lxml2 -llzma -lstdc++ -lpng -lm -lexpat $osLibs" pkg_config='pkg-config --static'
+	./configure $arch --prefix="$LOCALDESTDIR" --disable-debug --disable-shared --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opengl $zimg $libbluray $fontconfig $libfreetype $libass $libtwolame $libmp3lame $libsrt $libsoxr $libopus $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $libogg $osFlag --extra-libs="-lxml2 -llzma -lstdc++ -lpng -lm -lexpat $osLibs" pkg_config='pkg-config --static'
 
 	make -j "$cpuCount"
 	make install
