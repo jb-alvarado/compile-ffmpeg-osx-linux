@@ -46,8 +46,8 @@ libfdk_aac="--enable-libfdk-aac"
 decklink="--enable-decklink"
 opengl="--enable-opengl"
 zimg="--enable-libzimg"
-mediainfo="yes"
-mp4box="yes"
+#mediainfo="yes"
+#mp4box="yes"
 
 ffmpeg_shared="yes"
 
@@ -63,6 +63,7 @@ if [[ "$system" == "Darwin" ]]; then
 	osFlag=""
 	osLibs="-liconv"
 	arch="--arch=x86_64"
+	alias sed=gsed
 else
 	osExtra=""
 	osString="nix"
@@ -83,7 +84,7 @@ export LOCALBUILDDIR LOCALDESTDIR
 PKG_CONFIG_PATH="${LOCALDESTDIR}/lib/pkgconfig"
 CPPFLAGS="-I${LOCALDESTDIR}/include"
 CFLAGS="-I${LOCALDESTDIR}/include -mtune=generic -O2 $osExtra"
-CXXFLAGS="${CFLAGS} -stdlib=libc++"
+CXXFLAGS="${CFLAGS}"
 LDFLAGS="-L${LOCALDESTDIR}/lib -pipe $osExtra"
 export PKG_CONFIG_PATH CPPFLAGS CFLAGS CXXFLAGS LDFLAGS
 
@@ -283,6 +284,25 @@ else
     echo -------------------------------------------------
 fi
 
+cd $LOCALBUILDDIR
+
+if [ -f "$LOCALDESTDIR/lib/libssl.a" ]; then
+	echo -------------------------------------------------
+	echo "openssl-1.0.2p is already compiled"
+	echo -------------------------------------------------
+	else
+		echo -ne "\033]0;compile openssl 64Bit\007"
+
+		do_wget "https://www.openssl.org/source/openssl-1.0.2p.tar.gz"
+
+		./Configure --prefix=$LOCALDESTDIR linux-x86_64 no-shared zlib enable-camellia enable-idea enable-mdc2 enable-tlsext enable-rfc3779
+
+		make depend all
+		make install
+
+		do_checkIfExist openssl-1.0.2p libssl.a
+fi
+
 cd "$LOCALBUILDDIR" || exit
 
 if [[ -n "$fontconfig" ]]; then
@@ -445,7 +465,7 @@ if [[ -n "$zimg" ]]; then
 
 		do_checkIfExist zimg-git libzimg.a
 
-		gsed -ri "s/(Libs:.*)/\1 -lstdc++/g" "$LOCALDESTDIR/lib/pkgconfig/zimg.pc"
+		sed -ri "s/(Libs:.*)/\1 -lstdc++/g" "$LOCALDESTDIR/lib/pkgconfig/zimg.pc"
 	else
 		echo -------------------------------------------------
 		echo "zimg is already up to date"
@@ -468,12 +488,12 @@ if [[ -n "$libsrt" ]]; then
 			ssl_root="/usr/"
 		fi
 
-		cmake .. -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DENABLE_SHARED:BOOLEAN=OFF -DUSE_STATIC_LIBSTDCXX:BOOLEAN=ON -DOPENSSL_ROOT_DIR="$(brew --prefix openssl)"
+		cmake .. -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DENABLE_SHARED:BOOLEAN=OFF -DUSE_STATIC_LIBSTDCXX:BOOLEAN=ON -DENABLE_CXX11:BOOLEAN=OFF
 
 		make -j "$cpuCount"
 		make install
 
-		# gsed -ri "s/(Libs.private.*)/\1 -lstdc++/g" "$LOCALDESTDIR/lib/pkgconfig/haisrt.pc"
+		# sed -ri "s/(Libs.private.*)/\1 -lstdc++/g" "$LOCALDESTDIR/lib/pkgconfig/haisrt.pc"
 
 		do_checkIfExist srt-git libsrt.a
 	else
@@ -885,7 +905,7 @@ if [[ -n "$libx265" ]]; then
 		make install
 
 		do_checkIfExist x265-git libx265.a
-		gsed -ri "s/(Libs:.*)/\1 -lc++/g" "$LOCALDESTDIR/lib/pkgconfig/x265.pc"
+		sed -ri "s/(Libs:.*)/\1 -lc++/g" "$LOCALDESTDIR/lib/pkgconfig/x265.pc"
 
 		buildFFmpeg="true"
 	else
