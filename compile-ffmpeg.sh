@@ -22,6 +22,8 @@ zimg=""
 mediainfo=""
 mp4box=""
 
+ffmpeg_shared=""
+
 # --------------------------------------------------
 # --------------------------------------------------
 # enable / disable library:
@@ -46,6 +48,8 @@ opengl="--enable-opengl"
 zimg="--enable-libzimg"
 mediainfo="yes"
 mp4box="yes"
+
+ffmpeg_shared="yes"
 
 # --------------------------------------------------
 
@@ -79,7 +83,7 @@ export LOCALBUILDDIR LOCALDESTDIR
 PKG_CONFIG_PATH="${LOCALDESTDIR}/lib/pkgconfig"
 CPPFLAGS="-I${LOCALDESTDIR}/include"
 CFLAGS="-I${LOCALDESTDIR}/include -mtune=generic -O2 $osExtra"
-CXXFLAGS="${CFLAGS}"
+CXXFLAGS="${CFLAGS} -stdlib=libc++"
 LDFLAGS="-L${LOCALDESTDIR}/lib -pipe $osExtra"
 export PKG_CONFIG_PATH CPPFLAGS CFLAGS CXXFLAGS LDFLAGS
 
@@ -279,6 +283,8 @@ else
     echo -------------------------------------------------
 fi
 
+cd "$LOCALBUILDDIR" || exit
+
 if [[ -n "$fontconfig" ]]; then
 	if [ -f "$LOCALDESTDIR/lib/libexpat.a" ]; then
 		echo -------------------------------------------------
@@ -364,19 +370,19 @@ cd "$LOCALBUILDDIR" || exit
 if [[ -n "$opengl" ]]; then
 	if [ -f "$LOCALDESTDIR/lib/libSDL2.a" ]; then
 		echo -------------------------------------------------
-		echo "SDL2-2.0.7 is already compiled"
+		echo "SDL2-2.0.8 is already compiled"
 		echo -------------------------------------------------
 		else
 			echo -ne "\033]0;compile SDL\007"
 
-			do_wget "https://www.libsdl.org/release/SDL2-2.0.7.tar.gz"
+			do_wget "https://www.libsdl.org/release/SDL2-2.0.8.tar.gz"
 
-	    ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --disable-video-x11
+	    ./configure --prefix="$LOCALDESTDIR" --disable-video-x11 --enable-shared=no
 
 			make -j "$cpuCount"
 			make install
 
-			do_checkIfExist SDL2-2.0.7 libSDL2.a
+			do_checkIfExist SDL2-2.0.8 libSDL2.a
 
 	    unset CFLAGS
 	fi
@@ -438,12 +444,16 @@ if [[ -n "$zimg" ]]; then
 		make install
 
 		do_checkIfExist zimg-git libzimg.a
+
+		gsed -ri "s/(Libs:.*)/\1 -lstdc++/g" "$LOCALDESTDIR/lib/pkgconfig/zimg.pc"
 	else
 		echo -------------------------------------------------
 		echo "zimg is already up to date"
 		echo -------------------------------------------------
 	fi
 fi
+
+cd "$LOCALBUILDDIR" || exit
 
 if [[ -n "$libsrt" ]]; then
 	do_git "https://github.com/Haivision/srt.git" srt-git
@@ -452,15 +462,23 @@ if [[ -n "$libsrt" ]]; then
 		mkdir build
 		cd build || exit
 
-		cmake .. -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DENABLE_SHARED:BOOLEAN=OFF -DCMAKE_CXX_FLAGS_RELEASE:STRING="-O3 -DNDEBUG $CXXFLAGS"
+		if [[ "$system" == "Darwin" ]]; then
+			ssl_root=$(brew --prefix openssl)
+		else
+			ssl_root="/usr/"
+		fi
+
+		cmake .. -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DENABLE_SHARED:BOOLEAN=OFF -DUSE_STATIC_LIBSTDCXX:BOOLEAN=ON -DOPENSSL_ROOT_DIR="$(brew --prefix openssl)"
 
 		make -j "$cpuCount"
 		make install
 
+		# gsed -ri "s/(Libs.private.*)/\1 -lstdc++/g" "$LOCALDESTDIR/lib/pkgconfig/haisrt.pc"
+
 		do_checkIfExist srt-git libsrt.a
 	else
 		echo -------------------------------------------------
-		echo "libsrt is already up to date"
+		echo "srt is already up to date"
 		echo -------------------------------------------------
 	fi
 fi
@@ -867,6 +885,8 @@ if [[ -n "$libx265" ]]; then
 		make install
 
 		do_checkIfExist x265-git libx265.a
+		gsed -ri "s/(Libs:.*)/\1 -lc++/g" "$LOCALDESTDIR/lib/pkgconfig/x265.pc"
+
 		buildFFmpeg="true"
 	else
 		echo -------------------------------------------------
@@ -883,44 +903,64 @@ echo "--------------------------------------------------------------------------
 do_git "https://github.com/FFmpeg/FFmpeg.git" ffmpeg-git
 
 if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f "$LOCALDESTDIR/bin/ffmpeg" ]]; then
-	if [ -f "$LOCALDESTDIR/lib/libavcodec.a" ]; then
-		rm -rf "$LOCALDESTDIR/include/libavutil"
-		rm -rf "$LOCALDESTDIR/include/libavcodec"
-		rm -rf "$LOCALDESTDIR/include/libpostproc"
-		rm -rf "$LOCALDESTDIR/include/libswresample"
-		rm -rf "$LOCALDESTDIR/include/libswscale"
-		rm -rf "$LOCALDESTDIR/include/libavdevice"
-		rm -rf "$LOCALDESTDIR/include/libavfilter"
-		rm -rf "$LOCALDESTDIR/include/libavformat"
-		rm -f "$LOCALDESTDIR/lib/libavutil.a"
-		rm -f "$LOCALDESTDIR/lib/libswresample.a"
-		rm -f "$LOCALDESTDIR/lib/libswscale.a"
-		rm -f "$LOCALDESTDIR/lib/libavcodec.a"
-		rm -f "$LOCALDESTDIR/lib/libavdevice.a"
-		rm -f "$LOCALDESTDIR/lib/libavfilter.a"
-		rm -f "$LOCALDESTDIR/lib/libavformat.a"
-		rm -f "$LOCALDESTDIR/lib/libpostproc.a"
-		rm -f "$LOCALDESTDIR/lib/pkgconfig/libavcodec.pc"
-		rm -f "$LOCALDESTDIR/lib/pkgconfig/libavutil.pc"
-		rm -f "$LOCALDESTDIR/lib/pkgconfig/libpostproc.pc"
-		rm -f "$LOCALDESTDIR/lib/pkgconfig/libswresample.pc"
-		rm -f "$LOCALDESTDIR/lib/pkgconfig/libswscale.pc"
-		rm -f "$LOCALDESTDIR/lib/pkgconfig/libavdevice.pc"
-		rm -f "$LOCALDESTDIR/lib/pkgconfig/libavfilter.pc"
-		rm -f "$LOCALDESTDIR/lib/pkgconfig/libavformat.pc"
+	if [[ "$ffmpeg_shared" == "yes" ]]; then
+		#  && [[ ! -d "$LOCALDESTDIR/bin/ffmpeg_shared" ]]
+		rm -rf "$LOCALDESTDIR/bin/ffmpeg_shared"
+		static_share="--enable-shared"
+		pkg_extra=""
+		prefix_extra="$LOCALDESTDIR/bin/ffmpeg_shared"
+		mkdir "$prefix_extra"
+	else
+		static_share="--disable-shared"
+		pkg_extra='pkg-config --static'
+		prefix_extra="$LOCALDESTDIR"
+
+		if [ -f "$LOCALDESTDIR/lib/libavcodec.a" ]; then
+			rm -rf "$LOCALDESTDIR/include/libavutil"
+			rm -rf "$LOCALDESTDIR/include/libavcodec"
+			rm -rf "$LOCALDESTDIR/include/libpostproc"
+			rm -rf "$LOCALDESTDIR/include/libswresample"
+			rm -rf "$LOCALDESTDIR/include/libswscale"
+			rm -rf "$LOCALDESTDIR/include/libavdevice"
+			rm -rf "$LOCALDESTDIR/include/libavfilter"
+			rm -rf "$LOCALDESTDIR/include/libavformat"
+			rm -f "$LOCALDESTDIR/lib/libavutil.a"
+			rm -f "$LOCALDESTDIR/lib/libswresample.a"
+			rm -f "$LOCALDESTDIR/lib/libswscale.a"
+			rm -f "$LOCALDESTDIR/lib/libavcodec.a"
+			rm -f "$LOCALDESTDIR/lib/libavdevice.a"
+			rm -f "$LOCALDESTDIR/lib/libavfilter.a"
+			rm -f "$LOCALDESTDIR/lib/libavformat.a"
+			rm -f "$LOCALDESTDIR/lib/libpostproc.a"
+			rm -f "$LOCALDESTDIR/lib/pkgconfig/libavcodec.pc"
+			rm -f "$LOCALDESTDIR/lib/pkgconfig/libavutil.pc"
+			rm -f "$LOCALDESTDIR/lib/pkgconfig/libpostproc.pc"
+			rm -f "$LOCALDESTDIR/lib/pkgconfig/libswresample.pc"
+			rm -f "$LOCALDESTDIR/lib/pkgconfig/libswscale.pc"
+			rm -f "$LOCALDESTDIR/lib/pkgconfig/libavdevice.pc"
+			rm -f "$LOCALDESTDIR/lib/pkgconfig/libavfilter.pc"
+			rm -f "$LOCALDESTDIR/lib/pkgconfig/libavformat.pc"
+		fi
 	fi
 
 	if [ -f "ffbuild/config.mak" ]; then
 		make distclean
 	fi
 
-	./configure $arch --prefix="$LOCALDESTDIR" --disable-debug --disable-shared --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opengl $zimg $libbluray $fontconfig $libfreetype $libass $libtwolame $libmp3lame $libsrt $libsoxr $libopus $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $libogg $osFlag --extra-libs="-lxml2 -llzma -lstdc++ -lpng -lm -lexpat $osLibs" pkg_config='pkg-config --static'
+	./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opengl $zimg $libbluray $fontconfig $libfreetype $libass $libtwolame $libmp3lame $libsrt $libsoxr $libopus $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $libogg $osFlag pkg_config="${pkg_extra[@]}"
+
+	# --extra-libs="-lxml2 -llzma -lpng -lm -lexpat $osLibs"
 
 	make -j "$cpuCount"
 	make install
 
 
-	do_checkIfExist ffmpeg-git libavcodec.a
+	if [[ -z "$ffmpeg_shared" ]]; then
+		do_checkIfExist ffmpeg-git libavcodec.a
+	else
+		do_checkIfExist ffmpeg-git "bin/ffmpeg_shared/bin/ffmpeg"
+	fi
+
 else
 	echo -------------------------------------------------
 	echo "ffmpeg is already up to date"
@@ -933,7 +973,7 @@ echo -ne "\033]0;strip binaries\007"
 echo
 echo "-------------------------------------------------------------------------------"
 echo
-FILES=$(find bin -type f -mmin -600 ! \( -name '*-config' -o -name '.DS_Store' -o -name '*.conf' -o -name '*.png' -o -name '*.desktop' \))
+FILES=$(find bin -type f -mmin -600 ! \( -name '*-config' -o -name '.DS_Store' -o -name '*.conf' -o -name '*.png' -o -name '*.desktop' -o -path 'bin/ffmpeg_shared/*' -prune \))
 
 for f in $FILES; do
  strip "$f"
