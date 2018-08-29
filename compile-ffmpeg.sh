@@ -59,7 +59,6 @@ if [[ "$system" == "Darwin" ]]; then
     cpuCount=$( sysctl hw.ncpu | awk '{ print $2 - 1 }' )
     compNasm="no"
     osFlag=""
-    osLibs="-liconv"
     arch="--arch=x86_64"
     alias sed=gsed
 else
@@ -68,7 +67,6 @@ else
     cpuCount=$( nproc | awk '{ print $1 - 1 }' )
     compNasm="yes"
     osFlag="--enable-pic"
-    osLibs="-lpthread"
     arch=""
 fi
 
