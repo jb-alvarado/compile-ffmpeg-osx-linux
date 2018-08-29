@@ -282,7 +282,7 @@ buildProcess() {
         echo -------------------------------------------------
     fi
 
-    cd $LOCALBUILDDIR
+    cd $LOCALBUILDDIR || exit
 
     if [ -f "$LOCALDESTDIR/lib/libssl.a" ]; then
         echo -------------------------------------------------
@@ -392,6 +392,8 @@ buildProcess() {
             do_checkIfExist fribidi-0.19.7 libfribidi.a
         fi
     fi
+
+	cd "$LOCALBUILDDIR" || exit
 
     if [ -f "$LOCALDESTDIR/lib/libpng.a" ]; then
         echo -------------------------------------------------
