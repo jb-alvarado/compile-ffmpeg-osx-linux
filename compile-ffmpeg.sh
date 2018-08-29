@@ -58,16 +58,20 @@ if [[ "$system" == "Darwin" ]]; then
     osString="osx"
     cpuCount=$( sysctl hw.ncpu | awk '{ print $2 - 1 }' )
     compNasm="no"
+    osLib="-liconv"
     osFlag=""
     arch="--arch=x86_64"
+    fpic=""
     alias sed=gsed
 else
     osExtra=""
     osString="nix"
     cpuCount=$( nproc | awk '{ print $1 - 1 }' )
     compNasm="yes"
+    osLib=""
     osFlag="--enable-pic"
     arch=""
+    fpic="-fPIC"
 fi
 
 compile="false"
@@ -79,7 +83,7 @@ export LOCALBUILDDIR LOCALDESTDIR
 
 PKG_CONFIG_PATH="${LOCALDESTDIR}/lib/pkgconfig"
 CPPFLAGS="-I${LOCALDESTDIR}/include"
-CFLAGS="-I${LOCALDESTDIR}/include -mtune=generic -O2 $osExtra"
+CFLAGS="-I${LOCALDESTDIR}/include -mtune=generic -O2 $osExtra $fpic"
 CXXFLAGS="${CFLAGS}"
 LDFLAGS="-L${LOCALDESTDIR}/lib -pipe $osExtra"
 export PKG_CONFIG_PATH CPPFLAGS CFLAGS CXXFLAGS LDFLAGS
@@ -365,7 +369,10 @@ buildProcess() {
 
             do_checkIfExist fontconfig-2.13.0 libfontconfig.a
 
-            sed -ri "s/(Libs\:.*)/\1 -lpng16 -lbz2 -lxml2 -lz -lstdc++ -liconv -llzma -lm -lexpat/g" "$LOCALDESTDIR/lib/pkgconfig/fontconfig.pc"
+            # on linux fontconfig.pc is not copyed
+            [[ ! -f "$LOCALDESTDIR/lib/pkgconfig/fontconfig.pc" ]] && cp fontconfig.pc "$LOCALDESTDIR/lib/pkgconfig/"
+
+            sed -ri "s/(Libs\:.*)/\1 -lpng16 -lbz2 -lxml2 -lz -lstdc++ $osLib -llzma -lm -lexpat -luuid/g" "$LOCALDESTDIR/lib/pkgconfig/fontconfig.pc"
         fi
     fi
 
@@ -466,20 +473,20 @@ buildProcess() {
             mkdir build
             cd build || exit
 
-            if [[ "$system" == "Darwin" ]]; then
-                ssl_root=$(brew --prefix openssl)
-            else
-                ssl_root="/usr/"
-            fi
-
             cmake .. -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DENABLE_SHARED:BOOLEAN=OFF -DUSE_STATIC_LIBSTDCXX:BOOLEAN=ON -DENABLE_CXX11:BOOLEAN=OFF
 
             make -j "$cpuCount"
             make install
 
-            sed -ri "s/(Libs\:.*)/\1 -lstdc++ -lcrypto -lz/g" "$LOCALDESTDIR/lib/pkgconfig/srt.pc"
-
             do_checkIfExist srt-git libsrt.a
+
+            if [[ "$system" == "Darwin" ]]; then
+                extra=""
+            else
+                extra="-lpthread -ldl"
+            fi
+
+            sed -ri "s/(Libs\:.*)/\1 -lstdc++ -lcrypto -lz $extra/g" "$LOCALDESTDIR/lib/pkgconfig/srt.pc"
         else
             echo -------------------------------------------------
             echo "srt is already up to date"
@@ -568,6 +575,32 @@ buildProcess() {
 
     cd "$LOCALBUILDDIR" || exit
 
+    if [[ -n "$libsoxr" ]]; then
+        if [ -f "$LOCALDESTDIR/lib/libsoxr.a" ]; then
+            echo -------------------------------------------------
+            echo "soxr-0.1.3 is already compiled"
+            echo -------------------------------------------------
+        else
+            echo -ne "\033]0;compile soxr-0.1.1\007"
+
+            do_wget "https://downloads.sourceforge.net/project/soxr/soxr-0.1.3-Source.tar.xz"
+
+            mkdir build
+            cd build || exit
+
+
+
+            cmake .. -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DHAVE_WORDS_BIGENDIAN_EXITCODE=0 -DBUILD_SHARED_LIBS:bool=off -DBUILD_TESTS:BOOL=OFF -DWITH_OPENMP:BOOL=OFF -DUNIX:BOOL=on -Wno-dev
+
+            make -j "$cpuCount"
+            make install
+
+            do_checkIfExist soxr-0.1.3-Source libsoxr.a
+        fi
+    fi
+
+    cd "$LOCALBUILDDIR" || exit
+
     if [[ -n "$libopus" ]]; then
         if [ -f "$LOCALDESTDIR/lib/libopus.a" ]; then
             echo -------------------------------------------------
@@ -584,30 +617,6 @@ buildProcess() {
             make install
 
             do_checkIfExist opus-1.2.1 libopus.a
-        fi
-    fi
-
-    cd "$LOCALBUILDDIR" || exit
-
-    if [[ -n "$libsoxr" ]]; then
-        if [ -f "$LOCALDESTDIR/lib/libsoxr.a" ]; then
-            echo -------------------------------------------------
-            echo "soxr-0.1.3 is already compiled"
-            echo -------------------------------------------------
-        else
-            echo -ne "\033]0;compile soxr-0.1.1\007"
-
-            do_wget "https://downloads.sourceforge.net/project/soxr/soxr-0.1.3-Source.tar.xz"
-
-            mkdir build
-            cd build || exit
-
-            cmake .. -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DHAVE_WORDS_BIGENDIAN_EXITCODE=0 -DBUILD_SHARED_LIBS:bool=off -DBUILD_TESTS:BOOL=OFF -DWITH_OPENMP:BOOL=OFF -DUNIX:BOOL=on -Wno-dev
-
-            make -j "$cpuCount"
-            make install
-
-            do_checkIfExist soxr-0.1.3-Source libsoxr.a
         fi
     fi
 
@@ -673,7 +682,7 @@ buildProcess() {
 
             do_checkIfExist libbluray-git libbluray.a
 
-            sed -ri "s/(Libs\:.*)/\1 -lxml2 -lstdc++ -lz -liconv -llzma -lm/g" "$LOCALDESTDIR/lib/pkgconfig/libbluray.pc"
+            sed -ri "s/(Libs\:.*)/\1 -lxml2 -lstdc++ -lz $osLib -llzma -lm -ldl/g" "$LOCALDESTDIR/lib/pkgconfig/libbluray.pc"
         else
             echo -------------------------------------------------
             echo "libbluray-git is already up to date"
@@ -871,7 +880,14 @@ buildProcess() {
             make install
 
             do_checkIfExist x265-git libx265.a
-            sed -ri "s/(Libs\:.*)/\1 -lc++/g" "$LOCALDESTDIR/lib/pkgconfig/x265.pc"
+
+            if [[ "$system" == "Darwin" ]]; then
+                extra="-lc++"
+            else
+                extra="-lstdc++ -lpthread -ldl"
+            fi
+
+            sed -ri "s/(Libs\:.*)/\1 $extra/g" "$LOCALDESTDIR/lib/pkgconfig/x265.pc"
 
             buildFFmpeg="true"
         else
@@ -929,10 +945,11 @@ buildProcess() {
         fi
 
         if [ -f "ffbuild/config.mak" ]; then
+            make uninstall
             make distclean
         fi
 
-        ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opengl $zimg $libbluray $fontconfig $libfreetype $libass $libtwolame $libmp3lame $libsrt $libsoxr $libopus $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $osFlag $pkg_extra
+        ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opengl $zimg $libbluray $fontconfig $libfreetype $libass $libtwolame $libmp3lame $libsrt $libsoxr $libopus $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $osFlag --extra-libs="-lm" $pkg_extra
 
         make -j "$cpuCount"
         make install
