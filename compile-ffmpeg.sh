@@ -888,8 +888,8 @@ buildProcess() {
 
     do_git "https://github.com/FFmpeg/FFmpeg.git" ffmpeg-git
 
-    if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f "$LOCALDESTDIR/bin/ffmpeg" ]]; then
-        if [[ "$ffmpeg_shared" == "yes" ]] && [[ ! -f "$LOCALDESTDIR/bin/ffmpeg_shared/bin/ffmpeg" ]]; then
+    if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f "$LOCALDESTDIR/bin/ffmpeg" ]] && [[ ! -f "$LOCALDESTDIR/bin/ffmpeg_shared/bin/ffmpeg" ]]; then
+        if [[ "$ffmpeg_shared" == "yes" ]]; then
             rm -rf "$LOCALDESTDIR/bin/ffmpeg_shared"
             static_share="--enable-shared"
             pkg_extra=""
