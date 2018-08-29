@@ -383,7 +383,7 @@ buildProcess() {
 
             do_wget "https://github.com/fribidi/fribidi/archive/0.19.7.tar.gz" fribidi-0.19.7.tar.gz
 
-            /bootstrap
+            ./bootstrap
             ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --with-glib=no
 
             make -j "$cpuCount"
