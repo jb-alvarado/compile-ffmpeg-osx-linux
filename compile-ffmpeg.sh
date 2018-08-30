@@ -68,7 +68,7 @@ if [[ "$system" == "Darwin" ]]; then
     osFlag=""
     arch="--arch=x86_64"
     fpic=""
-    alias sed=gsed
+    sd="gsed"
 else
     osExtra=""
     osString="nix"
@@ -78,6 +78,7 @@ else
     osFlag="--enable-pic"
     arch=""
     fpic="-fPIC"
+    sd="sed"
 fi
 
 compile="false"
@@ -291,31 +292,6 @@ buildProcess() {
             echo -------------------------------------------------
         fi
 
-        cd $LOCALBUILDDIR || exit
-
-        if [ -f "$LOCALDESTDIR/lib/libssl.a" ]; then
-            echo -------------------------------------------------
-            echo "openssl-1.0.2p is already compiled"
-            echo -------------------------------------------------
-        else
-            echo -ne "\033]0;compile openssl 64Bit\007"
-
-            if [[ "$system" == "Darwin" ]]; then
-                target="darwin64-x86_64-cc"
-            else
-                target="linux-x86_64"
-            fi
-
-            do_wget "https://www.openssl.org/source/openssl-1.0.2p.tar.gz"
-
-            ./Configure --prefix=$LOCALDESTDIR $target no-shared zlib enable-camellia enable-idea enable-mdc2 enable-tlsext enable-rfc3779
-
-            make depend all
-            make install
-
-            do_checkIfExist openssl-1.0.2p libssl.a
-        fi
-
         cd "$LOCALBUILDDIR" || exit
 
         if [[ -n "$fontconfig" ]]; then
@@ -353,7 +329,7 @@ buildProcess() {
 
                 do_checkIfExist freetype-2.9.1 libfreetype.a
 
-                sed -ri "s/(Libs\:.*)/\1 -lpng16 -lbz2 -lz/g" "$LOCALDESTDIR/lib/pkgconfig/freetype2.pc"
+                $sd -ri "s/(Libs\:.*)/\1 -lpng16 -lbz2 -lz/g" "$LOCALDESTDIR/lib/pkgconfig/freetype2.pc"
             fi
         fi
 
@@ -379,7 +355,7 @@ buildProcess() {
                 # on linux fontconfig.pc is not copyed
                 [[ ! -f "$LOCALDESTDIR/lib/pkgconfig/fontconfig.pc" ]] && cp fontconfig.pc "$LOCALDESTDIR/lib/pkgconfig/"
 
-                sed -ri "s/(Libs\:.*)/\1 -lpng16 -lbz2 -lxml2 -lz -lstdc++ $osLib -llzma -lm -lexpat -luuid/g" "$LOCALDESTDIR/lib/pkgconfig/fontconfig.pc"
+                $sd -ri "s/(Libs\:.*)/\1 -lpng16 -lbz2 -lxml2 -lz -lstdc++ $osLib -llzma -lm -lexpat -luuid/g" "$LOCALDESTDIR/lib/pkgconfig/fontconfig.pc"
             fi
         fi
 
@@ -463,7 +439,7 @@ buildProcess() {
 
                 do_checkIfExist zimg-git libzimg.a
 
-                sed -ri "s/(Libs\:.*)/\1 -lstdc++/g" "$LOCALDESTDIR/lib/pkgconfig/zimg.pc"
+                $sd -ri "s/(Libs\:.*)/\1 -lstdc++/g" "$LOCALDESTDIR/lib/pkgconfig/zimg.pc"
             else
                 echo -------------------------------------------------
                 echo "zimg is already up to date"
@@ -474,6 +450,30 @@ buildProcess() {
         cd "$LOCALBUILDDIR" || exit
 
         if [[ -n "$libsrt" ]]; then
+            if [ -f "$LOCALDESTDIR/lib/libssl.a" ]; then
+                echo -------------------------------------------------
+                echo "openssl-1.0.2p is already compiled"
+                echo -------------------------------------------------
+            else
+                echo -ne "\033]0;compile openssl 64Bit\007"
+
+                if [[ "$system" == "Darwin" ]]; then
+                    target="darwin64-x86_64-cc"
+                else
+                    target="linux-x86_64"
+                fi
+
+                do_wget "https://www.openssl.org/source/openssl-1.0.2p.tar.gz"
+
+                ./Configure --prefix=$LOCALDESTDIR $target no-shared zlib enable-camellia enable-idea enable-mdc2 enable-tlsext enable-rfc3779
+
+                make depend all
+                make install
+
+                do_checkIfExist openssl-1.0.2p libssl.a
+            fi
+            cd $LOCALBUILDDIR || exit
+
             do_git "https://github.com/Haivision/srt.git" srt-git
 
             if [[ $compile == "true" ]]; then
@@ -493,7 +493,7 @@ buildProcess() {
                     extra="-lpthread -ldl"
                 fi
 
-                sed -ri "s/(Libs\:.*)/\1 -lstdc++ -lcrypto -lz $extra/g" "$LOCALDESTDIR/lib/pkgconfig/srt.pc"
+                $sd -ri "s/(Libs\:.*)/\1 -lstdc++ -lcrypto -lz $extra/g" "$LOCALDESTDIR/lib/pkgconfig/srt.pc"
             else
                 echo -------------------------------------------------
                 echo "srt is already up to date"
@@ -689,7 +689,7 @@ buildProcess() {
 
                 do_checkIfExist libbluray-git libbluray.a
 
-                sed -ri "s/(Libs\:.*)/\1 -lxml2 -lstdc++ -lz $osLib -llzma -lm -ldl/g" "$LOCALDESTDIR/lib/pkgconfig/libbluray.pc"
+                $sd -ri "s/(Libs\:.*)/\1 -lxml2 -lstdc++ -lz $osLib -llzma -lm -ldl/g" "$LOCALDESTDIR/lib/pkgconfig/libbluray.pc"
             else
                 echo -------------------------------------------------
                 echo "libbluray-git is already up to date"
@@ -717,7 +717,7 @@ buildProcess() {
                 make -j "$cpuCount"
                 make install
 
-                sed -i 's/-lass -lm/-lass -lfribidi -lm/' "$LOCALDESTDIR/lib/pkgconfig/libass.pc"
+                $sd -i 's/-lass -lm/-lass -lfribidi -lm/' "$LOCALDESTDIR/lib/pkgconfig/libass.pc"
 
                 do_checkIfExist libass-git libass.a
                 buildFFmpeg="true"
@@ -743,9 +743,9 @@ buildProcess() {
                 cp ../../decklink-${osString}/* .
 
                 if [[ $osString == "osx" ]]; then
-                    sed -i '' "s/void	InitDeckLinkAPI (void)/static void	InitDeckLinkAPI (void)/" DeckLinkAPIDispatch.cpp
-                    sed -i '' "s/bool		IsDeckLinkAPIPresent (void)/static bool		IsDeckLinkAPIPresent (void)/" DeckLinkAPIDispatch.cpp
-                    sed -i '' "s/void InitBMDStreamingAPI(void)/static void InitBMDStreamingAPI(void)/" DeckLinkAPIDispatch.cpp
+                    $sd -i '' "s/void	InitDeckLinkAPI (void)/static void	InitDeckLinkAPI (void)/" DeckLinkAPIDispatch.cpp
+                    $sd -i '' "s/bool		IsDeckLinkAPIPresent (void)/static bool		IsDeckLinkAPIPresent (void)/" DeckLinkAPIDispatch.cpp
+                    $sd -i '' "s/void InitBMDStreamingAPI(void)/static void InitBMDStreamingAPI(void)/" DeckLinkAPIDispatch.cpp
                 fi
             fi
         fi
@@ -894,7 +894,7 @@ buildProcess() {
                     extra="-lstdc++ -lpthread -ldl"
                 fi
 
-                sed -ri "s/(Libs\:.*)/\1 $extra/g" "$LOCALDESTDIR/lib/pkgconfig/x265.pc"
+                $sd -ri "s/(Libs\:.*)/\1 $extra/g" "$LOCALDESTDIR/lib/pkgconfig/x265.pc"
 
                 buildFFmpeg="true"
             else
@@ -966,12 +966,14 @@ buildProcess() {
         make -j "$cpuCount"
         make install
 
-
         if [[ -z "$ffmpeg_shared" ]]; then
             do_checkIfExist ffmpeg-git libavcodec.a
         else
             do_checkIfExist ffmpeg-git "bin/ffmpeg_shared/bin/ffmpeg"
         fi
+
+        # when you copy the shared libs to /usr/local/lib
+        # run "sudo ldconfig"
 
     else
         echo -------------------------------------------------
