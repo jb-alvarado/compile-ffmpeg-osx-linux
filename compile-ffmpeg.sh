@@ -46,7 +46,7 @@ libvpx="--enable-libvpx"
 libx264="--enable-libx264"
 libx265="--enable-libx265"
 nonfree="--enable-nonfree"
-libfdk_aac="--enable-libfdk-aac"
+# libfdk_aac="--enable-libfdk-aac"
 decklink="--enable-decklink"
 opengl="--enable-opengl"
 zimg="--enable-libzimg"
@@ -484,6 +484,10 @@ buildProcess() {
 
                 make -j "$cpuCount"
                 make install
+
+                if [[ -d "$LOCALDESTDIR/lib64" ]]; then
+                  cp -R "$LOCALDESTDIR/lib64/*" "$LOCALDESTDIR/lib/"
+                fi
 
                 do_checkIfExist srt-git libsrt.a
 
