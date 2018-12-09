@@ -48,7 +48,7 @@ libx265="--enable-libx265"
 nonfree="--enable-nonfree"
 libfdk_aac="--enable-libfdk-aac"
 decklink="--enable-decklink"
-opengl="--enable-opengl"
+# opengl="--enable-opengl"
 zimg="--enable-libzimg"
 mediainfo="yes"
 mp4box="yes"
@@ -69,6 +69,7 @@ if [[ "$system" == "Darwin" ]]; then
     arch="--arch=x86_64"
     fpic=""
     sd="gsed"
+    extraLibs=""
 else
     osExtra=""
     osString="nix"
@@ -79,6 +80,7 @@ else
     arch=""
     fpic="-fPIC"
     sd="sed"
+    extraLibs="-lpthread"
 fi
 
 compile="false"
@@ -821,7 +823,7 @@ buildProcess() {
                     rm -rf "$LOCALDESTDIR/include/gpac"
                 fi
                 [[ -f config.mak ]] && make distclean
-                ./configure --prefix="$LOCALDESTDIR" --static-mp4box --extra-libs="-lz -lm"
+                ./configure --prefix="$LOCALDESTDIR" --static-mp4box --extra-libs="-lm" --extra-cflags="-I$LOCALDESTDIR/include"
                 make -j "$cpuCount"
                 make install-lib
                 cp bin/gcc/MP4Box "$LOCALDESTDIR/bin/"
@@ -979,11 +981,17 @@ buildProcess() {
             rm -rf "$LOCALDESTDIR/bin/ffmpeg_shared"
             static_share="--enable-shared"
             pkg_extra=""
+            extraCFlags=""
+            extraCxxFlags=""
+            extraLdFlags=""
             prefix_extra="$LOCALDESTDIR/bin/ffmpeg_shared"
             mkdir "$prefix_extra"
         else
             static_share="--disable-shared"
             pkg_extra="--pkg-config-flags=--static"
+            extraCFlags="-static-libstdc++ -static-libgcc"
+            extraCxxFlags="-static-libstdc++ -static-libgcc"
+            extraLdFlags="-static-libstdc++ -static-libgcc"
             prefix_extra="$LOCALDESTDIR"
 
             if [ -f "$LOCALDESTDIR/lib/libavcodec.a" ]; then
@@ -1019,7 +1027,15 @@ buildProcess() {
             make distclean
         fi
 
-        ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opengl $zimg $libbluray $fontconfig $libfreetype $libass $libtwolame $libmp3lame $libsrt $libsoxr $libopus $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $osFlag --extra-libs="-lm -lpthread" $pkg_extra --extra-cflags='-static -static-libstdc++ -static-libgcc' --extra-cxxflags='-static -static-libstdc++ -static-libgcc' --extra-ldflags='-static -static-libstdc++ -static-libgcc'
+        ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opengl $zimg $libbluray $fontconfig $libfreetype $libass $libtwolame $libmp3lame $libsrt $libsoxr $libopus $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $osFlag --extra-libs="-lm $extraLibs" $pkg_extra --extra-cflags="$extraCFlags" --extra-cxxflags="$extraCxxFlags" --extra-ldflags="$extraLdFlags"
+
+        $sd -ri "s/--prefix=[^ ]* //g" config.h
+        $sd -ri "s/ --extra-ldflags='.*'//g" config.h
+        $sd -ri "s/ --extra-cxxflags='.*'//g" config.h
+        $sd -ri "s/ --extra-cflags='.*'//g" config.h
+        $sd -ri "s/ --extra-libs='.*'//g" config.h
+        $sd -ri "s/ --pkg-config-flags=--static//g" config.h
+        $sd -ri "s/ --extra-cflags=-DLIBTWOLAME_STATIC//g" config.h
 
         make -j "$cpuCount"
         make install
