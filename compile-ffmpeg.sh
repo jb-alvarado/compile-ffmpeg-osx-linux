@@ -71,7 +71,7 @@ if [[ "$system" == "Darwin" ]]; then
     sd="gsed"
     extraLibs=""
 else
-    osExtra=""
+    osExtra="-static-libstdc++ -static-libgcc"
     osString="nix"
     cpuCount=$( nproc | awk '{ print $1 - 1 }' )
     compNasm="yes"
@@ -981,17 +981,11 @@ buildProcess() {
             rm -rf "$LOCALDESTDIR/bin/ffmpeg_shared"
             static_share="--enable-shared"
             pkg_extra=""
-            extraCFlags=""
-            extraCxxFlags=""
-            extraLdFlags=""
             prefix_extra="$LOCALDESTDIR/bin/ffmpeg_shared"
             mkdir "$prefix_extra"
         else
             static_share="--disable-shared"
             pkg_extra="--pkg-config-flags=--static"
-            extraCFlags="-static-libstdc++ -static-libgcc"
-            extraCxxFlags="-static-libstdc++ -static-libgcc"
-            extraLdFlags="-static-libstdc++ -static-libgcc"
             prefix_extra="$LOCALDESTDIR"
 
             if [ -f "$LOCALDESTDIR/lib/libavcodec.a" ]; then
@@ -1027,12 +1021,9 @@ buildProcess() {
             make distclean
         fi
 
-        ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opengl $zimg $libbluray $fontconfig $libfreetype $libass $libtwolame $libmp3lame $libsrt $libsoxr $libopus $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $osFlag --extra-libs="-lm $extraLibs" $pkg_extra --extra-cflags="$extraCFlags" --extra-cxxflags="$extraCxxFlags" --extra-ldflags="$extraLdFlags"
+        ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opengl $zimg $libbluray $fontconfig $libfreetype $libass $libtwolame $libmp3lame $libsrt $libsoxr $libopus $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $osFlag --extra-libs="-lm $extraLibs" $pkg_extra
 
         $sd -ri "s/--prefix=[^ ]* //g" config.h
-        $sd -ri "s/ --extra-ldflags='.*'//g" config.h
-        $sd -ri "s/ --extra-cxxflags='.*'//g" config.h
-        $sd -ri "s/ --extra-cflags='.*'//g" config.h
         $sd -ri "s/ --extra-libs='.*'//g" config.h
         $sd -ri "s/ --pkg-config-flags=--static//g" config.h
         $sd -ri "s/ --extra-cflags=-DLIBTWOLAME_STATIC//g" config.h
