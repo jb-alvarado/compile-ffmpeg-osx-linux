@@ -46,14 +46,14 @@ libvpx="--enable-libvpx"
 libx264="--enable-libx264"
 libx265="--enable-libx265"
 nonfree="--enable-nonfree"
-# libfdk_aac="--enable-libfdk-aac"
+libfdk_aac="--enable-libfdk-aac"
 decklink="--enable-decklink"
 opengl="--enable-opengl"
 zimg="--enable-libzimg"
 mediainfo="yes"
 mp4box="yes"
 
-ffmpeg_shared="yes"
+# ffmpeg_shared="yes"
 
 # --------------------------------------------------
 
@@ -294,6 +294,79 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
+        if [ -f "$LOCALDESTDIR/lib/libz.a" ]; then
+            echo -------------------------------------------------
+            echo "zlib-1.2.11 is already compiled"
+            echo -------------------------------------------------
+        else
+            echo -ne "\033]0;compile libz 64Bit\007"
+
+            do_wget "https://zlib.net/zlib-1.2.11.tar.gz"
+
+            ./configure --prefix="$LOCALDESTDIR" --static
+
+            make -j "$cpuCount"
+            make install
+
+            do_checkIfExist zlib-1.2.11 libz.a
+        fi
+
+        cd "$LOCALBUILDDIR" || exit
+
+        if [ -f "$LOCALDESTDIR/lib/libbz2.a" ]; then
+            echo -------------------------------------------------
+            echo "bzip2-1.0.6 is already compiled"
+            echo -------------------------------------------------
+        else
+            echo -ne "\033]0;compile bzip2 64Bit\007"
+
+            do_wget "http://distfiles.gentoo.org/distfiles/bzip2-1.0.6.tar.gz"
+
+            make install PREFIX="$LOCALDESTDIR"
+
+            do_checkIfExist bzip2-1.0.6 libbz2.a
+        fi
+
+        cd "$LOCALBUILDDIR" || exit
+
+        if [ -f "$LOCALDESTDIR/lib/liblzma.a" ]; then
+            echo -------------------------------------------------
+            echo "xz-5.2.4 is already compiled"
+            echo -------------------------------------------------
+        else
+            echo -ne "\033]0;compile xz 64Bit\007"
+
+            do_wget "https://tukaani.org/xz/xz-5.2.4.tar.gz"
+
+            ./configure --prefix="$LOCALDESTDIR" --disable-shared
+
+            make -j "$cpuCount"
+            make install
+
+            do_checkIfExist xz-5.2.4 liblzma.a
+        fi
+
+    	cd "$LOCALBUILDDIR" || exit
+
+        if [ -f "$LOCALDESTDIR/lib/libpng.a" ]; then
+            echo -------------------------------------------------
+            echo "libpng-1.6.36 is already compiled"
+            echo -------------------------------------------------
+        else
+            echo -ne "\033]0;compile libpng 64Bit\007"
+
+            do_wget "https://downloads.sourceforge.net/project/libpng/libpng16/1.6.36/libpng-1.6.36.tar.gz"
+
+            ./configure --prefix="$LOCALDESTDIR" --disable-shared
+
+            make -j "$cpuCount"
+            make install
+
+            do_checkIfExist libpng-1.6.36 libpng.a
+        fi
+
+        cd "$LOCALBUILDDIR" || exit
+
         if [[ -n "$fontconfig" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libexpat.a" ]; then
                 echo -------------------------------------------------
@@ -381,25 +454,6 @@ buildProcess() {
             fi
         fi
 
-    	cd "$LOCALBUILDDIR" || exit
-
-        if [ -f "$LOCALDESTDIR/lib/libpng.a" ]; then
-            echo -------------------------------------------------
-            echo "libpng-1.6.35 is already compiled"
-            echo -------------------------------------------------
-        else
-            echo -ne "\033]0;compile libpng 64Bit\007"
-
-            do_wget "https://downloads.sourceforge.net/project/libpng/libpng16/1.6.35/libpng-1.6.35.tar.gz"
-
-            ./configure --prefix="$LOCALDESTDIR" --disable-shared
-
-            make -j "$cpuCount"
-            make install
-
-            do_checkIfExist libpng-1.6.35 libpng.a
-        fi
-
         cd "$LOCALBUILDDIR" || exit
 
         if [ -f "$LOCALDESTDIR/lib/libxml2.a" ]; then
@@ -452,7 +506,7 @@ buildProcess() {
         if [[ -n "$libsrt" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libssl.a" ]; then
                 echo -------------------------------------------------
-                echo "openssl-1.0.2p is already compiled"
+                echo "openssl-1.0.2q is already compiled"
                 echo -------------------------------------------------
             else
                 echo -ne "\033]0;compile openssl 64Bit\007"
@@ -463,14 +517,14 @@ buildProcess() {
                     target="linux-x86_64"
                 fi
 
-                do_wget "https://www.openssl.org/source/openssl-1.0.2p.tar.gz"
+                do_wget "https://www.openssl.org/source/openssl-1.0.2q.tar.gz"
 
-                ./Configure --prefix=$LOCALDESTDIR $target no-shared zlib enable-camellia enable-idea enable-mdc2 enable-tlsext enable-rfc3779
+                ./Configure --prefix=$LOCALDESTDIR $target no-shared enable-camellia enable-idea enable-mdc2 enable-tlsext enable-rfc3779
 
                 make depend all
                 make install
 
-                do_checkIfExist openssl-1.0.2p libssl.a
+                do_checkIfExist openssl-1.0.2q libssl.a
             fi
             cd $LOCALBUILDDIR || exit
 
