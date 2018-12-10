@@ -29,6 +29,7 @@ mediainfo=""
 mp4box=""
 
 ffmpeg_shared=""
+ffmpeg_branch="" #ffmpeg_branch="n4.1"
 
 # --------------------------------------------------
 # --------------------------------------------------
@@ -113,10 +114,13 @@ do_git() {
     local gitURL="$1"
     local gitFolder="$2"
     local gitDepth="$3"
+    local gitBranch="$4"
     echo -ne "\033]0;compile $gitFolder\007"
     if [ ! -d "$gitFolder" ]; then
         if [[ $gitDepth == "noDepth" ]]; then
             git clone "$gitURL" "$gitFolder"
+        elif [[ $gitBranch != "" ]]; then
+            git clone --depth 1 --single-branch -b $gitBranch "$gitURL" "$gitFolder"
         else
             git clone --depth 1 "$gitURL" "$gitFolder"
         fi
@@ -793,7 +797,7 @@ buildProcess() {
         cd "$LOCALBUILDDIR" || exit
 
         if [[ -n "$libbluray" ]]; then
-            do_git "git://git.videolan.org/libbluray.git" libbluray-git
+            do_git "https://code.videolan.org/videolan/libbluray" libbluray-git
 
             if [[ $compile == "true" ]]; then
 
@@ -962,7 +966,7 @@ buildProcess() {
         cd "$LOCALBUILDDIR" || exit
 
         if [[ -n "$libx264" ]]; then
-            do_git "git://git.videolan.org/x264.git" x264-git noDepth
+            do_git "https://git.videolan.org/git/x264" x264-git noDepth
 
             if [[ $compile == "true" ]]; then
                 echo -ne "\033]0;compile x264-git\007"
@@ -1037,7 +1041,7 @@ buildProcess() {
     echo "compile ffmpeg"
     echo "-------------------------------------------------------------------------------"
 
-    do_git "https://github.com/FFmpeg/FFmpeg.git" ffmpeg-git
+    do_git "https://github.com/FFmpeg/FFmpeg.git" ffmpeg-git "" $ffmpeg_branch
 
     if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f "$LOCALDESTDIR/bin/ffmpeg" ]] && [[ ! -f "$LOCALDESTDIR/bin/ffmpeg_shared/bin/ffmpeg" ]]; then
         if [[ "$ffmpeg_shared" == "yes" ]]; then
