@@ -298,21 +298,40 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [ -f "$LOCALDESTDIR/lib/libuuid.a" ]; then
-            echo -------------------------------------------------
-            echo "libuuid-1.0.3 is already compiled"
-            echo -------------------------------------------------
+        if [[ "$system" == "Darwin" ]]; then
+            if [ -f "$LOCALDESTDIR/lib/libuuid.a" ]; then
+                echo -------------------------------------------------
+                echo "uuid-1.6.2 is already compiled"
+                echo -------------------------------------------------
+            else
+                echo -ne "\033]0;compile uuid 64Bit\007"
+
+                do_wget "https://www.mirrorservice.org/sites/ftp.ossp.org/pkg/lib/uuid/uuid-1.6.2.tar.gz"
+
+                ./configure --prefix="$LOCALDESTDIR" --disable-shared
+
+                make -j "$cpuCount"
+                make install
+
+                do_checkIfExist uuid-1.6.2 libuuid.a
+            fi
         else
-            echo -ne "\033]0;compile uuid 64Bit\007"
+            if [ -f "$LOCALDESTDIR/lib/libuuid.a" ]; then
+                echo -------------------------------------------------
+                echo "libuuid-1.0.3 is already compiled"
+                echo -------------------------------------------------
+            else
+                echo -ne "\033]0;compile uuid 64Bit\007"
 
-            do_wget "http://sourceforge.net/projects/libuuid/files/libuuid-1.0.3.tar.gz"
+                do_wget "http://sourceforge.net/projects/libuuid/files/libuuid-1.0.3.tar.gz"
 
-            ./configure --prefix="$LOCALDESTDIR" --disable-shared
+                ./configure --prefix="$LOCALDESTDIR" --disable-shared
 
-            make -j "$cpuCount"
-            make install
+                make -j "$cpuCount"
+                make install
 
-            do_checkIfExist libuuid-1.0.3 libuuid.a
+                do_checkIfExist libuuid-1.0.3 libuuid.a
+            fi
         fi
 
         cd "$LOCALBUILDDIR" || exit
