@@ -21,6 +21,7 @@ libx265=""
 nonfree=""
 libfdk_aac=""
 decklink=""
+disable_ffplay=""
 opengl=""
 zimg=""
 
@@ -49,6 +50,7 @@ nonfree="--enable-nonfree"
 libfdk_aac="--enable-libfdk-aac"
 decklink="--enable-decklink"
 # opengl="--enable-opengl"
+disable_ffplay="--disable-ffplay --disable-sdl2"
 zimg="--enable-libzimg"
 mediainfo="yes"
 mp4box="yes"
@@ -91,7 +93,7 @@ LOCALDESTDIR="$PWD/local"
 export LOCALBUILDDIR LOCALDESTDIR
 
 PKG_CONFIG_PATH="${LOCALDESTDIR}/lib/pkgconfig"
-CPPFLAGS="-I${LOCALDESTDIR}/include $fpic"
+CPPFLAGS="-I${LOCALDESTDIR}/include $fpic $osExtra"
 CFLAGS="-I${LOCALDESTDIR}/include -mtune=generic -O2 $osExtra $fpic"
 CXXFLAGS="${CFLAGS}"
 LDFLAGS="-L${LOCALDESTDIR}/lib -pipe $osExtra"
@@ -315,6 +317,25 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
+        if [ -f "$LOCALDESTDIR/lib/libiconv.a" ]; then
+            echo -------------------------------------------------
+            echo "libiconv-1.15 is already compiled"
+            echo -------------------------------------------------
+        else
+            echo -ne "\033]0;compile libiconv 64Bit\007"
+
+            do_wget "https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.15.tar.gz"
+
+            ./configure --prefix="$LOCALDESTDIR" --disable-shared
+
+            make -j "$cpuCount"
+            make install
+
+            do_checkIfExist libiconv-1.15 libiconv.a
+        fi
+
+        cd "$LOCALBUILDDIR" || exit
+
         if [ -f "$LOCALDESTDIR/lib/libbz2.a" ]; then
             echo -------------------------------------------------
             echo "bzip2-1.0.6 is already compiled"
@@ -323,6 +344,10 @@ buildProcess() {
             echo -ne "\033]0;compile bzip2 64Bit\007"
 
             do_wget "http://distfiles.gentoo.org/distfiles/bzip2-1.0.6.tar.gz"
+
+            if [[ "$system" == "Darwin" ]]; then
+                $sd -ri "s/^CFLAGS=-Wall/^CFLAGS=-Wall $osExtra/g" Makefile
+            fi
 
             make install PREFIX="$LOCALDESTDIR"
 
@@ -521,7 +546,7 @@ buildProcess() {
 
                 do_wget "https://www.openssl.org/source/openssl-1.0.2q.tar.gz"
 
-                ./Configure --prefix=$LOCALDESTDIR $target no-shared enable-camellia enable-idea enable-mdc2 enable-tlsext enable-rfc3779
+                ./Configure --prefix=$LOCALDESTDIR $target no-shared enable-camellia enable-idea enable-mdc2 enable-tlsext enable-rfc3779 -mtune=generic $osExtra
 
                 make depend all
                 make install
@@ -1021,7 +1046,7 @@ buildProcess() {
             make distclean
         fi
 
-        ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opengl $zimg $libbluray $fontconfig $libfreetype $libass $libtwolame $libmp3lame $libsrt $libsoxr $libopus $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $osFlag --extra-libs="-lm $extraLibs" $pkg_extra
+        ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" $disable_ffplay --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opengl $zimg $libbluray $fontconfig $libfreetype $libass $libtwolame $libmp3lame $libsrt $libsoxr $libopus $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $osFlag --extra-libs="-lm -liconv $extraLibs" $pkg_extra
 
         $sd -ri "s/--prefix=[^ ]* //g" config.h
         $sd -ri "s/ --extra-libs='.*'//g" config.h
