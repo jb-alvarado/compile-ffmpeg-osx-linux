@@ -6,57 +6,63 @@
 
 compile_ffmpeg_only=$1
 
-libbluray=""
+decklink=""
+disable_ffplay=""
 fontconfig=""
-libfreetype=""
+libaom=""
 libass=""
-libtwolame=""
+libbluray=""
+libfdk_aac=""
+libfreetype=""
 libmp3lame=""
-libsrt=""
-libsoxr=""
 libopus=""
+libsoxr=""
+libsrt=""
+libtwolame=""
 libvpx=""
 libx264=""
 libx265=""
+libzimg=""
 nonfree=""
-libfdk_aac=""
-decklink=""
-disable_ffplay=""
+opencl=""
 opengl=""
-zimg=""
 
 mediainfo=""
 mp4box=""
 
 ffmpeg_shared=""
-ffmpeg_branch="" #ffmpeg_branch="n4.1"
+ffmpeg_branch=""
 
 # --------------------------------------------------
 # --------------------------------------------------
 # enable / disable library:
 
-libbluray="--enable-libbluray"
+decklink="--enable-decklink"
+# disable_ffplay="--disable-ffplay --disable-sdl2"
 fontconfig="--enable-fontconfig"
-libfreetype="--enable-libfreetype"
+libaom="--enable-libaom"
 libass="--enable-libass"
-libtwolame="--enable-libtwolame --extra-cflags=-DLIBTWOLAME_STATIC"
+libbluray="--enable-libbluray"
+libfdk_aac="--enable-libfdk-aac"
+libfreetype="--enable-libfreetype"
 libmp3lame="--enable-libmp3lame"
-libsrt="--enable-libsrt"
-libsoxr="--enable-libsoxr"
 libopus="--enable-libopus"
+libsoxr="--enable-libsoxr"
+libsrt="--enable-libsrt"
+libtwolame="--enable-libtwolame --extra-cflags=-DLIBTWOLAME_STATIC"
 libvpx="--enable-libvpx"
 libx264="--enable-libx264"
 libx265="--enable-libx265"
+libzimg="--enable-libzimg"
 nonfree="--enable-nonfree"
-libfdk_aac="--enable-libfdk-aac"
-decklink="--enable-decklink"
-# opengl="--enable-opengl"
-disable_ffplay="--disable-ffplay --disable-sdl2"
-zimg="--enable-libzimg"
+opencl="--enable-opencl"
+opengl="--enable-opengl"
+
 mediainfo="yes"
 mp4box="yes"
 
 # ffmpeg_shared="yes"
+# ffmpeg_branch="n4.1"
 
 # --------------------------------------------------
 
@@ -768,6 +774,37 @@ buildProcess() {
         echo
         echo "-------------------------------------------------------------------------------"
 
+        if [[ -n "$libaom" ]]; then
+            do_git "https://aomedia.googlesource.com/aom" libaom-git
+
+            if [[ $compile == "true" ]]; then
+                if [ -d "aom_build" ]; then
+                    cd aom_build
+                    make uninstall
+
+                    rm -rf *
+                else
+                    mkdir aom_build
+                    cd aom_build
+                fi
+
+                cmake -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DBUILD_SHARED_LIBS=0 -DENABLE_NASM=on -DAOM_EXTRA_C_FLAGS="-mtune=generic $osExtra" -DAOM_EXTRA_CXX_FLAGS="-mtune=generic $osExtra" ../
+
+                make -j "$cpuCount"
+                make install
+
+                do_checkIfExist libaom-git libaom.a
+
+                buildFFmpeg="true"
+            else
+                echo -------------------------------------------------
+                echo "libvaom is already up to date"
+                echo -------------------------------------------------
+            fi
+        fi
+
+        cd "$LOCALBUILDDIR" || exit
+
         if [[ -n "$libvpx" ]]; then
             do_git "https://github.com/webmproject/libvpx.git" libvpx-git noDepth
 
@@ -1088,7 +1125,13 @@ buildProcess() {
             make distclean
         fi
 
-        ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" $disable_ffplay --disable-doc --enable-gpl --enable-version3 --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opengl $zimg $libbluray $fontconfig $libfreetype $libass $libtwolame $libmp3lame $libsrt $libsoxr $libopus $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $osFlag --extra-libs="-lm -liconv $extraLibs" $pkg_extra
+        ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" $disable_ffplay \
+        --disable-doc --enable-gpl --enable-version3 \
+        --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opencl $opengl \
+        $fontconfig $libfreetype $libass $libbluray $libsrt $libzimg \
+        $libtwolame $libmp3lame $libopus $libsoxr \
+        $libaom $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink \
+        $osFlag --extra-libs="-lm -liconv $extraLibs" $pkg_extra
 
         $sd -ri "s/--prefix=[^ ]* //g" config.h
         $sd -ri "s/ --extra-libs='.*'//g" config.h
