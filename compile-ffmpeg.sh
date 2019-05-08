@@ -550,7 +550,7 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ -n "$zimg" ]]; then
+        if [[ -n "$libzimg" ]]; then
             do_git "https://github.com/sekrit-twc/zimg.git" zimg-git
 
             if [[ $compile == "true" ]]; then
