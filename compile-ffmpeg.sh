@@ -293,8 +293,7 @@ buildProcess() {
         if [ ! -f "/usr/local/bin/nasm" ] && [[ $compNasm == "yes" ]]; then
             echo -ne "\033]0;compile nasm 64Bit\007"
 
-            do_wget "http://www.nasm.us/pub/nasm/releasebuilds/2.13.01/nasm-2.13.01.tar.gz" nasm-2.13.01.tar.gz
-
+            do_wget "https://www.nasm.us/pub/nasm/releasebuilds/2.14/nasm-2.14.tar.gz" nasm-2.14.tar.gz
             ./configure --prefix="$LOCALDESTDIR"
 
             make -j "$cpuCount"
@@ -302,7 +301,7 @@ buildProcess() {
             sudo cp "$LOCALDESTDIR/bin/nasm" "$LOCALDESTDIR/bin/ndisasm" /usr/local/bin/
         else
             echo -------------------------------------------------
-            echo "nasm-2.13.01 is already compiled, or not needed"
+            echo "nasm-2.14 is already compiled, or not needed"
             echo -------------------------------------------------
         fi
 
