@@ -26,6 +26,7 @@ libzimg=""
 nonfree=""
 opencl=""
 opengl=""
+gnutls=""
 
 mediainfo=""
 mp4box=""
@@ -57,6 +58,7 @@ libzimg="--enable-libzimg"
 nonfree="--enable-nonfree"
 opencl="--enable-opencl"
 opengl="--enable-opengl"
+gnutls="--enable-gnutls"
 
 mediainfo="yes"
 mp4box="yes"
@@ -1066,6 +1068,50 @@ buildProcess() {
                 echo -------------------------------------------------
             fi
         fi
+
+        cd "$LOCALBUILDDIR" || exit
+
+        if [[ -n "$gnutls" ]]; then
+            if [ -f "$LOCALDESTDIR/lib/libnettle.a" ]; then
+                echo -------------------------------------------------
+                echo "nettle-3.4.1 is already compiled"
+                echo -------------------------------------------------
+            else
+                echo -ne "\033]0;compile nettle 64Bit\007"
+
+                do_wget "https://ftp.gnu.org/gnu/nettle/nettle-3.4.1.tar.gz"
+
+                ./configure --prefix="$LOCALDESTDIR" --enable-static --disable-shared --enable-mini-gmp
+
+                make -j "$cpuCount"
+                make install
+
+                do_checkIfExist nettle-3.4.1 libnettle.a
+            fi
+
+            cd "$LOCALBUILDDIR" || exit
+
+            if [ -f "$LOCALDESTDIR/lib/libgnutls.a" ]; then
+                echo -------------------------------------------------
+                echo "gnutls-3.6.8 is already compiled"
+                echo -------------------------------------------------
+            else
+                echo -ne "\033]0;compile gnutls 64Bit\007"
+
+                do_wget "https://www.gnupg.org/ftp/gcrypt/gnutls/v3.6/gnutls-3.6.8.tar.xz"
+
+                ./configure --prefix="$LOCALDESTDIR" --enable-static --disable-shared \
+                  --disable-{cxx,doc,tools,tests,nls,rpath,libdane,guile,gcc-warnings} \
+                  --without-{p11-kit,idn,tpm} --enable-local-libopts \
+                  --with-nettle-mini --with-included-libtasn1 \
+                  --with-included-unistring --disable-code-coverage
+
+                make -j "$cpuCount"
+                make install
+
+                do_checkIfExist gnutls-3.6.8 libgnutls.a
+            fi
+        fi
     }
 
     if [[ -z "$compile_ffmpeg_only" ]]; then
@@ -1129,7 +1175,7 @@ buildProcess() {
         --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opencl $opengl \
         $fontconfig $libfreetype $libass $libbluray $libsrt $libzimg \
         $libtwolame $libmp3lame $libopus $libsoxr \
-        $libaom $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink \
+        $libaom $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $gnutls \
         $osFlag --extra-libs="-lm -liconv $extraLibs" $pkg_extra
 
         $sd -ri "s/--prefix=[^ ]* //g" config.h
