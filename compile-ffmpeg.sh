@@ -1035,7 +1035,7 @@ buildProcess() {
         cd "$LOCALBUILDDIR" || exit
 
         if [[ -n "$libx265" ]]; then
-            do_hg "https://bitbucket.org/multicoreware/x265" x265-hg
+            do_git "https://github.com/videolan/x265.git" x265-git
 
             if [[ $compile == "true" ]]; then
                 cd build || exit/xcode
