@@ -26,7 +26,7 @@ libzimg=""
 nonfree=""
 opencl=""
 opengl=""
-gnutls=""
+openssl=""
 
 mediainfo=""
 mp4box=""
@@ -58,7 +58,7 @@ libzimg="--enable-libzimg"
 nonfree="--enable-nonfree"
 opencl="--enable-opencl"
 opengl="--enable-opengl"
-gnutls="--enable-gnutls"
+openssl="--enable-openssl"
 
 mediainfo="yes"
 mp4box="yes"
@@ -368,31 +368,31 @@ buildProcess() {
 
         if [ -f "$LOCALDESTDIR/lib/libiconv.a" ]; then
             echo -------------------------------------------------
-            echo "libiconv-1.15 is already compiled"
+            echo "libiconv-1.16 is already compiled"
             echo -------------------------------------------------
         else
             echo -ne "\033]0;compile libiconv 64Bit\007"
 
-            do_wget "https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.15.tar.gz"
+            do_wget "https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.16.tar.gz"
 
             ./configure --prefix="$LOCALDESTDIR" --disable-shared
 
             make -j "$cpuCount"
             make install
 
-            do_checkIfExist libiconv-1.15 libiconv.a
+            do_checkIfExist libiconv-1.16 libiconv.a
         fi
 
         cd "$LOCALBUILDDIR" || exit
 
         if [ -f "$LOCALDESTDIR/lib/libbz2.a" ]; then
             echo -------------------------------------------------
-            echo "bzip2-1.0.6 is already compiled"
+            echo "bzip2-1.0.8 is already compiled"
             echo -------------------------------------------------
         else
             echo -ne "\033]0;compile bzip2 64Bit\007"
 
-            do_wget "http://distfiles.gentoo.org/distfiles/bzip2-1.0.6.tar.gz"
+            do_wget "http://distfiles.gentoo.org/distfiles/bzip2-1.0.8.tar.gz"
 
             if [[ "$system" == "Darwin" ]]; then
                 $sd -ri "s/^CFLAGS=-Wall/^CFLAGS=-Wall $osExtra/g" Makefile
@@ -400,7 +400,7 @@ buildProcess() {
 
             make install PREFIX="$LOCALDESTDIR"
 
-            do_checkIfExist bzip2-1.0.6 libbz2.a
+            do_checkIfExist bzip2-1.0.8 libbz2.a
         fi
 
         cd "$LOCALBUILDDIR" || exit
@@ -426,19 +426,19 @@ buildProcess() {
 
         if [ -f "$LOCALDESTDIR/lib/libpng.a" ]; then
             echo -------------------------------------------------
-            echo "libpng-1.6.36 is already compiled"
+            echo "libpng-1.6.37 is already compiled"
             echo -------------------------------------------------
         else
             echo -ne "\033]0;compile libpng 64Bit\007"
 
-            do_wget "https://downloads.sourceforge.net/project/libpng/libpng16/1.6.36/libpng-1.6.36.tar.gz"
+            do_wget "https://downloads.sourceforge.net/project/libpng/libpng16/1.6.37/libpng-1.6.37.tar.gz"
 
             ./configure --prefix="$LOCALDESTDIR" --disable-shared
 
             make -j "$cpuCount"
             make install
 
-            do_checkIfExist libpng-1.6.36 libpng.a
+            do_checkIfExist libpng-1.6.37 libpng.a
         fi
 
         cd "$LOCALBUILDDIR" || exit
@@ -446,37 +446,37 @@ buildProcess() {
         if [[ -n "$fontconfig" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libexpat.a" ]; then
                 echo -------------------------------------------------
-                echo "expat-2.2.6 is already compiled"
+                echo "expat-2.2.7 is already compiled"
                 echo -------------------------------------------------
             else
                 echo -ne "\033]0;compile expat 64Bit\007"
 
-                do_wget "https://downloads.sourceforge.net/project/expat/expat/2.2.6/expat-2.2.6.tar.bz2"
+                do_wget "https://downloads.sourceforge.net/project/expat/expat/2.2.7/expat-2.2.7.tar.bz2"
 
                 ./configure --prefix="$LOCALDESTDIR" --enable-shared=no
 
                 make -j "$cpuCount"
                 make install
 
-                do_checkIfExist expat-2.2.6 libexpat.a
+                do_checkIfExist expat-2.2.7 libexpat.a
             fi
 
             cd "$LOCALBUILDDIR" || exit
 
             if [ -f "$LOCALDESTDIR/lib/libfreetype.a" ]; then
                 echo -------------------------------------------------
-                echo "freetype-2.9.1 is already compiled"
+                echo "freetype-2.10.1 is already compiled"
                 echo -------------------------------------------------
             else
                 echo -ne "\033]0;compile freetype\007"
 
-                do_wget "https://downloads.sourceforge.net/project/freetype/freetype2/2.9.1/freetype-2.9.1.tar.gz"
+                do_wget "https://downloads.sourceforge.net/project/freetype/freetype2/2.10.1/freetype-2.10.1.tar.gz"
 
                 ./configure --prefix="$LOCALDESTDIR" --disable-shared --with-harfbuzz=no
                 make -j "$cpuCount"
                 make install
 
-                do_checkIfExist freetype-2.9.1 libfreetype.a
+                do_checkIfExist freetype-2.10.1 libfreetype.a
 
                 $sd -ri "s/(Libs\:.*)/\1 -lpng16 -lbz2 -lz/g" "$LOCALDESTDIR/lib/pkgconfig/freetype2.pc"
             fi
@@ -487,19 +487,19 @@ buildProcess() {
         if [[ -n "$libfreetype" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libfontconfig.a" ]; then
                 echo -------------------------------------------------
-                echo "fontconfig-2.13.0 is already compiled"
+                echo "fontconfig-2.13.92 is already compiled"
                 echo -------------------------------------------------
             else
                 echo -ne "\033]0;compile fontconfig\007"
 
-                do_wget "https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.13.0.tar.gz"
+                do_wget "https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.13.92.tar.gz"
 
                 ./configure --prefix="$LOCALDESTDIR" --enable-shared=no
 
                 make -j "$cpuCount"
                 make install
 
-                do_checkIfExist fontconfig-2.13.0 libfontconfig.a
+                do_checkIfExist fontconfig-2.13.92 libfontconfig.a
 
                 # on linux fontconfig.pc is not copyed
                 [[ ! -f "$LOCALDESTDIR/lib/pkgconfig/fontconfig.pc" ]] && cp fontconfig.pc "$LOCALDESTDIR/lib/pkgconfig/"
@@ -513,20 +513,20 @@ buildProcess() {
         if [[ -n "$libass" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libfribidi.a" ]; then
                 echo -------------------------------------------------
-                echo "fribidi-0.19.7 is already compiled"
+                echo "fribidi-1.0.5 is already compiled"
                 echo -------------------------------------------------
             else
                 echo -ne "\033]0;compile fribidi\007"
 
-                do_wget "https://github.com/fribidi/fribidi/archive/0.19.7.tar.gz" fribidi-0.19.7.tar.gz
+                do_wget "https://github.com/fribidi/fribidi/archive/v1.0.5.tar.gz" fribidi-1.0.5.tar.gz
 
-                ./bootstrap
+                ./autogen.sh
                 ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --with-glib=no
 
                 make -j "$cpuCount"
                 make install
 
-                do_checkIfExist fribidi-0.19.7 libfribidi.a
+                do_checkIfExist fribidi-1.0.5 libfribidi.a
             fi
         fi
 
@@ -534,19 +534,19 @@ buildProcess() {
 
         if [ -f "$LOCALDESTDIR/lib/libxml2.a" ]; then
             echo -------------------------------------------------
-            echo "libxml2-2.9.8 is already compiled"
+            echo "libxml2-2.9.9 is already compiled"
             echo -------------------------------------------------
         else
             echo -ne "\033]0;compile libxml2\007"
 
-            do_wget "ftp://xmlsoft.org/libxml2/libxml2-2.9.8.tar.gz"
+            do_wget "ftp://xmlsoft.org/libxml2/libxml2-2.9.9.tar.gz"
 
             ./configure --prefix="$LOCALDESTDIR" --disable-shared --enable-static
 
             make -j "$cpuCount"
             make install
 
-            do_checkIfExist libxml2-2.9.8 libxml2.a
+            do_checkIfExist libxml2-2.9.9 libxml2.a
         fi
 
         cd "$LOCALBUILDDIR" || exit
@@ -582,7 +582,7 @@ buildProcess() {
         if [[ -n "$libsrt" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libssl.a" ]; then
                 echo -------------------------------------------------
-                echo "openssl-1.0.2q is already compiled"
+                echo "openssl-1.0.2s is already compiled"
                 echo -------------------------------------------------
             else
                 echo -ne "\033]0;compile openssl 64Bit\007"
@@ -593,14 +593,14 @@ buildProcess() {
                     target="linux-x86_64"
                 fi
 
-                do_wget "https://www.openssl.org/source/openssl-1.0.2q.tar.gz"
+                do_wget "https://www.openssl.org/source/openssl-1.0.2s.tar.gz"
 
                 ./Configure --prefix=$LOCALDESTDIR $target no-shared enable-camellia enable-idea enable-mdc2 enable-tlsext enable-rfc3779 -mtune=generic $osExtra
 
                 make depend all
                 make install
 
-                do_checkIfExist openssl-1.0.2q libssl.a
+                do_checkIfExist openssl-1.0.2s libssl.a
             fi
             cd $LOCALBUILDDIR || exit
 
@@ -745,19 +745,19 @@ buildProcess() {
         if [[ -n "$libopus" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libopus.a" ]; then
                 echo -------------------------------------------------
-                echo "opus-1.2.1 is already compiled"
+                echo "opus-1.3 is already compiled"
                 echo -------------------------------------------------
             else
                 echo -ne "\033]0;compile opus\007"
 
-                do_wget "https://ftp.osuosl.org/pub/xiph/releases/opus/opus-1.2.1.tar.gz"
+                do_wget "https://ftp.osuosl.org/pub/xiph/releases/opus/opus-1.3.tar.gz"
 
                 ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --enable-static --disable-doc
 
                 make -j "$cpuCount"
                 make install
 
-                do_checkIfExist opus-1.2.1 libopus.a
+                do_checkIfExist opus-1.3 libopus.a
             fi
         fi
 
@@ -1035,7 +1035,7 @@ buildProcess() {
         cd "$LOCALBUILDDIR" || exit
 
         if [[ -n "$libx265" ]]; then
-            do_git "https://github.com/videolan/x265.git" x265-git
+            do_hg "https://bitbucket.org/multicoreware/x265" x265-hg
 
             if [[ $compile == "true" ]]; then
                 cd build || exit/xcode
@@ -1066,50 +1066,6 @@ buildProcess() {
                 echo -------------------------------------------------
                 echo "x265 is already up to date"
                 echo -------------------------------------------------
-            fi
-        fi
-
-        cd "$LOCALBUILDDIR" || exit
-
-        if [[ -n "$gnutls" ]]; then
-            if [ -f "$LOCALDESTDIR/lib/libnettle.a" ]; then
-                echo -------------------------------------------------
-                echo "nettle-3.4.1 is already compiled"
-                echo -------------------------------------------------
-            else
-                echo -ne "\033]0;compile nettle 64Bit\007"
-
-                do_wget "https://ftp.gnu.org/gnu/nettle/nettle-3.4.1.tar.gz"
-
-                ./configure --prefix="$LOCALDESTDIR" --enable-static --disable-shared --enable-mini-gmp
-
-                make -j "$cpuCount"
-                make install
-
-                do_checkIfExist nettle-3.4.1 libnettle.a
-            fi
-
-            cd "$LOCALBUILDDIR" || exit
-
-            if [ -f "$LOCALDESTDIR/lib/libgnutls.a" ]; then
-                echo -------------------------------------------------
-                echo "gnutls-3.6.8 is already compiled"
-                echo -------------------------------------------------
-            else
-                echo -ne "\033]0;compile gnutls 64Bit\007"
-
-                do_wget "https://www.gnupg.org/ftp/gcrypt/gnutls/v3.6/gnutls-3.6.8.tar.xz"
-
-                ./configure --prefix="$LOCALDESTDIR" --enable-static --disable-shared \
-                  --disable-{cxx,doc,tools,tests,nls,rpath,libdane,guile,gcc-warnings} \
-                  --without-{p11-kit,idn,tpm} --enable-local-libopts \
-                  --with-nettle-mini --with-included-libtasn1 \
-                  --with-included-unistring --disable-code-coverage
-
-                make -j "$cpuCount"
-                make install
-
-                do_checkIfExist gnutls-3.6.8 libgnutls.a
             fi
         fi
     }
