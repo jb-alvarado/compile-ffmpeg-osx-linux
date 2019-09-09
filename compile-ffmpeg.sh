@@ -1131,7 +1131,7 @@ buildProcess() {
         --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opencl $opengl \
         $fontconfig $libfreetype $libass $libbluray $libsrt $libzimg \
         $libtwolame $libmp3lame $libopus $libsoxr \
-        $libaom $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $gnutls \
+        $libaom $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $openssl \
         $osFlag --extra-libs="-lm -liconv $extraLibs" $pkg_extra
 
         $sd -ri "s/--prefix=[^ ]* //g" config.h
