@@ -5,7 +5,7 @@ For OSX is needed: homebrew with installed: `cmake mercurial git wget curl pkg-c
 
 For Linux (ubuntu/debian) is needed: `sudo apt install autoconf automake build-essential libtool pkg-config texi2html yasm cmake curl mercurial git wget gperf` (debian needs sudo for install nasm to /usr/local/bin/)
 
-For Centos install: `yum group install "Development Tools"`
+For Centos install: `yum group install "Development Tools"` and: `yum install libstdc++-static mercurial libtool cmake`
 
 Install sdl2/libsdl2-dev only when you need ffplay or opengl!
 
