@@ -23,6 +23,7 @@ libvpx=""
 libx264=""
 libx265=""
 libzimg=""
+libzmq=""
 nonfree=""
 opencl=""
 opengl=""
@@ -55,6 +56,7 @@ libvpx="--enable-libvpx"
 libx264="--enable-libx264"
 libx265="--enable-libx265"
 libzimg="--enable-libzimg"
+libzmq="--enable-libzmq --extra-cflags=-DZMG_STATIC"
 nonfree="--enable-nonfree"
 opencl="--enable-opencl"
 opengl="--enable-opengl"
@@ -573,6 +575,33 @@ buildProcess() {
             else
                 echo -------------------------------------------------
                 echo "zimg is already up to date"
+                echo -------------------------------------------------
+            fi
+        fi
+
+        cd "$LOCALBUILDDIR" || exit
+
+        if [[ -n "$libzmq" ]]; then
+            do_git "https://github.com/zeromq/libzmq.git" libzmq-git
+
+            if [[ $compile == "true" ]]; then
+                if [[ ! -f ./configure ]]; then
+                    ./autogen.sh
+                else
+                    make uninstall
+                    make clean
+                fi
+
+                ./configure --prefix="$LOCALDESTDIR" --enable-static --disable-shared
+
+                make -j "$cpuCount"
+                make install
+
+                do_checkIfExist libzmq-git libzmq.a
+
+            else
+                echo -------------------------------------------------
+                echo "libzmq is already up to date"
                 echo -------------------------------------------------
             fi
         fi
@@ -1129,7 +1158,7 @@ buildProcess() {
         ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" $disable_ffplay \
         --disable-doc --enable-gpl --enable-version3 \
         --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opencl $opengl \
-        $fontconfig $libfreetype $libass $libbluray $libsrt $libzimg \
+        $fontconfig $libfreetype $libass $libbluray $libsrt $libzimg $libzmq \
         $libtwolame $libmp3lame $libopus $libsoxr \
         $libaom $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $openssl \
         $osFlag --extra-libs="-lm -liconv $extraLibs" $pkg_extra
@@ -1138,6 +1167,7 @@ buildProcess() {
         $sd -ri "s/ --extra-libs='.*'//g" config.h
         $sd -ri "s/ --pkg-config-flags=--static//g" config.h
         $sd -ri "s/ --extra-cflags=-DLIBTWOLAME_STATIC//g" config.h
+        $sd -ri "s/ --extra-cflags=-DZMG_STATIC//g" config.h
 
         make -j "$cpuCount"
         make install
@@ -1146,6 +1176,10 @@ buildProcess() {
             do_checkIfExist ffmpeg-git libavcodec.a
         else
             do_checkIfExist ffmpeg-git "bin/ffmpeg_shared/bin/ffmpeg"
+        fi
+
+        if [[ -n "$libzmq" ]]; then
+            gcc -o $LOCALDESTDIR/bin/zmqsend ./tools/zmqsend.c -I.. `pkg-config --libs --cflags libzmq libavutil` -DZMG_STATIC -lstdc++
         fi
 
         # when you copy the shared libs to /usr/local/lib
