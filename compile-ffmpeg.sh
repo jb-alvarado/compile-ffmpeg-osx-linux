@@ -1179,7 +1179,8 @@ buildProcess() {
         fi
 
         if [[ -n "$libzmq" ]]; then
-            gcc -o $LOCALDESTDIR/bin/zmqsend ./tools/zmqsend.c -I.. `pkg-config --libs --cflags libzmq libavutil` -DZMG_STATIC -lstdc++
+            cd tools
+            gcc -o $LOCALDESTDIR/bin/zmqsend zmqsend.c -I.. `pkg-config --libs --cflags libzmq libavutil` -DZMG_STATIC -lstdc++
         fi
 
         # when you copy the shared libs to /usr/local/lib
