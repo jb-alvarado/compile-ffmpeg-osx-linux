@@ -13,6 +13,7 @@ libaom=""
 libass=""
 libbluray=""
 libfdk_aac=""
+libfribidi=""
 libfreetype=""
 libmp3lame=""
 libopus=""
@@ -46,7 +47,8 @@ libaom="--enable-libaom"
 libass="--enable-libass"
 libbluray="--enable-libbluray"
 libfdk_aac="--enable-libfdk-aac"
-libfreetype="--enable-libfreetype --enable-libfribidi"
+libfribidi="--enable-libfribidi"
+libfreetype="--enable-libfreetype"
 libmp3lame="--enable-libmp3lame"
 libopus="--enable-libopus"
 libsoxr="--enable-libsoxr"
@@ -445,6 +447,31 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
+        if [[ -n "$libfribidi" ]]; then
+            do_git "https://github.com/fribidi/fribidi.git" fribidi-git
+
+            if [[ $compile == "true" ]]; then
+                if [[ ! -f ./configure ]]; then
+                    ./autogen.sh
+                else
+                    make uninstall
+                    make clean
+                fi
+
+                ./configure --prefix="$LOCALDESTDIR" --enable-shared=no
+
+                make -j "$cpuCount"
+                make install
+
+                do_checkIfExist fribidi-git libfribidi.a
+
+            else
+                echo -------------------------------------------------
+                echo "fribidi is already up to date"
+                echo -------------------------------------------------
+            fi
+        fi
+
         if [[ -n "$fontconfig" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libexpat.a" ]; then
                 echo -------------------------------------------------
@@ -507,29 +534,6 @@ buildProcess() {
                 [[ ! -f "$LOCALDESTDIR/lib/pkgconfig/fontconfig.pc" ]] && cp fontconfig.pc "$LOCALDESTDIR/lib/pkgconfig/"
 
                 $sd -ri "s/(Libs\:.*)/\1 -lpng16 -lbz2 -lxml2 -lz -lstdc++ $osLib -llzma -lm -lexpat -luuid/g" "$LOCALDESTDIR/lib/pkgconfig/fontconfig.pc"
-            fi
-
-            do_git "https://github.com/fribidi/fribidi.git" fribidi-git
-
-            if [[ $compile == "true" ]]; then
-                if [[ ! -f ./configure ]]; then
-                    ./autogen.sh
-                else
-                    make uninstall
-                    make clean
-                fi
-
-                ./configure --prefix="$LOCALDESTDIR" --enable-shared=no
-
-                make -j "$cpuCount"
-                make install
-
-                do_checkIfExist fribidi-git libfribidi.a
-
-            else
-                echo -------------------------------------------------
-                echo "fribidi is already up to date"
-                echo -------------------------------------------------
             fi
         fi
 
@@ -1181,7 +1185,7 @@ buildProcess() {
         ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" $disable_ffplay \
         --disable-doc --enable-gpl --enable-version3 \
         --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opencl $opengl \
-        $fontconfig $libfreetype $libass $libbluray $libsrt $libzimg $libzmq \
+        $fontconfig $libfreetype $libfribidi $libass $libbluray $libsrt $libzimg $libzmq \
         $libtwolame $libmp3lame $libopus $libsoxr \
         $libaom $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $openssl \
         $osFlag --extra-libs="-lm -liconv $extraLibs" $pkg_extra
