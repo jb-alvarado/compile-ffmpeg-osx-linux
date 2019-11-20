@@ -46,7 +46,7 @@ libaom="--enable-libaom"
 libass="--enable-libass"
 libbluray="--enable-libbluray"
 libfdk_aac="--enable-libfdk-aac"
-libfreetype="--enable-libfreetype"
+libfreetype="--enable-libfreetype --enable-libfribidi"
 libmp3lame="--enable-libmp3lame"
 libopus="--enable-libopus"
 libsoxr="--enable-libsoxr"
@@ -507,6 +507,29 @@ buildProcess() {
                 [[ ! -f "$LOCALDESTDIR/lib/pkgconfig/fontconfig.pc" ]] && cp fontconfig.pc "$LOCALDESTDIR/lib/pkgconfig/"
 
                 $sd -ri "s/(Libs\:.*)/\1 -lpng16 -lbz2 -lxml2 -lz -lstdc++ $osLib -llzma -lm -lexpat -luuid/g" "$LOCALDESTDIR/lib/pkgconfig/fontconfig.pc"
+            fi
+
+            do_git "https://github.com/fribidi/fribidi.git" fribidi-git
+
+            if [[ $compile == "true" ]]; then
+                if [[ ! -f ./configure ]]; then
+                    ./autogen.sh
+                else
+                    make uninstall
+                    make clean
+                fi
+
+                ./configure --prefix="$LOCALDESTDIR" --enable-shared=no
+
+                make -j "$cpuCount"
+                make install
+
+                do_checkIfExist fribidi-git libfribidi.a
+
+            else
+                echo -------------------------------------------------
+                echo "fribidi is already up to date"
+                echo -------------------------------------------------
             fi
         fi
 
