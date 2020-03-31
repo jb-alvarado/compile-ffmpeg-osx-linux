@@ -1060,7 +1060,7 @@ buildProcess() {
         cd "$LOCALBUILDDIR" || exit
 
         if [[ -n "$libx264" ]]; then
-            do_git "https://git.videolan.org/git/x264" x264-git noDepth
+            do_git "do_git "https://code.videolan.org/videolan/x264" x264-git noDepth" x264-git noDepth
 
             if [[ $compile == "true" ]]; then
                 echo -ne "\033]0;compile x264-git\007"
