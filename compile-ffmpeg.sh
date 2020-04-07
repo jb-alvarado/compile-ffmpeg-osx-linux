@@ -638,7 +638,7 @@ buildProcess() {
         if [[ -n "$libsrt" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libssl.a" ]; then
                 echo -------------------------------------------------
-                echo "openssl-1.0.2s is already compiled"
+                echo "openssl-1.1.1f is already compiled"
                 echo -------------------------------------------------
             else
                 echo -ne "\033]0;compile openssl 64Bit\007"
@@ -649,14 +649,14 @@ buildProcess() {
                     target="linux-x86_64"
                 fi
 
-                do_wget "https://www.openssl.org/source/openssl-1.0.2s.tar.gz"
+                do_wget "https://www.openssl.org/source/openssl-1.1.1f.tar.gz"
 
-                ./Configure --prefix=$LOCALDESTDIR $target no-shared enable-camellia enable-idea enable-mdc2 enable-tlsext enable-rfc3779 -mtune=generic $osExtra
+                ./Configure --prefix=$LOCALDESTDIR $target no-shared enable-camellia enable-idea enable-mdc2 enable-rfc3779 -mtune=generic $osExtra
 
                 make depend all
                 make install
 
-                do_checkIfExist openssl-1.0.2s libssl.a
+                do_checkIfExist openssl-1.1.1f libssl.a
             fi
             cd $LOCALBUILDDIR || exit
 
@@ -1060,7 +1060,7 @@ buildProcess() {
         cd "$LOCALBUILDDIR" || exit
 
         if [[ -n "$libx264" ]]; then
-            do_git "do_git "https://code.videolan.org/videolan/x264" x264-git noDepth" x264-git noDepth
+            do_git "https://code.videolan.org/videolan/x264" x264-git noDepth
 
             if [[ $compile == "true" ]]; then
                 echo -ne "\033]0;compile x264-git\007"
