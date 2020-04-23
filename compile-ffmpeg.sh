@@ -1,74 +1,83 @@
 #!/bin/bash
 
+mediainfo="yes"
+mp4box="yes"
+
+#ffmpeg_shared="yes"
+#ffmpeg_branch="n4.1"
+
 # when you call the script with an variable, like:
 #   compile-ffmpeg.sh ffmpeg
 # then it only compile the ffmpeg binary
 
 compile_ffmpeg_only=$1
 
-decklink=""
-disable_ffplay=""
-fontconfig=""
-libaom=""
-libass=""
-libbluray=""
-libfdk_aac=""
-libfribidi=""
-libfreetype=""
-libmp3lame=""
-libopus=""
-libsoxr=""
-libsrt=""
-libtwolame=""
-libvpx=""
-libx264=""
-libx265=""
-libzimg=""
-libzmq=""
-nonfree=""
-opencl=""
-opengl=""
-openssl=""
+config="build_config.txt"
 
-mediainfo=""
-mp4box=""
+if [[ ! -f "$config" ]]; then
+cat <<EOF > "$config"
+#--enable-decklink
+#--disable-ffplay
+#--disable-sdl2
+#--enable-fontconfig
+#--enable-libaom
+#--enable-libass
+#--enable-libbluray
+#--enable-libfdk-aac
+#--enable-libfribidi
+#--enable-libfreetype
+#--enable-libmp3lame
+#--enable-libopus
+#--enable-libsoxr
+#--enable-libsrt
+#--enable-libtwolame
+#--enable-libvpx
+#--enable-libx264
+#--enable-libx265
+#--enable-libzimg
+#--enable-libzmq
+#--enable-nonfree
+#--enable-opencl
+#--enable-opengl
+#--enable-openssl
+#--enable-libsvtav1
+EOF
+    echo "-------------------------------------------------------------------------------"
+    echo "-------------------------------------------------------------------------------"
+    echo ""
+    echo " edit \"$config\" and activate all libs that you need"
+    echo ""
+    echo "-------------------------------------------------------------------------------"
+    echo "-------------------------------------------------------------------------------"
+    while true; do
+        read -r -p "run (y/n):$ " run
 
-ffmpeg_shared=""
-ffmpeg_branch=""
+        if [[ "$run" == 'y' ]]; then
+            break
+        elif [[ "$run" == 'n' ]]; then
+            exit
+        else
+            echo ""
+            echo "Please type 'y' or 'n'"
+            echo "------------------------------------"
+            echo ""
+        fi
+    done
+fi
 
-# --------------------------------------------------
-# --------------------------------------------------
-# enable / disable library:
+get_options() {
+    sed -r '# remove commented text
+        s/#.*//
+        # delete empty lines
+        /^\s*$/d
+        # remove leading whitespace
+        s/^\s+//
+        # remove trailing whitespace
+        s/\s+$//
+        ' "$config" | tr -d '\r'
+}
 
-decklink="--enable-decklink"
-# disable_ffplay="--disable-ffplay --disable-sdl2"
-fontconfig="--enable-fontconfig"
-libaom="--enable-libaom"
-libass="--enable-libass"
-libbluray="--enable-libbluray"
-libfdk_aac="--enable-libfdk-aac"
-libfribidi="--enable-libfribidi"
-libfreetype="--enable-libfreetype"
-libmp3lame="--enable-libmp3lame"
-libopus="--enable-libopus"
-libsoxr="--enable-libsoxr"
-libsrt="--enable-libsrt"
-libtwolame="--enable-libtwolame --extra-cflags=-DLIBTWOLAME_STATIC"
-libvpx="--enable-libvpx"
-libx264="--enable-libx264"
-libx265="--enable-libx265"
-libzimg="--enable-libzimg"
-libzmq="--enable-libzmq --extra-cflags=-DZMG_STATIC"
-nonfree="--enable-nonfree"
-opencl="--enable-opencl"
-opengl="--enable-opengl"
-openssl="--enable-openssl"
-
-mediainfo="yes"
-mp4box="yes"
-
-# ffmpeg_shared="yes"
-# ffmpeg_branch="n4.1"
+IFS=$'\n' read -d '' -r -a FFMPEG_LIBS < <(get_options)
 
 # --------------------------------------------------
 
@@ -97,6 +106,8 @@ else
     sd="sed"
     extraLibs="-lpthread"
 fi
+
+EXTRA_CFLAGS=""
 
 compile="false"
 buildFFmpeg="false"
@@ -426,7 +437,7 @@ buildProcess() {
             do_checkIfExist xz-5.2.4 liblzma.a
         fi
 
-    	cd "$LOCALBUILDDIR" || exit
+        cd "$LOCALBUILDDIR" || exit
 
         if [ -f "$LOCALDESTDIR/lib/libpng.a" ]; then
             echo -------------------------------------------------
@@ -447,7 +458,7 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ -n "$libfribidi" ]]; then
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libfribidi" ]] || [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libass" ]]; then
             do_git "https://github.com/fribidi/fribidi.git" fribidi-git
 
             if [[ $compile == "true" ]]; then
@@ -472,7 +483,7 @@ buildProcess() {
             fi
         fi
 
-        if [[ -n "$fontconfig" ]]; then
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-fontconfig" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libexpat.a" ]; then
                 echo -------------------------------------------------
                 echo "expat-2.2.7 is already compiled"
@@ -513,7 +524,7 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ -n "$libfreetype" ]]; then
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libfreetype" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libfontconfig.a" ]; then
                 echo -------------------------------------------------
                 echo "fontconfig-2.13.92 is already compiled"
@@ -539,28 +550,6 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ -n "$libass" ]]; then
-            if [ -f "$LOCALDESTDIR/lib/libfribidi.a" ]; then
-                echo -------------------------------------------------
-                echo "fribidi-1.0.5 is already compiled"
-                echo -------------------------------------------------
-            else
-                echo -ne "\033]0;compile fribidi\007"
-
-                do_wget "https://github.com/fribidi/fribidi/archive/v1.0.5.tar.gz" fribidi-1.0.5.tar.gz
-
-                ./autogen.sh
-                ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --with-glib=no
-
-                make -j "$cpuCount"
-                make install
-
-                do_checkIfExist fribidi-1.0.5 libfribidi.a
-            fi
-        fi
-
-        cd "$LOCALBUILDDIR" || exit
-
         if [ -f "$LOCALDESTDIR/lib/libxml2.a" ]; then
             echo -------------------------------------------------
             echo "libxml2-2.9.9 is already compiled"
@@ -580,7 +569,7 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ -n "$libzimg" ]]; then
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libzimg" ]]; then
             do_git "https://github.com/sekrit-twc/zimg.git" zimg-git
 
             if [[ $compile == "true" ]]; then
@@ -608,7 +597,9 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ -n "$libzmq" ]]; then
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libzmq" ]]; then
+            EXTRA_CFLAGS="$EXTRA_CFLAGS -DZMG_STATIC"
+
             do_git "https://github.com/zeromq/libzmq.git" libzmq-git
 
             if [[ $compile == "true" ]]; then
@@ -635,7 +626,7 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ -n "$libsrt" ]]; then
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-openssl" ]] || [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libsrt" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libssl.a" ]; then
                 echo -------------------------------------------------
                 echo "openssl-1.1.1f is already compiled"
@@ -658,22 +649,21 @@ buildProcess() {
 
                 do_checkIfExist openssl-1.1.1f libssl.a
             fi
-            cd $LOCALBUILDDIR || exit
+        fi
 
+        cd "$LOCALBUILDDIR" || exit
+
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libsrt" ]]; then
             do_git "https://github.com/Haivision/srt.git" srt-git
 
             if [[ $compile == "true" ]]; then
                 mkdir build
                 cd build || exit
 
-                cmake .. -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DENABLE_SHARED:BOOLEAN=OFF -DUSE_STATIC_LIBSTDCXX:BOOLEAN=ON -DENABLE_CXX11:BOOLEAN=OFF
+                cmake .. -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DENABLE_SHARED:BOOLEAN=OFF -DUSE_STATIC_LIBSTDCXX:BOOLEAN=ON -DENABLE_CXX11:BOOLEAN=OFF -DCMAKE_INSTALL_BINDIR="bin" -DCMAKE_INSTALL_LIBDIR="lib" -DCMAKE_INSTALL_INCLUDEDIR="include"
 
                 make -j "$cpuCount"
                 make install
-
-                if [[ -d "$LOCALDESTDIR/lib64" ]]; then
-                  cp -R "$LOCALDESTDIR/lib64/*" "$LOCALDESTDIR/lib/"
-                fi
 
                 do_checkIfExist srt-git libsrt.a
 
@@ -704,7 +694,7 @@ buildProcess() {
         echo
         echo "-------------------------------------------------------------------------------"
 
-        if [[ -n "$libmp3lame" ]]; then
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libmp3lame" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libmp3lame.a" ]; then
                 echo -------------------------------------------------
                 echo "lame-3.100 is already compiled"
@@ -725,7 +715,8 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ -n "$libtwolame" ]]; then
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libtwolame" ]]; then
+            EXTRA_CFLAGS="$EXTRA_CFLAGS -DLIBTWOLAME_STATIC"
             if [ -f "$LOCALDESTDIR/lib/libtwolame.a" ]; then
                 echo -------------------------------------------------
                 echo "twolame-0.3.13 is already compiled"
@@ -746,7 +737,7 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ -n "$libfdk_aac" ]]; then
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libfdk-aac" ]]; then
             do_git "https://github.com/mstorsjo/fdk-aac" fdk-aac-git
 
             if [[ $compile == "true" ]]; then
@@ -772,7 +763,7 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ -n "$libsoxr" ]]; then
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libsoxr" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libsoxr.a" ]; then
                 echo -------------------------------------------------
                 echo "soxr-0.1.3 is already compiled"
@@ -798,7 +789,7 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ -n "$libopus" ]]; then
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libopus" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libopus.a" ]; then
                 echo -------------------------------------------------
                 echo "opus-1.3 is already compiled"
@@ -831,7 +822,32 @@ buildProcess() {
         echo
         echo "-------------------------------------------------------------------------------"
 
-        if [[ -n "$libaom" ]]; then
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libsvtav1" ]]; then
+            do_git "https://github.com/OpenVisualCloud/SVT-AV1" libsvtav1-git
+
+            if [[ $compile == "true" ]]; then
+                cd Build
+
+                rm -rf *
+
+                cmake .. -G"Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_BINDIR="bin" -DCMAKE_INSTALL_LIBDIR="lib" -DCMAKE_INSTALL_INCLUDEDIR="include"
+
+                make -j "$cpuCount"
+                make install
+
+                do_checkIfExist libsvtav1-git libSvtAv1Enc.a
+
+                buildFFmpeg="true"
+            else
+                echo -------------------------------------------------
+                echo "libsvtav1-git is already up to date"
+                echo -------------------------------------------------
+            fi
+        fi
+
+        cd "$LOCALBUILDDIR" || exit
+
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libaom" ]]; then
             do_git "https://aomedia.googlesource.com/aom" libaom-git
 
             if [[ $compile == "true" ]]; then
@@ -862,7 +878,7 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ -n "$libvpx" ]]; then
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libvpx" ]]; then
             do_git "https://github.com/webmproject/libvpx.git" libvpx-git noDepth
 
             if [[ $compile == "true" ]]; then
@@ -890,7 +906,7 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ -n "$libbluray" ]]; then
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libbluray" ]]; then
             do_git "https://code.videolan.org/videolan/libbluray" libbluray-git
 
             if [[ $compile == "true" ]]; then
@@ -920,7 +936,7 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ -n "$libass" ]]; then
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libass" ]]; then
             do_git "https://github.com/libass/libass.git" libass-git
 
             if [[ $compile == "true" ]]; then
@@ -951,7 +967,7 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ -n "$decklink" ]]; then
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-decklink" ]]; then
             if [ -f "$LOCALDESTDIR/include/DeckLinkAPI.h" ]; then
                 echo -------------------------------------------------
                 echo "DeckLinkAPI is already in place"
@@ -964,8 +980,8 @@ buildProcess() {
                 cp ../../decklink-${osString}/* .
 
                 if [[ $osString == "osx" ]]; then
-                    $sd -i '' "s/void	InitDeckLinkAPI (void)/static void	InitDeckLinkAPI (void)/" DeckLinkAPIDispatch.cpp
-                    $sd -i '' "s/bool		IsDeckLinkAPIPresent (void)/static bool		IsDeckLinkAPIPresent (void)/" DeckLinkAPIDispatch.cpp
+                    $sd -i '' "s/void    InitDeckLinkAPI (void)/static void    InitDeckLinkAPI (void)/" DeckLinkAPIDispatch.cpp
+                    $sd -i '' "s/bool        IsDeckLinkAPIPresent (void)/static bool        IsDeckLinkAPIPresent (void)/" DeckLinkAPIDispatch.cpp
                     $sd -i '' "s/void InitBMDStreamingAPI(void)/static void InitBMDStreamingAPI(void)/" DeckLinkAPIDispatch.cpp
                 fi
             fi
@@ -1059,7 +1075,7 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ -n "$libx264" ]]; then
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libx264" ]]; then
             do_git "https://code.videolan.org/videolan/x264" x264-git noDepth
 
             if [[ $compile == "true" ]]; then
@@ -1090,7 +1106,7 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ -n "$libx265" ]]; then
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libx265" ]]; then
             do_hg "https://bitbucket.org/multicoreware/x265" x265-hg
 
             if [[ $compile == "true" ]]; then
@@ -1182,19 +1198,19 @@ buildProcess() {
             make distclean
         fi
 
-        ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" $disable_ffplay \
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libsvtav1" ]]; then
+            git apply "$LOCALBUILDDIR/libsvtav1-git/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch"
+        fi
+
+        echo ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" $disable_ffplay \
         --disable-doc --enable-gpl --enable-version3 \
-        --enable-runtime-cpudetect --enable-avfilter --enable-zlib $opencl $opengl \
-        $fontconfig $libfreetype $libfribidi $libass $libbluray $libsrt $libzimg $libzmq \
-        $libtwolame $libmp3lame $libopus $libsoxr \
-        $libaom $libvpx $libx264 $libx265 $nonfree $libfdk_aac $decklink $openssl \
-        $osFlag --extra-libs="-lm -liconv $extraLibs" $pkg_extra
+        --enable-runtime-cpudetect --enable-avfilter --enable-zlib "${FFMPEG_LIBS[@]}" \
+        $osFlag --extra-libs="-lm -liconv $extraLibs" --extra-cflags="$EXTRA_CFLAGS" $pkg_extra
 
         $sd -ri "s/--prefix=[^ ]* //g" config.h
         $sd -ri "s/ --extra-libs='.*'//g" config.h
         $sd -ri "s/ --pkg-config-flags=--static//g" config.h
-        $sd -ri "s/ --extra-cflags=-DLIBTWOLAME_STATIC//g" config.h
-        $sd -ri "s/ --extra-cflags=-DZMG_STATIC//g" config.h
+        $sd -ri "s/ --extra-cflags=.*//g" config.h
 
         make -j "$cpuCount"
         make install
