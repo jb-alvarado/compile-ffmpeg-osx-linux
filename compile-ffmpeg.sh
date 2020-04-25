@@ -1202,7 +1202,7 @@ buildProcess() {
             git apply "$LOCALBUILDDIR/libsvtav1-git/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch"
         fi
 
-        echo ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" $disable_ffplay \
+        ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" $disable_ffplay \
         --disable-doc --enable-gpl --enable-version3 \
         --enable-runtime-cpudetect --enable-avfilter --enable-zlib "${FFMPEG_LIBS[@]}" \
         $osFlag --extra-libs="-lm -liconv $extraLibs" --extra-cflags="$EXTRA_CFLAGS" $pkg_extra
