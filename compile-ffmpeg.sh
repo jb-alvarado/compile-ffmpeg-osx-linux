@@ -493,7 +493,7 @@ buildProcess() {
 
                 do_wget "https://downloads.sourceforge.net/project/expat/expat/2.2.7/expat-2.2.7.tar.bz2"
 
-                ./configure --prefix="$LOCALDESTDIR" --enable-shared=no
+                ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --without-docbook
 
                 make -j "$cpuCount"
                 make install
