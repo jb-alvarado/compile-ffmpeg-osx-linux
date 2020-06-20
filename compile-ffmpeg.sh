@@ -992,7 +992,7 @@ buildProcess() {
         #------------------------------------------------
 
         cd "$LOCALBUILDDIR" || exit
-        if [[ -n "$mp4box" ]]; then
+        if [[ "$mp4box" == "yes" ]]; then
             do_git "https://github.com/gpac/gpac.git" gpac-git noDepth
             if [[ $compile = "true" ]]; then
                 if [ -d "$LOCALDESTDIR/include/gpac" ]; then
@@ -1010,7 +1010,7 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ -n "$mediainfo" ]]; then
+        if [[ "$mediainfo" == "yes" ]]; then
             do_git "https://github.com/MediaArea/ZenLib" libzen-git
             if [[ $compile = "true" ]]; then
                 cd Project/GNU/Library || exit
