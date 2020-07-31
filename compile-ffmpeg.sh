@@ -873,6 +873,8 @@ buildProcess() {
                 make -j "$cpuCount"
                 make install
 
+                cp -R $LOCALDESTDIR/lib64/* $LOCALDESTDIR/lib/
+
                 do_checkIfExist libaom-git libaom.a
 
                 buildFFmpeg="true"
