@@ -4,7 +4,7 @@ mediainfo="yes"
 mp4box="yes"
 
 #ffmpeg_shared="yes"
-#ffmpeg_branch="n4.1"
+#ffmpeg_branch="release/4.3"
 
 # when you call the script with an variable, like:
 #   compile-ffmpeg.sh ffmpeg
@@ -310,7 +310,7 @@ buildProcess() {
         if [ ! -f "/usr/local/bin/nasm" ] && [[ $compNasm == "yes" ]]; then
             echo -ne "\033]0;compile nasm 64Bit\007"
 
-            do_wget "https://www.nasm.us/pub/nasm/releasebuilds/2.14/nasm-2.14.tar.gz" nasm-2.14.tar.gz
+            do_wget "https://www.nasm.us/pub/nasm/releasebuilds/2.15.03/nasm-2.15.03.tar.gz"
             ./configure --prefix="$LOCALDESTDIR"
 
             make -j "$cpuCount"
@@ -318,7 +318,7 @@ buildProcess() {
             sudo cp "$LOCALDESTDIR/bin/nasm" "$LOCALDESTDIR/bin/ndisasm" /usr/local/bin/
         else
             echo -------------------------------------------------
-            echo "nasm-2.14 is already compiled, or not needed"
+            echo "nnasm-2.15.03 is already compiled, or not needed"
             echo -------------------------------------------------
         fi
 
@@ -422,19 +422,19 @@ buildProcess() {
 
         if [ -f "$LOCALDESTDIR/lib/liblzma.a" ]; then
             echo -------------------------------------------------
-            echo "xz-5.2.4 is already compiled"
+            echo "xz-5.2.5 is already compiled"
             echo -------------------------------------------------
         else
             echo -ne "\033]0;compile xz 64Bit\007"
 
-            do_wget "https://tukaani.org/xz/xz-5.2.4.tar.gz"
+            do_wget "https://tukaani.org/xz/xz-5.2.5.tar.gz"
 
             ./configure --prefix="$LOCALDESTDIR" --disable-shared
 
             make -j "$cpuCount"
             make install
 
-            do_checkIfExist xz-5.2.4 liblzma.a
+            do_checkIfExist xz-5.2.5 liblzma.a
         fi
 
         cd "$LOCALBUILDDIR" || exit
@@ -486,37 +486,37 @@ buildProcess() {
         if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-fontconfig" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libexpat.a" ]; then
                 echo -------------------------------------------------
-                echo "expat-2.2.7 is already compiled"
+                echo "expat-2.2.9 is already compiled"
                 echo -------------------------------------------------
             else
                 echo -ne "\033]0;compile expat 64Bit\007"
 
-                do_wget "https://downloads.sourceforge.net/project/expat/expat/2.2.7/expat-2.2.7.tar.bz2"
+                do_wget "https://downloads.sourceforge.net/project/expat/expat/2.2.9/expat-2.2.9.tar.bz2"
 
                 ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --without-docbook
 
                 make -j "$cpuCount"
                 make install
 
-                do_checkIfExist expat-2.2.7 libexpat.a
+                do_checkIfExist expat-2.2.9 libexpat.a
             fi
 
             cd "$LOCALBUILDDIR" || exit
 
             if [ -f "$LOCALDESTDIR/lib/libfreetype.a" ]; then
                 echo -------------------------------------------------
-                echo "freetype-2.10.1 is already compiled"
+                echo "freetype-2.10.2 is already compiled"
                 echo -------------------------------------------------
             else
                 echo -ne "\033]0;compile freetype\007"
 
-                do_wget "https://downloads.sourceforge.net/project/freetype/freetype2/2.10.1/freetype-2.10.1.tar.gz"
+                do_wget "https://sourceforge.net/projects/freetype/files/freetype2/2.10.2/freetype-2.10.2.tar.gz"
 
                 ./configure --prefix="$LOCALDESTDIR" --disable-shared --with-harfbuzz=no
                 make -j "$cpuCount"
                 make install
 
-                do_checkIfExist freetype-2.10.1 libfreetype.a
+                do_checkIfExist freetype-2.10.2 libfreetype.a
 
                 $sd -ri "s/(Libs\:.*)/\1 -lpng16 -lbz2 -lz/g" "$LOCALDESTDIR/lib/pkgconfig/freetype2.pc"
             fi
@@ -552,19 +552,26 @@ buildProcess() {
 
         if [ -f "$LOCALDESTDIR/lib/libxml2.a" ]; then
             echo -------------------------------------------------
-            echo "libxml2-2.9.9 is already compiled"
+            echo "libxml2-2.9.10 is already compiled"
             echo -------------------------------------------------
         else
             echo -ne "\033]0;compile libxml2\007"
 
-            do_wget "ftp://xmlsoft.org/libxml2/libxml2-2.9.9.tar.gz"
+            do_wget "https://github.com/GNOME/libxml2/archive/v2.9.10.tar.gz" "libxml2-2.9.10.tar.gz"
+
+            if [[ ! -f ./configure ]]; then
+                    ./autogen.sh
+                else
+                    make uninstall
+                    make clean
+                fi
 
             ./configure --prefix="$LOCALDESTDIR" --disable-shared --enable-static
 
             make -j "$cpuCount"
             make install
 
-            do_checkIfExist libxml2-2.9.9 libxml2.a
+            do_checkIfExist libxml2-2.9.10 libxml2.a
         fi
 
         cd "$LOCALBUILDDIR" || exit
@@ -629,7 +636,7 @@ buildProcess() {
         if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-openssl" ]] || [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libsrt" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libssl.a" ]; then
                 echo -------------------------------------------------
-                echo "openssl-1.1.1f is already compiled"
+                echo "openssl-1.1.1g is already compiled"
                 echo -------------------------------------------------
             else
                 echo -ne "\033]0;compile openssl 64Bit\007"
@@ -640,14 +647,14 @@ buildProcess() {
                     target="linux-x86_64"
                 fi
 
-                do_wget "https://www.openssl.org/source/openssl-1.1.1f.tar.gz"
+                do_wget "https://www.openssl.org/source/openssl-1.1.1g.tar.gz"
 
                 ./Configure --prefix=$LOCALDESTDIR $target no-shared enable-camellia enable-idea enable-mdc2 enable-rfc3779 -mtune=generic $osExtra
 
                 make depend all
                 make install
 
-                do_checkIfExist openssl-1.1.1f libssl.a
+                do_checkIfExist openssl-1.1.1g libssl.a
             fi
         fi
 
@@ -719,19 +726,19 @@ buildProcess() {
             EXTRA_CFLAGS="$EXTRA_CFLAGS -DLIBTWOLAME_STATIC"
             if [ -f "$LOCALDESTDIR/lib/libtwolame.a" ]; then
                 echo -------------------------------------------------
-                echo "twolame-0.3.13 is already compiled"
+                echo "twolame-0.4.0 is already compiled"
                 echo -------------------------------------------------
             else
                 echo -ne "\033]0;compile twolame 64Bit\007"
 
-                do_wget "http://sourceforge.net/projects/twolame/files/twolame/0.3.13/twolame-0.3.13.tar.gz/download" twolame-0.3.13.tar.gz
+                do_wget "https://sourceforge.net/projects/twolame/files/twolame/0.4.0/twolame-0.4.0.tar.gz/download" twolame-0.4.0.tar.gz
 
                 ./configure --prefix="$LOCALDESTDIR" --disable-shared CPPFLAGS="$CPPFLAGS -DLIBTWOLAME_STATIC"
 
                 make -j "$cpuCount"
                 make install
 
-                do_checkIfExist twolame-0.3.13 libtwolame.a
+                do_checkIfExist twolame-0.4.0 libtwolame.a
             fi
         fi
 

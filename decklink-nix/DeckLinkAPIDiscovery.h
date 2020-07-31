@@ -1,5 +1,5 @@
 /* -LICENSE-START-
-** Copyright (c) 2019 Blackmagic Design
+** Copyright (c) 2020 Blackmagic Design
 **
 ** Permission is hereby granted, free of charge, to any person or organization
 ** obtaining a copy of the software and accompanying documentation covered by
@@ -54,7 +54,7 @@ BMD_CONST REFIID IID_IDeckLink                                    = /* C418FBDD-
 
 class IDeckLink;
 
-/* Interface IDeckLink - represents a DeckLink device */
+/* Interface IDeckLink - Represents a DeckLink device */
 
 class BMD_PUBLIC IDeckLink : public IUnknown
 {
