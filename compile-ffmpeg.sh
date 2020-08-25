@@ -1116,10 +1116,10 @@ buildProcess() {
         cd "$LOCALBUILDDIR" || exit
 
         if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libx265" ]]; then
-            do_hg "https://bitbucket.org/multicoreware/x265" x265-hg
+            do_hg "http://hg.videolan.org/x265" x265-hg
 
             if [[ $compile == "true" ]]; then
-                cd build || exit/xcode
+                cd build || exit
                 rm -rf ./*
                 rm -f "$LOCALDESTDIR/bin/x265"
                 rm -f "$LOCALDESTDIR/include/x265.h"
