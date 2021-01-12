@@ -473,6 +473,10 @@ buildProcess() {
 
                 make -j "$cpuCount"
                 make install
+                
+                if [[ ! -f "$LOCALDESTDIR/lib/pkgconfig/fribidi.pc" ]]; then
+                    cp fribidi.pc "$LOCALDESTDIR/lib/pkgconfig/"
+                fi
 
                 do_checkIfExist fribidi-git libfribidi.a
 
