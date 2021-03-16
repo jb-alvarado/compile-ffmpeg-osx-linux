@@ -473,7 +473,7 @@ buildProcess() {
 
                 make -j "$cpuCount"
                 make install
-                
+
                 if [[ ! -f "$LOCALDESTDIR/lib/pkgconfig/fribidi.pc" ]]; then
                     cp fribidi.pc "$LOCALDESTDIR/lib/pkgconfig/"
                 fi
@@ -834,7 +834,7 @@ buildProcess() {
         echo "-------------------------------------------------------------------------------"
 
         if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libsvtav1" ]]; then
-            do_git "https://github.com/OpenVisualCloud/SVT-AV1" libsvtav1-git
+            do_git "https://gitlab.com/AOMediaCodec/SVT-AV1.git" libsvtav1-git
 
             if [[ $compile == "true" ]]; then
                 cd Build
@@ -1209,10 +1209,6 @@ buildProcess() {
         if [ -f "ffbuild/config.mak" ]; then
             # make uninstall
             make distclean
-        fi
-
-        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libsvtav1" ]]; then
-            git apply "$LOCALBUILDDIR/libsvtav1-git/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch"
         fi
 
         ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" $disable_ffplay \
