@@ -41,6 +41,7 @@ cat <<EOF > "$config"
 #--enable-opengl
 #--enable-openssl
 #--enable-libsvtav1
+#--enable-librav1e
 EOF
     echo "-------------------------------------------------------------------------------"
     echo "-------------------------------------------------------------------------------"
@@ -310,7 +311,7 @@ buildProcess() {
         if [ ! -f "/usr/local/bin/nasm" ] && [[ $compNasm == "yes" ]]; then
             echo -ne "\033]0;compile nasm 64Bit\007"
 
-            do_wget "https://www.nasm.us/pub/nasm/releasebuilds/2.15.03/nasm-2.15.03.tar.gz"
+            do_wget "https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/nasm-2.15.05.tar.gz"
             ./configure --prefix="$LOCALDESTDIR"
 
             make -j "$cpuCount"
@@ -318,7 +319,7 @@ buildProcess() {
             sudo cp "$LOCALDESTDIR/bin/nasm" "$LOCALDESTDIR/bin/ndisasm" /usr/local/bin/
         else
             echo -------------------------------------------------
-            echo "nnasm-2.15.03 is already compiled, or not needed"
+            echo "nasm-2.15.05 is already compiled, or not needed"
             echo -------------------------------------------------
         fi
 
@@ -490,37 +491,37 @@ buildProcess() {
         if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-fontconfig" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libexpat.a" ]; then
                 echo -------------------------------------------------
-                echo "expat-2.2.9 is already compiled"
+                echo "expat-2.4.1 is already compiled"
                 echo -------------------------------------------------
             else
                 echo -ne "\033]0;compile expat 64Bit\007"
 
-                do_wget "https://downloads.sourceforge.net/project/expat/expat/2.2.9/expat-2.2.9.tar.bz2"
+                do_wget "https://downloads.sourceforge.net/project/expat/expat/2.4.1/expat-2.4.1.tar.bz2"
 
                 ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --without-docbook
 
                 make -j "$cpuCount"
                 make install
 
-                do_checkIfExist expat-2.2.9 libexpat.a
+                do_checkIfExist expat-2.4.1 libexpat.a
             fi
 
             cd "$LOCALBUILDDIR" || exit
 
             if [ -f "$LOCALDESTDIR/lib/libfreetype.a" ]; then
                 echo -------------------------------------------------
-                echo "freetype-2.10.2 is already compiled"
+                echo "freetype-2.10.4 is already compiled"
                 echo -------------------------------------------------
             else
                 echo -ne "\033]0;compile freetype\007"
 
-                do_wget "https://sourceforge.net/projects/freetype/files/freetype2/2.10.2/freetype-2.10.2.tar.gz"
+                do_wget "https://sourceforge.net/projects/freetype/files/freetype2/2.10.4/freetype-2.10.4.tar.gz"
 
                 ./configure --prefix="$LOCALDESTDIR" --disable-shared --with-harfbuzz=no
                 make -j "$cpuCount"
                 make install
 
-                do_checkIfExist freetype-2.10.2 libfreetype.a
+                do_checkIfExist freetype-2.10.4 libfreetype.a
 
                 $sd -ri "s/(Libs\:.*)/\1 -lpng16 -lbz2 -lz/g" "$LOCALDESTDIR/lib/pkgconfig/freetype2.pc"
             fi
@@ -531,19 +532,19 @@ buildProcess() {
         if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libfreetype" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libfontconfig.a" ]; then
                 echo -------------------------------------------------
-                echo "fontconfig-2.13.92 is already compiled"
+                echo "fontconfig-2.13.93 is already compiled"
                 echo -------------------------------------------------
             else
                 echo -ne "\033]0;compile fontconfig\007"
 
-                do_wget "https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.13.92.tar.gz"
+                do_wget "https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.13.93.tar.gz"
 
                 ./configure --prefix="$LOCALDESTDIR" --enable-shared=no
 
                 make -j "$cpuCount"
                 make install
 
-                do_checkIfExist fontconfig-2.13.92 libfontconfig.a
+                do_checkIfExist fontconfig-2.13.93 libfontconfig.a
 
                 # on linux fontconfig.pc is not copyed
                 [[ ! -f "$LOCALDESTDIR/lib/pkgconfig/fontconfig.pc" ]] && cp fontconfig.pc "$LOCALDESTDIR/lib/pkgconfig/"
@@ -556,12 +557,12 @@ buildProcess() {
 
         if [ -f "$LOCALDESTDIR/lib/libxml2.a" ]; then
             echo -------------------------------------------------
-            echo "libxml2-2.9.10 is already compiled"
+            echo "libxml2-2.9.12 is already compiled"
             echo -------------------------------------------------
         else
             echo -ne "\033]0;compile libxml2\007"
 
-            do_wget "https://github.com/GNOME/libxml2/archive/v2.9.10.tar.gz" "libxml2-2.9.10.tar.gz"
+            do_wget "https://github.com/GNOME/libxml2/archive/v2.9.12.tar.gz" "libxml2-2.9.12.tar.gz"
 
             if [[ ! -f ./configure ]]; then
                     ./autogen.sh
@@ -575,7 +576,7 @@ buildProcess() {
             make -j "$cpuCount"
             make install
 
-            do_checkIfExist libxml2-2.9.10 libxml2.a
+            do_checkIfExist libxml2-2.9.12 libxml2.a
         fi
 
         cd "$LOCALBUILDDIR" || exit
@@ -1150,6 +1151,24 @@ buildProcess() {
             else
                 echo -------------------------------------------------
                 echo "x265 is already up to date"
+                echo -------------------------------------------------
+            fi
+        fi
+
+        cd "$LOCALBUILDDIR" || exit
+
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-librav1e" ]]; then
+            do_git "https://github.com/xiph/rav1e.git" rav1e-git noDepth
+
+            if [[ $compile == "true" ]]; then
+                cargo cinstall --release --jobs "$cpuCount" --prefix=$LOCALDESTDIR --libdir=$LOCALDESTDIR/lib --includedir=$LOCALDESTDIR/include
+
+                do_checkIfExist rav1e-git librav1e.a
+
+                buildFFmpeg="true"
+            else
+                echo -------------------------------------------------
+                echo "rav1e-git is already up to date"
                 echo -------------------------------------------------
             fi
         fi
