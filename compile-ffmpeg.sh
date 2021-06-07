@@ -428,7 +428,7 @@ buildProcess() {
         else
             echo -ne "\033]0;compile xz 64Bit\007"
 
-            do_wget "https://tukaani.org/xz/xz-5.2.5.tar.gz"
+            do_wget "https://downloads.sourceforge.net/project/lzmautils/xz-5.2.5.tar.gz"
 
             ./configure --prefix="$LOCALDESTDIR" --disable-shared
 
