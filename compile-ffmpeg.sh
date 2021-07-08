@@ -1286,14 +1286,3 @@ buildProcess() {
 buildProcess
 
 echo -ne "\033]0;compiling done...\007"
-echo
-echo "Window close in 15"
-echo
-sleep 5
-echo
-echo "Window close in 10"
-echo
-sleep 5
-echo
-echo "Window close in 5"
-sleep 5
