@@ -864,7 +864,7 @@ buildProcess() {
             do_git "https://code.videolan.org/videolan/dav1d.git" libdav1d-git
 
             if [[ $compile == "true" ]]; then
-                cargo install cargo-c
+                cargo install cargo-c --features=vendored-openssl
                 pip3 install --upgrade --user meson
                 rm -rf build
                 mkdir build
