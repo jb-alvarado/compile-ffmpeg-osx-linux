@@ -1,11 +1,11 @@
 # compile-ffmpeg-osx / linux
 Build script for compiling ffmpeg under OSX and linux (ubuntu/debian)
 
-For OSX is needed: homebrew with installed: `cmake mercurial git wget curl pkg-config nasm autoconf automake libtool autogen gnu-sed sdl2 shtool`
+For OSX is needed: homebrew with installed: `cmake mercurial git wget curl pkg-config nasm autoconf automake libtool autogen gnu-sed sdl2 shtool ninja-build cargo cargo-c`
 
-For Linux (ubuntu/debian) is needed: `sudo apt install autoconf automake build-essential libtool pkg-config texi2html yasm cmake curl mercurial git wget gperf` (debian needs sudo for install nasm to /usr/local/bin/)
+For Linux (ubuntu/debian) is needed: `sudo apt install autoconf automake build-essential libtool pkg-config texi2html yasm cmake curl mercurial git wget gperf ninja-build cargo cargo-c` (debian needs sudo for install nasm to /usr/local/bin/)
 
-For Centos install: `yum group install "Development Tools"` and: `yum install libstdc++-static mercurial libtool cmake`
+For Centos install: `yum group install "Development Tools"` and: `yum install libstdc++-static mercurial libtool cmake ninja-build cargo cargo-c`
 
 Install sdl2/libsdl2-dev only when you need ffplay or opengl!
 

@@ -42,6 +42,7 @@ cat <<EOF > "$config"
 #--enable-openssl
 #--enable-libsvtav1
 #--enable-librav1e
+#--enable-libdav1d
 EOF
     echo "-------------------------------------------------------------------------------"
     echo "-------------------------------------------------------------------------------"
@@ -853,6 +854,31 @@ buildProcess() {
             else
                 echo -------------------------------------------------
                 echo "libsvtav1-git is already up to date"
+                echo -------------------------------------------------
+            fi
+        fi
+
+        cd "$LOCALBUILDDIR" || exit
+
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libdav1d" ]]; then
+            do_git "https://code.videolan.org/videolan/dav1d.git" libdav1d-git
+
+            if [[ $compile == "true" ]]; then
+                pip3 install --upgrade --user meson
+                rm -rf build
+                mkdir build
+                cd build
+
+                meson setup -Denable_tools=false -Denable_tests=false --default-library=static .. --prefix "$LOCALDESTDIR" --libdir="$LOCALDESTDIR/lib"
+                ninja
+                ninja install
+
+                do_checkIfExist libdav1d-git libdav1d.a
+
+                buildFFmpeg="true"
+            else
+                echo -------------------------------------------------
+                echo "libdav1d-git is already up to date"
                 echo -------------------------------------------------
             fi
         fi
