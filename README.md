@@ -7,6 +7,8 @@ For Linux (ubuntu/debian) is needed: `sudo apt install autoconf automake build-e
 
 For Centos install: `yum group install "Development Tools"` and: `yum install libstdc++-static mercurial libtool cmake ninja-build cargo`
 
+For libdav1d install meson: `pip3 install --upgrade --user meson`
+
 Install sdl2/libsdl2-dev only when you need ffplay or opengl!
 
 NOTE: make sure the full path where you checkout this project does not contain any spaces or the script will not work.
