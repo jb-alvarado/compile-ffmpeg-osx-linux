@@ -1,16 +1,49 @@
 #!/bin/bash
 
-mediainfo="yes"
-mp4box="yes"
-
 #ffmpeg_shared="yes"
 #ffmpeg_branch="release/4.3"
 
-# when you call the script with an variable, like:
-#   compile-ffmpeg.sh ffmpeg
-# then it only compile the ffmpeg binary
 
-compile_ffmpeg_only=$1
+while [[ $# -gt 0 ]] && [[ "$1" == "--"* ]]; do
+    opt="$1";
+    shift;
+    case "$opt" in
+        --ffmpeg-only=* )
+           compile_ffmpeg_only="${opt#*=}";;
+        --mediainfo=* )
+           compile_mediainfo="${opt#*=}";;
+        --mp4box=* )
+           compile_mp4box="${opt#*=}";;
+        --optimize=* )
+           optimize="${opt#*=}";;
+        --help )
+           showHelp=true;;
+        *);;
+   esac
+done
+
+if [[ $showHelp ]]; then
+    echo "-------------------------------------------------------------"
+    echo "compile ffmpeg with:"
+    echo
+    echo '--ffmpeg-only=[y/n]    # compile only ffmpeg'
+    echo '--mediainfo=[y/n]      # compile mediainfo'
+    echo '--mp4box=[y/n]         # compile mp4box'
+    echo '--optimize=[y/n]       # compile system optimized version'
+    echo '--help                 # show this help'
+
+    exit 0
+fi
+
+if [[ -n "$optimize" ]]; then
+    tune="native"
+    onum=3
+    cpuDetect=""
+else
+    tune="generic"
+    onum=2
+    cpuDetect="--enable-runtime-cpudetect"
+fi
 
 config="build_config.txt"
 
@@ -109,7 +142,7 @@ else
     extraLibs="-lpthread"
 fi
 
-EXTRA_CFLAGS=""
+EXTRA_CFLAGS="-march=$tune"
 
 compile="false"
 buildFFmpeg="false"
@@ -120,7 +153,7 @@ export LOCALBUILDDIR LOCALDESTDIR
 
 PKG_CONFIG_PATH="${LOCALDESTDIR}/lib/pkgconfig"
 CPPFLAGS="-I${LOCALDESTDIR}/include $fpic $osExtra"
-CFLAGS="-I${LOCALDESTDIR}/include -mtune=generic -O2 $osExtra $fpic"
+CFLAGS="-I${LOCALDESTDIR}/include -mtune=$tune -O$onum $osExtra $fpic"
 CXXFLAGS="${CFLAGS}"
 LDFLAGS="-L${LOCALDESTDIR}/lib -pipe $osExtra"
 export PKG_CONFIG_PATH CPPFLAGS CFLAGS CXXFLAGS LDFLAGS
@@ -655,10 +688,10 @@ buildProcess() {
 
                 do_wget "https://www.openssl.org/source/openssl-1.1.1g.tar.gz"
 
-                ./Configure --prefix=$LOCALDESTDIR $target no-shared enable-camellia enable-idea enable-mdc2 enable-rfc3779 -mtune=generic $osExtra
+                ./Configure --prefix=$LOCALDESTDIR $target no-shared enable-camellia enable-idea enable-mdc2 enable-rfc3779 -mtune=$tune $osExtra
 
                 make depend all
-                make install
+                make install_sw
 
                 do_checkIfExist openssl-1.1.1g libssl.a
             fi
@@ -898,7 +931,7 @@ buildProcess() {
                     cd aom_build
                 fi
 
-                cmake -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DBUILD_SHARED_LIBS=0 -DENABLE_NASM=on -DAOM_EXTRA_C_FLAGS="-mtune=generic $osExtra" -DAOM_EXTRA_CXX_FLAGS="-mtune=generic $osExtra" ../
+                cmake -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DBUILD_SHARED_LIBS=0 -DENABLE_NASM=on -DAOM_EXTRA_C_FLAGS="-mtune=$tune $osExtra" -DAOM_EXTRA_CXX_FLAGS="-mtune=$tune $osExtra" ../
 
                 make -j "$cpuCount"
                 make install
@@ -1031,7 +1064,8 @@ buildProcess() {
         #------------------------------------------------
 
         cd "$LOCALBUILDDIR" || exit
-        if [[ "$mp4box" == "yes" ]]; then
+
+        if [[ "$compile_mp4box" ]]; then
             do_git "https://github.com/gpac/gpac.git" gpac-git noDepth
             if [[ $compile = "true" ]]; then
                 if [ -d "$LOCALDESTDIR/include/gpac" ]; then
@@ -1039,7 +1073,7 @@ buildProcess() {
                     rm -rf "$LOCALDESTDIR/include/gpac"
                 fi
                 [[ -f config.mak ]] && make distclean
-                ./configure --prefix="$LOCALDESTDIR" --static-mp4box --extra-libs="-lm" --extra-cflags="-I$LOCALDESTDIR/include"
+                ./configure --prefix="$LOCALDESTDIR" --static-bin --extra-libs="-lm" --extra-cflags="-I$LOCALDESTDIR/include"
                 make -j "$cpuCount"
                 make install-lib
                 cp bin/gcc/MP4Box "$LOCALDESTDIR/bin/"
@@ -1049,7 +1083,7 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ "$mediainfo" == "yes" ]]; then
+        if [[ "$compile_mediainfo" ]]; then
             do_git "https://github.com/MediaArea/ZenLib" libzen-git
             if [[ $compile = "true" ]]; then
                 cd Project/GNU/Library || exit
@@ -1257,7 +1291,7 @@ buildProcess() {
 
         ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" $disable_ffplay \
         --disable-doc --enable-gpl --enable-version3 \
-        --enable-runtime-cpudetect --enable-avfilter --enable-zlib "${FFMPEG_LIBS[@]}" \
+        $cpuDetect --enable-avfilter --enable-zlib "${FFMPEG_LIBS[@]}" \
         $osFlag --extra-libs="-lm -liconv $extraLibs" --extra-cflags="$EXTRA_CFLAGS" $pkg_extra
 
         $sd -ri "s/--prefix=[^ ]* //g" config.h
