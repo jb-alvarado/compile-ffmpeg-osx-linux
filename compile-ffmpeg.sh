@@ -327,7 +327,7 @@ do_checkIfExist() {
             echo "build $packetName failed..."
             echo "delete the source folder under '$LOCALBUILDDIR' and start again,"
             echo "or if you know there is no dependences hit enter for continue it"
-            read -r -p "first close the batch window, then the shell window"
+            read -r -p ""
             sleep 5
         fi
     fi
