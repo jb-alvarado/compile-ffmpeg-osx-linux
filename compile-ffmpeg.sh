@@ -1289,6 +1289,8 @@ buildProcess() {
             make distclean
         fi
 
+        EXTRA_CFLAGS=$(echo $EXTRA_CFLAGS | sed "s/-march=generic //")
+
         ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" $disable_ffplay \
         --disable-doc --enable-gpl --enable-version3 \
         $cpuDetect --enable-avfilter --enable-zlib "${FFMPEG_LIBS[@]}" \
