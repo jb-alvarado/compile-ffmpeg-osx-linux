@@ -1065,15 +1065,15 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ "$compile_mp4box" ]]; then
+        if [[ "$compile_mp4box" == 'y' ]]; then
             do_git "https://github.com/gpac/gpac.git" gpac-git noDepth
-            if [[ $compile = "true" ]]; then
+            if [[ $compile = "true"  ]] || [[ ! -f "local/bin/MP4Box" ]]; then
                 if [ -d "$LOCALDESTDIR/include/gpac" ]; then
                     rm -rf "$LOCALDESTDIR/bin/MP4Box $LOCALDESTDIR/lib/libgpac*"
                     rm -rf "$LOCALDESTDIR/include/gpac"
                 fi
                 [[ -f config.mak ]] && make distclean
-                ./configure --prefix="$LOCALDESTDIR" --static-bin --extra-libs="-lm" --extra-cflags="-I$LOCALDESTDIR/include"
+                ./configure --prefix="$LOCALDESTDIR" --static-bin --static-build --static-modules --disable-opt
                 make -j "$cpuCount"
                 make install-lib
                 cp bin/gcc/MP4Box "$LOCALDESTDIR/bin/"
@@ -1083,7 +1083,7 @@ buildProcess() {
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [[ "$compile_mediainfo" ]]; then
+        if [[ "$compile_mediainfo" == 'y' ]]; then
             do_git "https://github.com/MediaArea/ZenLib" libzen-git
             if [[ $compile = "true" ]]; then
                 cd Project/GNU/Library || exit
