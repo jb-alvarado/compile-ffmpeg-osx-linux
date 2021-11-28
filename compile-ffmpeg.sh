@@ -1067,7 +1067,7 @@ buildProcess() {
 
         if [[ "$compile_mp4box" == 'y' ]]; then
             do_git "https://github.com/gpac/gpac.git" gpac-git noDepth
-            if [[ $compile = "true"  ]] || [[ ! -f "local/bin/MP4Box" ]]; then
+            if [[ $compile = "true"  ]] || [[ ! -f "$LOCALDESTDIR/local/bin/MP4Box" ]]; then
                 if [ -d "$LOCALDESTDIR/include/gpac" ]; then
                     rm -rf "$LOCALDESTDIR/bin/MP4Box $LOCALDESTDIR/lib/libgpac*"
                     rm -rf "$LOCALDESTDIR/include/gpac"
