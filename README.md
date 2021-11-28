@@ -5,7 +5,7 @@ For OSX is needed: homebrew with installed: `cmake mercurial git wget curl pkg-c
 
 For Linux (ubuntu/debian) is needed: `sudo apt install autoconf automake build-essential libtool pkg-config texi2html yasm cmake curl mercurial git wget gperf ninja-build cargo cargo-c` (debian needs sudo for install nasm to /usr/local/bin/)
 
-For Centos/fedora install: `yum group install "Development Tools"` and: `yum install libstdc++-static mercurial libtool cmake ninja-build cargo cargo-c gcc-c++ python3-devel gperf perl`
+For Centos/fedora install: `yum group install "Development Tools"` and: `yum install libstdc++-static mercurial libtool cmake ninja-build cargo cargo-c gcc-c++ python3-devel gperf perl glibc-static binutils-devel`
 
 For libdav1d install meson: `pip3 install --upgrade --user meson`
 
