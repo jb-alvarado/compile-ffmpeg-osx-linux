@@ -1067,7 +1067,7 @@ buildProcess() {
 
         if [[ "$compile_mp4box" == 'y' ]]; then
             do_git "https://github.com/gpac/gpac.git" gpac-git noDepth
-            if [[ $compile = "true"  ]] || [[ ! -f "$LOCALDESTDIR/local/bin/MP4Box" ]]; then
+            if [[ $compile = "true"  ]] || [[ ! -f "$LOCALDESTDIR/bin/MP4Box" ]]; then
                 if [ -d "$LOCALDESTDIR/include/gpac" ]; then
                     rm -rf "$LOCALDESTDIR/bin/MP4Box $LOCALDESTDIR/lib/libgpac*"
                     rm -rf "$LOCALDESTDIR/include/gpac"
@@ -1085,7 +1085,7 @@ buildProcess() {
 
         if [[ "$compile_mediainfo" == 'y' ]]; then
             do_git "https://github.com/MediaArea/ZenLib" libzen-git
-            if [[ $compile = "true" ]]; then
+            if [[ $compile = "true" ]] || [[ ! -f "$LOCALDESTDIR/bin/mediainfo" ]]; then
                 cd Project/GNU/Library || exit
                 [[ ! -f "configure" ]] && ./autogen.sh
                 [[ -f libzen.pc ]] && make distclean
