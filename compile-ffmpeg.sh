@@ -1073,10 +1073,9 @@ buildProcess() {
                     rm -rf "$LOCALDESTDIR/include/gpac"
                 fi
                 [[ -f config.mak ]] && make distclean
-                ./configure --prefix="$LOCALDESTDIR" --static-bin --static-build --static-modules --disable-opt
+                ./configure --prefix="$LOCALDESTDIR" --static-bin --static-build --static-modules
                 make -j "$cpuCount"
-                make install-lib
-                cp bin/gcc/MP4Box "$LOCALDESTDIR/bin/"
+                make install
                 do_checkIfExist gpac-git bin/MP4Box
             fi
         fi
