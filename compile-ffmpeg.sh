@@ -544,18 +544,18 @@ buildProcess() {
 
             if [ -f "$LOCALDESTDIR/lib/libfreetype.a" ]; then
                 echo -------------------------------------------------
-                echo "freetype-2.10.4 is already compiled"
+                echo "freetype-2.11.1 is already compiled"
                 echo -------------------------------------------------
             else
                 echo -ne "\033]0;compile freetype\007"
 
-                do_wget "https://sourceforge.net/projects/freetype/files/freetype2/2.10.4/freetype-2.10.4.tar.gz"
+                do_wget "https://sourceforge.net/projects/freetype/files/freetype2/2.11.1/freetype-2.11.1.tar.gz"
 
                 ./configure --prefix="$LOCALDESTDIR" --disable-shared --with-harfbuzz=no
                 make -j "$cpuCount"
                 make install
 
-                do_checkIfExist freetype-2.10.4 libfreetype.a
+                do_checkIfExist freetype-2.11.1 libfreetype.a
 
                 $sd -ri "s/(Libs\:.*)/\1 -lpng16 -lbz2 -lz/g" "$LOCALDESTDIR/lib/pkgconfig/freetype2.pc"
             fi
@@ -566,19 +566,19 @@ buildProcess() {
         if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libfreetype" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libfontconfig.a" ]; then
                 echo -------------------------------------------------
-                echo "fontconfig-2.13.93 is already compiled"
+                echo "fontconfig-2.13.94 is already compiled"
                 echo -------------------------------------------------
             else
                 echo -ne "\033]0;compile fontconfig\007"
 
-                do_wget "https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.13.93.tar.gz"
+                do_wget "https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.13.94.tar.gz"
 
                 ./configure --prefix="$LOCALDESTDIR" --enable-shared=no
 
                 make -j "$cpuCount"
                 make install
 
-                do_checkIfExist fontconfig-2.13.93 libfontconfig.a
+                do_checkIfExist fontconfig-2.13.94 libfontconfig.a
 
                 # on linux fontconfig.pc is not copyed
                 [[ ! -f "$LOCALDESTDIR/lib/pkgconfig/fontconfig.pc" ]] && cp fontconfig.pc "$LOCALDESTDIR/lib/pkgconfig/"
@@ -675,7 +675,7 @@ buildProcess() {
         if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-openssl" ]] || [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libsrt" ]]; then
             if [ -f "$LOCALDESTDIR/lib/libssl.a" ]; then
                 echo -------------------------------------------------
-                echo "openssl-1.1.1g is already compiled"
+                echo "openssl-1.1.1l is already compiled"
                 echo -------------------------------------------------
             else
                 echo -ne "\033]0;compile openssl 64Bit\007"
@@ -686,14 +686,14 @@ buildProcess() {
                     target="linux-x86_64"
                 fi
 
-                do_wget "https://www.openssl.org/source/openssl-1.1.1g.tar.gz"
+                do_wget "https://www.openssl.org/source/openssl-1.1.1l.tar.gz"
 
                 ./Configure --prefix=$LOCALDESTDIR $target no-shared enable-camellia enable-idea enable-mdc2 enable-rfc3779 -mtune=$tune $osExtra
 
                 make depend all
                 make install_sw
 
-                do_checkIfExist openssl-1.1.1g libssl.a
+                do_checkIfExist openssl-1.1.1l libssl.a
             fi
         fi
 
