@@ -50,6 +50,7 @@ config="build_config.txt"
 if [[ ! -f "$config" ]]; then
 cat <<EOF > "$config"
 #--enable-decklink
+#--enable-libklvanc
 #--disable-ffplay
 #--disable-sdl2
 #--enable-fontconfig
@@ -1227,6 +1228,33 @@ buildProcess() {
             else
                 echo -------------------------------------------------
                 echo "rav1e-git is already up to date"
+                echo -------------------------------------------------
+            fi
+        fi
+
+        cd "$LOCALBUILDDIR" || exit
+
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libklvanc" ]]; then
+            do_git "https://github.com/stoth68000/libklvanc.git" libklvanc-git noDepth
+
+            if [[ $compile == "true" ]]; then
+                if [ -f "$LOCALDESTDIR/lib/libklvanc.a" ]; then
+                    make distclean
+                fi
+
+                ./autogen.sh --build
+
+                ./configure --prefix=$LOCALDESTDIR --enable-shared=no
+
+                make -j "$cpuCount"
+                make install
+
+                do_checkIfExist libklvanc-git libklvanc.a
+
+                buildFFmpeg="true"
+            else
+                echo -------------------------------------------------
+                echo "libklvanc-git is already up to date"
                 echo -------------------------------------------------
             fi
         fi
