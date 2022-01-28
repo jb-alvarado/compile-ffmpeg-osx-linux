@@ -1298,7 +1298,7 @@ buildProcess() {
         $sd -ri "s/--prefix=[^ ]* //g" config.h
         $sd -ri "s/ --extra-libs='.*'//g" config.h
         $sd -ri "s/ --pkg-config-flags=--static//g" config.h
-        $sd -ri "s/ --extra-cflags=.*//g" config.h
+        $sd -ri "s/ --extra-cflags=[a-zA-Z_'-]+//g" config.h
 
         make -j "$cpuCount"
         make install
