@@ -1066,6 +1066,33 @@ buildLibs() {
 
     cd "$LOCALBUILDDIR" || exit
 
+    if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libklvanc" ]]; then
+        do_git "https://github.com/stoth68000/libklvanc.git" libklvanc-git noDepth
+
+        if [[ $compile == "true" ]]; then
+            if [ -f "$LOCALDESTDIR/lib/libklvanc.a" ]; then
+                make distclean
+            fi
+
+            ./autogen.sh --build
+
+            ./configure --prefix=$LOCALDESTDIR --enable-shared=no
+
+            make -j "$cpuCount"
+            make install
+
+            do_checkIfExist libklvanc-git libklvanc.a
+
+            buildFFmpeg="true"
+        else
+            echo -------------------------------------------------
+            echo "libklvanc-git is already up to date"
+            echo -------------------------------------------------
+        fi
+    fi
+
+    cd "$LOCALBUILDDIR" || exit
+
     if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libx264" ]]; then
         do_git "https://code.videolan.org/videolan/x264" x264-git noDepth
 
