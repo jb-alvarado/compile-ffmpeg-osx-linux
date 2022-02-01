@@ -1,4 +1,4 @@
-name: Run every Sunday
+name: compile libs
 
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
@@ -22,5 +22,5 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install autoconf automake build-essential libtool pkg-config texi2html yasm cmake curl mercurial git wget gperf ninja-build cargo cargo-c python3-pip
+        sudo apt install -y autoconf automake build-essential libtool pkg-config texi2html yasm cmake curl mercurial git wget gperf ninja-build cargo cargo-c python3-pip
         sudo pip3 install --upgrade --user meson
