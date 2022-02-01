@@ -1,0 +1,19 @@
+name: Run every Sunday
+
+# Controls when the action will run. Workflow runs when manually triggered using the UI
+# or API.
+on:
+  schedule:
+    - cron: 0 21 * * 0
+
+jobs:
+  build:
+    runs-on: debian-11
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install autoconf automake build-essential libtool pkg-config texi2html yasm cmake curl mercurial git wget gperf ninja-build cargo cargo-c python3-pip
+        sudo pip3 install --upgrade --user meson
