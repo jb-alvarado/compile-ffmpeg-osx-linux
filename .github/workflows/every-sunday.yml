@@ -26,7 +26,7 @@ jobs:
     - name: install dependencies
       run: |
         sudo apt update
-        sudo apt install -y autoconf automake build-essential libtool pkg-config texi2html yasm cmake curl mercurial git wget gperf ninja-build cargo python3-pip
+        sudo apt install -y texi2html yasm cmake gperf ninja-build cargo
         sudo python -m pip install --upgrade --user meson
     - name: install cargo-c
       run: |
