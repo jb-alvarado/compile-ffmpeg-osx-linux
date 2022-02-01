@@ -26,10 +26,11 @@ jobs:
     - name: install dependencies
       run: |
         sudo apt update
-        sudo apt install -y texi2html yasm cmake gperf ninja-build cargo
+        sudo apt install -y texi2html yasm cmake gperf ninja-build
         sudo python -m pip install --upgrade --user meson
-    - name: install cargo-c
+    - name: install rust
       run: |
+        sudo curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
         sudo rustup default stable
         sudo rustup update
         sudo cargo install cargo-c
