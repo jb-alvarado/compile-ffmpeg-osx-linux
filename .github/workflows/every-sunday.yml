@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python 3.9
       uses: actions/setup-python@v1
       with:
@@ -35,3 +35,5 @@ jobs:
         rustup default nightly
         rustup update
         cargo install cargo-c
+    - name: compile libs
+      run: ./compile-ffmpeg.sh --libs-only=y
