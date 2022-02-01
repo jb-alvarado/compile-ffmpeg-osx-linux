@@ -31,5 +31,5 @@ jobs:
     - name: install rust
       run: |
         sudo curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain stable -y
-        sudo rustup update
+        source $HOME/.cargo/env && rustup default nightly && rustup update
         sudo cargo install cargo-c
