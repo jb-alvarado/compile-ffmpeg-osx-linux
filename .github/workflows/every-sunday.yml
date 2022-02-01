@@ -36,4 +36,36 @@ jobs:
         rustup update
         cargo install cargo-c
     - name: compile libs
-      run: ./compile-ffmpeg.sh --libs-only=y
+      run: |
+        cat <<EOF > build_config.txt
+        --enable-decklink
+        --enable-libklvanc
+        --disable-ffplay
+        --disable-sdl2
+        --enable-fontconfig
+        --enable-libaom
+        --enable-libass
+        --enable-libbluray
+        --enable-libfdk-aac
+        --enable-libfribidi
+        --enable-libfreetype
+        --enable-libmp3lame
+        --enable-libopus
+        --enable-libsoxr
+        --enable-libsrt
+        --enable-libtwolame
+        --enable-libvpx
+        --enable-libx264
+        --enable-libx265
+        --enable-libzimg
+        --enable-libzmq
+        --enable-nonfree
+        --enable-opencl
+        --enable-opengl
+        --enable-openssl
+        --enable-libsvtav1
+        --enable-librav1e
+        --enable-libdav1d
+        EOF
+
+        ./compile-ffmpeg.sh --libs-only=y
