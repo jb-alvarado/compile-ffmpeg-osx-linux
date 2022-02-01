@@ -14,7 +14,7 @@ on:
 
 jobs:
   build_on_debian_11:
-    name: build on debian 11
+    name: build on ubuntu
     runs-on: ubuntu-20.04
 
     steps:
@@ -29,4 +29,7 @@ jobs:
         sudo apt install -y autoconf automake build-essential libtool pkg-config texi2html yasm cmake curl mercurial git wget gperf ninja-build cargo python3-pip
         sudo python -m pip install --upgrade --user meson
     - name: install cargo-c
-      run: sudo cargo install cargo-c
+      run: |
+        sudo rustup default stable
+        sudo rustup update
+        sudo cargo install cargo-c
