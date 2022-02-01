@@ -19,8 +19,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.9
     - name: Install dependencies
       run: |
         sudo apt update
         sudo apt install -y autoconf automake build-essential libtool pkg-config texi2html yasm cmake curl mercurial git wget gperf ninja-build cargo cargo-c python3-pip
-        sudo pip3 install --upgrade --user meson
+        sudo python -m pip install --upgrade --user meson
