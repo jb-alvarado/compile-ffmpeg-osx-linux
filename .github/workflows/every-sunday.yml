@@ -15,7 +15,7 @@ on:
 jobs:
   build_on_debian_11:
     name: build on debian 11
-    runs-on: debian-11
+    runs-on: ubuntu-20.04
 
     steps:
     - uses: actions/checkout@v1
