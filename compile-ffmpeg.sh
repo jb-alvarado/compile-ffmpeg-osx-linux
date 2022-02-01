@@ -55,6 +55,7 @@ config="build_config.txt"
 if [[ ! -f "$config" ]]; then
 cat <<EOF > "$config"
 #--enable-decklink
+#--enable-libklvanc
 #--disable-ffplay
 #--disable-sdl2
 #--enable-fontconfig
@@ -1213,7 +1214,7 @@ buildFfmpeg() {
         $sd -ri "s/--prefix=[^ ]* //g" config.h
         $sd -ri "s/ --extra-libs='.*'//g" config.h
         $sd -ri "s/ --pkg-config-flags=--static//g" config.h
-        $sd -ri "s/ --extra-cflags=.*//g" config.h
+        $sd -ri "s/ --extra-cflags=[a-zA-Z_'-]+//g" config.h
 
         make -j "$cpuCount"
         make install
