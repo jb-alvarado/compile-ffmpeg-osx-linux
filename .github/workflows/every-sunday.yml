@@ -13,27 +13,26 @@ on:
         required: true
 
 jobs:
-  build_on_debian_11:
+  build_libs:
     name: build on ubuntu
     runs-on: ubuntu-20.04
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v1
     - name: Set up Python 3.9
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
         python-version: 3.9
     - name: install dependencies
       run: |
         sudo apt update
-        sudo apt install -y texi2html yasm cmake gperf ninja-build
+        sudo apt install -y autoconf automake build-essential libtool pkg-config \
+          texi2html yasm cmake gperf ninja-build python3-pip
         sudo python -m pip install --upgrade --user meson
     - name: install rust
       run: |
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain nightly -y
         source $HOME/.cargo/env
-        rustup default nightly
-        rustup update
         cargo install cargo-c
     - name: compile libs
       run: |
