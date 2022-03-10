@@ -530,19 +530,19 @@ buildLibs() {
     if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-fontconfig" ]]; then
         if [ -f "$LOCALDESTDIR/lib/libexpat.a" ]; then
             echo -------------------------------------------------
-            echo "expat-2.4.1 is already compiled"
+            echo "expat-2.4.7 is already compiled"
             echo -------------------------------------------------
         else
             echo -ne "\033]0;compile expat 64Bit\007"
 
-            do_wget "https://downloads.sourceforge.net/project/expat/expat/2.4.1/expat-2.4.1.tar.bz2"
+            do_wget "https://github.com/libexpat/libexpat/releases/download/R_2_4_7/expat-2.4.7.tar.bz2"
 
             ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --without-docbook
 
             make -j "$cpuCount"
             make install
 
-            do_checkIfExist expat-2.4.1 libexpat.a
+            do_checkIfExist expat-2.4.7 libexpat.a
         fi
 
         cd "$LOCALBUILDDIR" || exit
