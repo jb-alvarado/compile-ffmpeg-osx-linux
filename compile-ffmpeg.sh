@@ -106,26 +106,12 @@ EOF
     done
 fi
 
-get_options() {
-    sed -r '# remove commented text
-        s/#.*//
-        # delete empty lines
-        /^\s*$/d
-        # remove leading whitespace
-        s/^\s+//
-        # remove trailing whitespace
-        s/\s+$//
-        ' "$config" | tr -d '\r'
-}
-
-IFS=$'\n' read -d '' -r -a FFMPEG_LIBS < <(get_options)
-
 # --------------------------------------------------
 
 # check system
 system=$( uname -s )
 if [[ "$system" == "Darwin" ]]; then
-    osExtra="-mmacosx-version-min=10.10"
+    osExtra="-mmacosx-version-min=11"
     osString="osx"
     cpuCount=$( sysctl hw.ncpu | awk '{ print $2 - 1 }' )
     compNasm="no"
@@ -147,6 +133,20 @@ else
     sd="sed"
     extraLibs="-lpthread"
 fi
+
+get_options() {
+    $sd -r '# remove commented text
+        s/#.*//
+        # delete empty lines
+        /^\s*$/d
+        # remove leading whitespace
+        s/^\s+//
+        # remove trailing whitespace
+        s/\s+$//
+        ' "$config" | tr -d '\r'
+}
+
+IFS=$'\n' read -d '' -r -a FFMPEG_LIBS < <(get_options)
 
 EXTRA_CFLAGS="-march=$tune"
 
@@ -486,7 +486,7 @@ buildLibs() {
     else
         echo -ne "\033]0;compile libpng 64Bit\007"
 
-        do_wget "https://downloads.sourceforge.net/project/libpng/libpng16/1.6.37/libpng-1.6.37.tar.gz"
+        do_wget "http://prdownloads.sourceforge.net/libpng/libpng-1.6.37.tar.gz"
 
         ./configure --prefix="$LOCALDESTDIR" --disable-shared
 
