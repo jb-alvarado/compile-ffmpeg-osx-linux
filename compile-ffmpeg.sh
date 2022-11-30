@@ -404,19 +404,19 @@ buildLibs() {
 
     if [ -f "$LOCALDESTDIR/lib/libz.a" ]; then
         echo -------------------------------------------------
-        echo "zlib-1.2.12 is already compiled"
+        echo "zlib-1.2.13 is already compiled"
         echo -------------------------------------------------
     else
         echo -ne "\033]0;compile libz 64Bit\007"
 
-        do_wget "https://zlib.net/zlib-1.2.12.tar.gz"
+        do_wget "https://zlib.net/zlib-1.2.13.tar.gz"
 
         ./configure --prefix="$LOCALDESTDIR" --static
 
         make -j "$cpuCount"
         make install
 
-        do_checkIfExist zlib-1.2.12 libz.a
+        do_checkIfExist zlib-1.2.13 libz.a
     fi
 
     cd "$LOCALBUILDDIR" || exit
@@ -1234,7 +1234,7 @@ buildFfmpeg() {
         EXTRA_CFLAGS=$(echo $EXTRA_CFLAGS | sed "s/-march=generic //")
 
         ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" $disable_ffplay \
-        --disable-doc --enable-gpl --enable-version3 \
+        --disable-doc --enable-gpl --enable-version3 --enable-libvpl \
         $cpuDetect --enable-avfilter --enable-zlib "${FFMPEG_LIBS[@]}" \
         $osFlag --extra-libs="-lm -liconv $extraLibs" --extra-cflags="$EXTRA_CFLAGS" $pkg_extra
 
