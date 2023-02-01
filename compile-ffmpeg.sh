@@ -82,6 +82,11 @@ cat <<EOF > "$config"
 #--enable-libsvtav1
 #--enable-librav1e
 #--enable-libdav1d
+#--enable-cuda-nvcc
+#--enable-cuvid
+#--enable-nvenc
+#--enable-nvdec
+#--enable-libnpp
 EOF
     echo "-------------------------------------------------------------------------------"
     echo "-------------------------------------------------------------------------------"
@@ -1176,6 +1181,21 @@ buildLibs() {
             echo -------------------------------------------------
         fi
     fi
+
+    cd "$LOCALBUILDDIR" || exit
+
+    if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-nvenc" ]]; then
+        do_git "https://git.videolan.org/git/ffmpeg/nv-codec-headers" nv-codec-headers-git
+
+        if [[ $compile == "true" ]]; then
+            make -j "$cpuCount"
+            make install  PREFIX="$LOCALDESTDIR"
+        else
+            echo -------------------------------------------------
+            echo "nv-codec-headers-git is already up to date"
+            echo -------------------------------------------------
+        fi
+    fi
 }
 
 buildFfmpeg() {
@@ -1232,11 +1252,19 @@ buildFfmpeg() {
         fi
 
         EXTRA_CFLAGS=$(echo $EXTRA_CFLAGS | sed "s/-march=generic //")
+        EXTRA_LD=""
+
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-nvenc" ]]; then
+            export PATH="/usr/local/cuda-12.0/bin:$PATH"
+            export LD_LIBRARY_PATH="/usr/local/cuda-12.0/lib64:$LD_LIBRARY_PATH"
+            EXTRA_CFLAGS="$EXTRA_CFLAGS -I/usr/local/cuda/include"
+            EXTRA_LD="--extra-ldflags=-L/usr/local/cuda/lib64"
+        fi
 
         ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" $disable_ffplay \
         --disable-doc --enable-gpl --enable-version3 \
         $cpuDetect --enable-avfilter --enable-zlib "${FFMPEG_LIBS[@]}" \
-        $osFlag --extra-libs="-lm -liconv $extraLibs" --extra-cflags="$EXTRA_CFLAGS" $pkg_extra
+        $osFlag --extra-libs="-lm -liconv $extraLibs" --extra-cflags="$EXTRA_CFLAGS" $pkg_extra $EXTRA_LD
 
         $sd -ri "s/--prefix=[^ ]* //g" config.h
         $sd -ri "s/ --extra-libs='.*'//g" config.h
