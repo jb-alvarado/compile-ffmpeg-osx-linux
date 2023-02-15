@@ -1274,6 +1274,11 @@ buildFfmpeg() {
             make distclean
         fi
 
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libndi_newtek" ]]; then
+            git apply ../../patches/revert-libndi_newtek.patch
+            cp ../../patches/libndi/libavdevice/libndi_newtek_* libavdevice/
+        fi
+
         EXTRA_CFLAGS=$(echo $EXTRA_CFLAGS | sed "s/-march=generic //")
         EXTRA_LD=""
 
