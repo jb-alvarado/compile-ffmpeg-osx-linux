@@ -50,6 +50,7 @@
 typedef IDeckLinkIterator* (*CreateIteratorFunc)(void);
 typedef IDeckLinkAPIInformation* (*CreateAPIInformationFunc)(void);
 typedef IDeckLinkGLScreenPreviewHelper* (*CreateOpenGLScreenPreviewHelperFunc)(void);
+typedef IDeckLinkGLScreenPreviewHelper* (*CreateOpenGL3ScreenPreviewHelperFunc)(void);
 typedef IDeckLinkVideoConversion* (*CreateVideoConversionInstanceFunc)(void);
 typedef IDeckLinkDiscovery* (*CreateDeckLinkDiscoveryInstanceFunc)(void);
 typedef IDeckLinkVideoFrameAncillaryPackets* (*CreateVideoFrameAncillaryPacketsInstanceFunc)(void);
@@ -62,6 +63,7 @@ static bool								gLoadedDeckLinkAPI = false;
 static CreateIteratorFunc					gCreateIteratorFunc = NULL;
 static CreateAPIInformationFunc				gCreateAPIInformationFunc = NULL;
 static CreateOpenGLScreenPreviewHelperFunc	gCreateOpenGLPreviewFunc = NULL;
+static CreateOpenGL3ScreenPreviewHelperFunc	gCreateOpenGL3PreviewFunc = NULL;
 static CreateVideoConversionInstanceFunc	gCreateVideoConversionFunc	= NULL;
 static CreateDeckLinkDiscoveryInstanceFunc	gCreateDeckLinkDiscoveryFunc = NULL;
 static CreateVideoFrameAncillaryPacketsInstanceFunc	gCreateVideoFrameAncillaryPacketsFunc = NULL;
@@ -109,6 +111,9 @@ static void	InitDeckLinkPreviewAPI (void)
 	gCreateOpenGLPreviewFunc = (CreateOpenGLScreenPreviewHelperFunc)dlsym(libraryHandle, "CreateOpenGLScreenPreviewHelper_0001");
 	if (!gCreateOpenGLPreviewFunc)
 		fprintf(stderr, "%s\n", dlerror());
+	gCreateOpenGL3PreviewFunc = (CreateOpenGL3ScreenPreviewHelperFunc)dlsym(libraryHandle, "CreateOpenGL3ScreenPreviewHelper_0001");
+	if (!gCreateOpenGL3PreviewFunc)
+		fprintf(stderr, "%s\n", dlerror());
 }
 
 bool		IsDeckLinkAPIPresent (void)
@@ -143,6 +148,16 @@ IDeckLinkGLScreenPreviewHelper*		CreateOpenGLScreenPreviewHelper (void)
 	if (gCreateOpenGLPreviewFunc == NULL)
 		return NULL;
 	return gCreateOpenGLPreviewFunc();
+}
+
+IDeckLinkGLScreenPreviewHelper*		CreateOpenGL3ScreenPreviewHelper (void)
+{
+	pthread_once(&gDeckLinkOnceControl, InitDeckLinkAPI);
+	pthread_once(&gPreviewOnceControl, InitDeckLinkPreviewAPI);
+
+	if (gCreateOpenGL3PreviewFunc == NULL)
+		return NULL;
+	return gCreateOpenGL3PreviewFunc();
 }
 
 IDeckLinkVideoConversion* CreateVideoConversionInstance (void)

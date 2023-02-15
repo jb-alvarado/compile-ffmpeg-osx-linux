@@ -1,5 +1,5 @@
 /* -LICENSE-START-
-** Copyright (c) 2021 Blackmagic Design
+** Copyright (c) 2022 Blackmagic Design
 **
 ** Permission is hereby granted, free of charge, to any person or organization
 ** obtaining a copy of the software and accompanying documentation covered by
@@ -372,8 +372,8 @@ protected:
 
 extern "C" {
 
-    IBMDStreamingDiscovery* BMD_PUBLIC CreateBMDStreamingDiscoveryInstance(void);
-    IBMDStreamingH264NALParser* BMD_PUBLIC CreateBMDStreamingH264NALParser(void);
+    BMD_PUBLIC IBMDStreamingDiscovery* CreateBMDStreamingDiscoveryInstance(void);
+    BMD_PUBLIC IBMDStreamingH264NALParser* CreateBMDStreamingH264NALParser(void);
 
 }
 

@@ -52,6 +52,8 @@
 typedef IDeckLinkIterator* (*CreateIteratorFunc)(void);
 typedef IDeckLinkAPIInformation* (*CreateAPIInformationFunc)(void);
 typedef IDeckLinkGLScreenPreviewHelper* (*CreateOpenGLScreenPreviewHelperFunc)(void);
+typedef IDeckLinkGLScreenPreviewHelper* (*CreateOpenGL3ScreenPreviewHelperFunc)(void);
+typedef IDeckLinkMetalScreenPreviewHelper* (*CreateMetalScreenPreviewHelperFunc)(void);
 typedef IDeckLinkCocoaScreenPreviewCallback* (*CreateCocoaScreenPreviewFunc)(void*);
 typedef IDeckLinkVideoConversion* (*CreateVideoConversionInstanceFunc)(void);
 typedef IDeckLinkDiscovery* (*CreateDeckLinkDiscoveryInstanceFunc)(void);
@@ -62,6 +64,8 @@ static CFBundleRef							gDeckLinkAPIBundleRef		= NULL;
 static CreateIteratorFunc					gCreateIteratorFunc			= NULL;
 static CreateAPIInformationFunc				gCreateAPIInformationFunc	= NULL;
 static CreateOpenGLScreenPreviewHelperFunc	gCreateOpenGLPreviewFunc	= NULL;
+static CreateOpenGL3ScreenPreviewHelperFunc	gCreateOpenGL3PreviewFunc	= NULL;
+static CreateMetalScreenPreviewHelperFunc	gCreateMetalPreviewFunc		= NULL;
 static CreateCocoaScreenPreviewFunc			gCreateCocoaPreviewFunc		= NULL;
 static CreateVideoConversionInstanceFunc	gCreateVideoConversionFunc	= NULL;
 static CreateDeckLinkDiscoveryInstanceFunc  gCreateDeckLinkDiscoveryFunc= NULL;
@@ -81,6 +85,8 @@ static void	InitDeckLinkAPI (void)
 			gCreateIteratorFunc = (CreateIteratorFunc)CFBundleGetFunctionPointerForName(gDeckLinkAPIBundleRef, CFSTR("CreateDeckLinkIteratorInstance_0004"));
 			gCreateAPIInformationFunc = (CreateAPIInformationFunc)CFBundleGetFunctionPointerForName(gDeckLinkAPIBundleRef, CFSTR("CreateDeckLinkAPIInformationInstance_0001"));
 			gCreateOpenGLPreviewFunc = (CreateOpenGLScreenPreviewHelperFunc)CFBundleGetFunctionPointerForName(gDeckLinkAPIBundleRef, CFSTR("CreateOpenGLScreenPreviewHelper_0001"));
+			gCreateOpenGL3PreviewFunc = (CreateOpenGL3ScreenPreviewHelperFunc)CFBundleGetFunctionPointerForName(gDeckLinkAPIBundleRef, CFSTR("CreateOpenGL3ScreenPreviewHelper_0001"));
+			gCreateMetalPreviewFunc = (CreateMetalScreenPreviewHelperFunc)CFBundleGetFunctionPointerForName(gDeckLinkAPIBundleRef, CFSTR("CreateMetalScreenPreviewHelper_0001"));
 			gCreateCocoaPreviewFunc = (CreateCocoaScreenPreviewFunc)CFBundleGetFunctionPointerForName(gDeckLinkAPIBundleRef, CFSTR("CreateCocoaScreenPreview_0001"));
 			gCreateVideoConversionFunc = (CreateVideoConversionInstanceFunc)CFBundleGetFunctionPointerForName(gDeckLinkAPIBundleRef, CFSTR("CreateVideoConversionInstance_0001"));
             gCreateDeckLinkDiscoveryFunc = (CreateDeckLinkDiscoveryInstanceFunc)CFBundleGetFunctionPointerForName(gDeckLinkAPIBundleRef, CFSTR("CreateDeckLinkDiscoveryInstance_0003"));
@@ -127,6 +133,26 @@ IDeckLinkGLScreenPreviewHelper*		CreateOpenGLScreenPreviewHelper (void)
 		return NULL;
 	
 	return gCreateOpenGLPreviewFunc();
+}
+
+IDeckLinkGLScreenPreviewHelper*		CreateOpenGL3ScreenPreviewHelper (void)
+{
+	pthread_once(&gDeckLinkOnceControl, InitDeckLinkAPI);
+
+	if (gCreateOpenGL3PreviewFunc == NULL)
+		return NULL;
+
+	return gCreateOpenGL3PreviewFunc();
+}
+
+IDeckLinkMetalScreenPreviewHelper*		CreateMetalScreenPreviewHelper (void)
+{
+	pthread_once(&gDeckLinkOnceControl, InitDeckLinkAPI);
+	
+	if (gCreateMetalPreviewFunc == NULL)
+		return NULL;
+	
+	return gCreateMetalPreviewFunc();
 }
 
 IDeckLinkCocoaScreenPreviewCallback*	CreateCocoaScreenPreview (void* parentView)
