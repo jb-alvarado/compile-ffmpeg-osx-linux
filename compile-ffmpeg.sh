@@ -69,6 +69,7 @@ cat <<EOF > "$config"
 #--enable-libopus
 #--enable-libsoxr
 #--enable-libsrt
+#--enable-librist
 #--enable-libtwolame
 #--enable-libvpx
 #--enable-libx264
@@ -733,6 +734,28 @@ buildLibs() {
         else
             echo -------------------------------------------------
             echo "srt is already up to date"
+            echo -------------------------------------------------
+        fi
+    fi
+
+    cd "$LOCALBUILDDIR" || exit
+
+    if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-librist" ]]; then
+        do_git "https://code.videolan.org/rist/librist.git" librist-git
+
+        if [[ $compile == "true" ]]; then
+            mkdir build
+            cd build || exit
+
+            meson setup --default-library=static --prefix "$LOCALDESTDIR" --libdir="$LOCALDESTDIR/lib" ..
+
+            ninja
+            ninja install
+
+            do_checkIfExist librist-git librist.a
+        else
+            echo -------------------------------------------------
+            echo "librist is already up to date"
             echo -------------------------------------------------
         fi
     fi
