@@ -244,10 +244,10 @@ static int ndi_create_audio_stream(AVFormatContext *avctx, NDIlib_audio_frame_t 
         return AVERROR(ENOMEM);
     }
 
-    st->codecpar->codec_type        = AVMEDIA_TYPE_AUDIO;
-    st->codecpar->codec_id          = AV_CODEC_ID_PCM_S16LE;
-    st->codecpar->sample_rate       = a->sample_rate;
-    st->codecpar->channels          = a->no_channels;
+    st->codecpar->codec_type            = AVMEDIA_TYPE_AUDIO;
+    st->codecpar->codec_id              = AV_CODEC_ID_PCM_S16LE;
+    st->codecpar->sample_rate           = a->sample_rate;
+    st->codecpar->ch_layout.nb_channels = a->no_channels;
 
     avpriv_set_pts_info(st, 64, 1, NDI_TIME_BASE);
 
