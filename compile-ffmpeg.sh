@@ -1079,17 +1079,30 @@ buildLibs() {
             echo "DeckLinkAPI is already in place"
             echo -------------------------------------------------
         else
-            echo -ne "\033]0;download DeckLinkAPI\007"
-
             cd "$LOCALDESTDIR/include" || exit
 
-            cp ../../decklink-${osString}/* .
+            cp ../../headers/decklink-${osString}/* .
 
             if [[ $osString == "osx" ]]; then
                 $sd -i '' "s/void    InitDeckLinkAPI (void)/static void    InitDeckLinkAPI (void)/" DeckLinkAPIDispatch.cpp
                 $sd -i '' "s/bool        IsDeckLinkAPIPresent (void)/static bool        IsDeckLinkAPIPresent (void)/" DeckLinkAPIDispatch.cpp
                 $sd -i '' "s/void InitBMDStreamingAPI(void)/static void InitBMDStreamingAPI(void)/" DeckLinkAPIDispatch.cpp
             fi
+        fi
+    fi
+
+    cd "$LOCALBUILDDIR" || exit
+
+    if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libndi_newtek" ]]; then
+        if [ -f "$LOCALDESTDIR/include/Processing.NDI.Lib.h" ]; then
+            echo -------------------------------------------------
+            echo "NDI headers are already in place"
+            echo -------------------------------------------------
+        else
+
+            cd "$LOCALDESTDIR/include" || exit
+
+            cp ../../headers/ndi-${osString}/* .
         fi
     fi
 
