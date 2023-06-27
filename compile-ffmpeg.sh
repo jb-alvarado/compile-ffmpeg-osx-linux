@@ -128,7 +128,7 @@ if [[ "$system" == "Darwin" ]]; then
     arch="--arch=x86_64"
     fpic=""
     sd="gsed"
-    extraLibs=""
+    extraLibs="-lintl"
 else
     osExtra="-static-libstdc++ -static-libgcc"
     osString="nix"
