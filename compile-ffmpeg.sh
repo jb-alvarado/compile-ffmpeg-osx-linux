@@ -259,8 +259,8 @@ do_hg() {
     fi
 }
 
-# get wget download
-do_wget() {
+# get curl download
+do_curl() {
     local url="$1"
     local archive="$2"
     local dirName="$3"
@@ -278,7 +278,7 @@ do_wget() {
                 dirName=$( expr "$archive" : '\(.*\)\.\(tar.gz\)$' )
                 rm -rf "$dirName"
                 tar -xf "$archive"
-                rm "$archive"
+                #rm "$archive"
                 cd "$dirName" || exit
             ;;
             *.tar.bz2)
@@ -363,7 +363,7 @@ buildLibs() {
     if [ ! -f "/usr/local/bin/nasm" ] && [[ $compNasm == "yes" ]]; then
         echo -ne "\033]0;compile nasm 64Bit\007"
 
-        do_wget "https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/nasm-2.15.05.tar.gz"
+        do_curl "https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/nasm-2.15.05.tar.gz"
         ./configure --prefix="$LOCALDESTDIR"
 
         make -j "$cpuCount"
@@ -385,7 +385,7 @@ buildLibs() {
         else
             echo -ne "\033]0;compile uuid 64Bit\007"
 
-            do_wget "https://www.mirrorservice.org/sites/ftp.ossp.org/pkg/lib/uuid/uuid-1.6.2.tar.gz"
+            do_curl "https://www.mirrorservice.org/sites/ftp.ossp.org/pkg/lib/uuid/uuid-1.6.2.tar.gz"
 
             ./configure --prefix="$LOCALDESTDIR" --disable-shared
 
@@ -402,7 +402,7 @@ buildLibs() {
         else
             echo -ne "\033]0;compile uuid 64Bit\007"
 
-            do_wget "http://sourceforge.net/projects/libuuid/files/libuuid-1.0.3.tar.gz"
+            do_curl "http://sourceforge.net/projects/libuuid/files/libuuid-1.0.3.tar.gz"
 
             ./configure --prefix="$LOCALDESTDIR" --disable-shared
 
@@ -422,7 +422,7 @@ buildLibs() {
     else
         echo -ne "\033]0;compile libz 64Bit\007"
 
-        do_wget "https://zlib.net/zlib-1.2.13.tar.gz"
+        do_curl "https://zlib.net/zlib-1.2.13.tar.gz"
 
         ./configure --prefix="$LOCALDESTDIR" --static
 
@@ -436,77 +436,76 @@ buildLibs() {
 
     if [ -f "$LOCALDESTDIR/lib/libiconv.a" ]; then
         echo -------------------------------------------------
-        echo "libiconv-1.16 is already compiled"
+        echo "libiconv-1.17 is already compiled"
         echo -------------------------------------------------
     else
         echo -ne "\033]0;compile libiconv 64Bit\007"
 
-        do_wget "https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.16.tar.gz"
+        do_curl "https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.17.tar.gz"
 
         ./configure --prefix="$LOCALDESTDIR" --disable-shared
 
         make -j "$cpuCount"
         make install
 
-        do_checkIfExist libiconv-1.16 libiconv.a
+        do_checkIfExist libiconv-1.17 libiconv.a
     fi
 
     cd "$LOCALBUILDDIR" || exit
 
-    if [ -f "$LOCALDESTDIR/lib/libbz2.a" ]; then
+    if [ -f "$LOCALDESTDIR/lib/libbzip3.a" ]; then
         echo -------------------------------------------------
-        echo "bzip2-1.0.8 is already compiled"
+        echo "bzip3-1.3.1 is already compiled"
         echo -------------------------------------------------
     else
-        echo -ne "\033]0;compile bzip2 64Bit\007"
+        echo -ne "\033]0;compile bzip3 64Bit\007"
 
-        do_wget "http://distfiles.gentoo.org/distfiles/bzip2-1.0.8.tar.gz"
+        do_curl "http://distfiles.gentoo.org/distfiles/bzip3-1.3.1.tar.xz"
 
-        if [[ "$system" == "Darwin" ]]; then
-            $sd -ri "s/^CFLAGS=-Wall/^CFLAGS=-Wall $osExtra/g" Makefile
-        fi
+        ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --enable-static=yes
 
-        make install PREFIX="$LOCALDESTDIR"
+        make -j "$cpuCount"
+        make install
 
-        do_checkIfExist bzip2-1.0.8 libbz2.a
+        do_checkIfExist bzip3-1.3.1 libbzip3.a
     fi
 
     cd "$LOCALBUILDDIR" || exit
 
     if [ -f "$LOCALDESTDIR/lib/liblzma.a" ]; then
         echo -------------------------------------------------
-        echo "xz-5.2.5 is already compiled"
+        echo "xz-5.4.3 is already compiled"
         echo -------------------------------------------------
     else
         echo -ne "\033]0;compile xz 64Bit\007"
 
-        do_wget "https://downloads.sourceforge.net/project/lzmautils/xz-5.2.5.tar.gz"
+        do_curl "https://downloads.sourceforge.net/project/lzmautils/xz-5.4.3.tar.gz"
 
         ./configure --prefix="$LOCALDESTDIR" --disable-shared
 
         make -j "$cpuCount"
         make install
 
-        do_checkIfExist xz-5.2.5 liblzma.a
+        do_checkIfExist xz-5.4.3 liblzma.a
     fi
 
     cd "$LOCALBUILDDIR" || exit
 
     if [ -f "$LOCALDESTDIR/lib/libpng.a" ]; then
         echo -------------------------------------------------
-        echo "libpng-1.6.37 is already compiled"
+        echo "libpng-1.6.40 is already compiled"
         echo -------------------------------------------------
     else
         echo -ne "\033]0;compile libpng 64Bit\007"
 
-        do_wget "http://prdownloads.sourceforge.net/libpng/libpng-1.6.37.tar.gz"
+        do_curl "http://prdownloads.sourceforge.net/libpng/libpng-1.6.40.tar.gz"
 
         ./configure --prefix="$LOCALDESTDIR" --disable-shared
 
         make -j "$cpuCount"
         make install
 
-        do_checkIfExist libpng-1.6.37 libpng.a
+        do_checkIfExist libpng-1.6.40 libpng.a
     fi
 
     cd "$LOCALBUILDDIR" || exit
@@ -540,63 +539,64 @@ buildLibs() {
         fi
     fi
 
+    cd "$LOCALBUILDDIR" || exit
+
     if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-fontconfig" ]]; then
         if [ -f "$LOCALDESTDIR/lib/libexpat.a" ]; then
             echo -------------------------------------------------
-            echo "expat-2.4.7 is already compiled"
+            echo "expat2.5.0 is already compiled"
             echo -------------------------------------------------
         else
             echo -ne "\033]0;compile expat 64Bit\007"
 
-            do_wget "https://github.com/libexpat/libexpat/releases/download/R_2_4_7/expat-2.4.7.tar.bz2"
+            do_curl "https://github.com/libexpat/libexpat/releases/download/R_2_5_0/expat-2.5.0.tar.bz2"
 
             ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --without-docbook
 
             make -j "$cpuCount"
             make install
 
-            do_checkIfExist expat-2.4.7 libexpat.a
+            do_checkIfExist expat-2.5.0 libexpat.a
         fi
 
         cd "$LOCALBUILDDIR" || exit
 
         if [ -f "$LOCALDESTDIR/lib/libfreetype.a" ]; then
             echo -------------------------------------------------
-            echo "freetype-2.11.1 is already compiled"
+            echo "freetype-2.13.1 is already compiled"
             echo -------------------------------------------------
         else
             echo -ne "\033]0;compile freetype\007"
 
-            do_wget "https://sourceforge.net/projects/freetype/files/freetype2/2.11.1/freetype-2.11.1.tar.gz"
+            do_curl "https://sourceforge.net/projects/freetype/files/freetype2/2.13.1/freetype-2.13.1.tar.gz"
 
             ./configure --prefix="$LOCALDESTDIR" --disable-shared --with-harfbuzz=no
             make -j "$cpuCount"
             make install
 
-            do_checkIfExist freetype-2.11.1 libfreetype.a
+            do_checkIfExist freetype-2.13.1 libfreetype.a
 
             $sd -ri "s/(Libs\:.*)/\1 -lpng16 -lbz2 -lz/g" "$LOCALDESTDIR/lib/pkgconfig/freetype2.pc"
         fi
     fi
 
     cd "$LOCALBUILDDIR" || exit
- --enable-shared
     if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libfreetype" ]]; then
         if [ -f "$LOCALDESTDIR/lib/libfontconfig.a" ]; then
             echo -------------------------------------------------
-            echo "fontconfig-2.13.94 is already compiled"
+            echo "fontconfig-2.14.2 is already compiled"
             echo -------------------------------------------------
         else
             echo -ne "\033]0;compile fontconfig\007"
 
-            do_wget "https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.13.94.tar.gz"
+            do_curl "https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.14.2.tar.gz"
 
             ./configure --prefix="$LOCALDESTDIR" --enable-shared=no
 
             make -j "$cpuCount"
             make install
 
-            do_checkIfExist fontconfig-2.13.94 libfontconfig.a
+            do_checkIfExist fontconfig-2.14.2 libfontconfig.a
 
             # on linux fontconfig.pc is not copyed
             [[ ! -f "$LOCALDESTDIR/lib/pkgconfig/fontconfig.pc" ]] && cp fontconfig.pc "$LOCALDESTDIR/lib/pkgconfig/"
@@ -637,12 +637,12 @@ buildLibs() {
 
     if [ -f "$LOCALDESTDIR/lib/libxml2.a" ]; then
         echo -------------------------------------------------
-        echo "libxml2-2.9.12 is already compiled"
+        echo "libxml2-2.14.11 is already compiled"
         echo -------------------------------------------------
     else
         echo -ne "\033]0;compile libxml2\007"
 
-        do_wget "https://github.com/GNOME/libxml2/archive/v2.9.12.tar.gz" "libxml2-2.9.12.tar.gz"
+        do_curl "https://codeload.github.com/GNOME/libxml2/tar.gz/refs/tags/v2.11.4" "libxml2-2.11.4.tar.gz"
 
         if [[ ! -f ./configure ]]; then
                 ./autogen.sh
@@ -651,12 +651,12 @@ buildLibs() {
                 make clean
             fi
 
-        ./configure --prefix="$LOCALDESTDIR" --disable-shared --enable-static
+        ./configure --prefix="$LOCALDESTDIR" --disable-shared --enable-static --with-iconv="no"
 
         make -j "$cpuCount"
         make install
 
-        do_checkIfExist libxml2-2.9.12 libxml2.a
+        do_checkIfExist libxml2-2.14.11 libxml2.a
     fi
 
     cd "$LOCALBUILDDIR" || exit
@@ -721,7 +721,7 @@ buildLibs() {
     if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-openssl" ]] || [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libsrt" ]]; then
         if [ -f "$LOCALDESTDIR/lib/libssl.a" ]; then
             echo -------------------------------------------------
-            echo "openssl-1.1.1l is already compiled"
+            echo "openssl-1.1.1u is already compiled"
             echo -------------------------------------------------
         else
             echo -ne "\033]0;compile openssl 64Bit\007"
@@ -732,14 +732,14 @@ buildLibs() {
                 target="linux-x86_64"
             fi
 
-            do_wget "https://www.openssl.org/source/openssl-1.1.1l.tar.gz"
+            do_curl "https://www.openssl.org/source/openssl-1.1.1u.tar.gz"
 
-            ./Configure --prefix=$LOCALDESTDIR $target no-shared enable-camellia enable-idea enable-mdc2 enable-rfc3779 -mtune=$tune $osExtra
+            ./Configure --prefix=$LOCALDESTDIR --openssldir=$LOCALDESTDIR $target --libdir="$LOCALDESTDIR/lib" no-shared enable-camellia enable-idea enable-mdc2 enable-rfc3779 -mtune=$tune $osExtra
 
             make depend all
             make install_sw
 
-            do_checkIfExist openssl-1.1.1l libssl.a
+            do_checkIfExist openssl-1.1.1u libssl.a
         fi
     fi
 
@@ -816,7 +816,7 @@ buildLibs() {
         else
             echo -ne "\033]0;compile lame\007"
 
-            do_wget "https://downloads.sourceforge.net/project/lame/lame/3.100/lame-3.100.tar.gz" lame-3.100.tar.gz
+            do_curl "https://downloads.sourceforge.net/project/lame/lame/3.100/lame-3.100.tar.gz" lame-3.100.tar.gz
 
             ./configure --prefix="$LOCALDESTDIR" --enable-expopt=full --enable-shared=no
 
@@ -838,7 +838,7 @@ buildLibs() {
         else
             echo -ne "\033]0;compile twolame 64Bit\007"
 
-            do_wget "https://sourceforge.net/projects/twolame/files/twolame/0.4.0/twolame-0.4.0.tar.gz/download" twolame-0.4.0.tar.gz
+            do_curl "https://sourceforge.net/projects/twolame/files/twolame/0.4.0/twolame-0.4.0.tar.gz/download" twolame-0.4.0.tar.gz
 
             ./configure --prefix="$LOCALDESTDIR" --disable-shared CPPFLAGS="$CPPFLAGS -DLIBTWOLAME_STATIC"
 
@@ -885,7 +885,7 @@ buildLibs() {
         else
             echo -ne "\033]0;compile soxr-0.1.1\007"
 
-            do_wget "https://downloads.sourceforge.net/project/soxr/soxr-0.1.3-Source.tar.xz"
+            do_curl "https://downloads.sourceforge.net/project/soxr/soxr-0.1.3-Source.tar.xz"
 
             mkdir build
             cd build || exit
@@ -906,19 +906,19 @@ buildLibs() {
     if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libopus" ]]; then
         if [ -f "$LOCALDESTDIR/lib/libopus.a" ]; then
             echo -------------------------------------------------
-            echo "opus-1.3 is already compiled"
+            echo "opus-1.4 is already compiled"
             echo -------------------------------------------------
         else
             echo -ne "\033]0;compile opus\007"
 
-            do_wget "https://ftp.osuosl.org/pub/xiph/releases/opus/opus-1.3.tar.gz"
+            do_curl "https://ftp.osuosl.org/pub/xiph/releases/opus/opus-1.4.tar.gz"
 
             ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --enable-static --disable-doc
 
             make -j "$cpuCount"
             make install
 
-            do_checkIfExist opus-1.3 libopus.a
+            do_checkIfExist opus-1.4 libopus.a
         fi
     fi
 
