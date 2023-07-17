@@ -40,14 +40,18 @@ if [[ $showHelp ]]; then
     exit 0
 fi
 
-if [[ "$optimize" == "n" ]]; then
+arch="$(uname -m)"
+
+if [[ "$optimize" == "n" ]] || [[ "$arch" != "x86_64" ]]; then
     tune="native"
     onum=3
     cpuDetect=""
+    vpxFlags=""
 else
     tune="generic"
     onum=2
     cpuDetect="--enable-runtime-cpudetect"
+    vpxFlags="--enable-postproc --enable-vp9-postproc --enable-runtime-cpu-detect"
 fi
 
 config="build_config.txt"
@@ -65,6 +69,7 @@ cat <<EOF > "$config"
 #--enable-libfdk-aac
 #--enable-libfribidi
 #--enable-libfreetype
+#--enable-libharfbuzz
 #--enable-libmp3lame
 #--enable-libopus
 #--enable-libsoxr
@@ -125,7 +130,7 @@ if [[ "$system" == "Darwin" ]]; then
     compNasm="no"
     osLib="-liconv"
     osFlag=""
-    arch="--arch=x86_64"
+    arch="--arch=$arch"
     fpic=""
     sd="gsed"
     extraLibs=""
@@ -575,7 +580,7 @@ buildLibs() {
     fi
 
     cd "$LOCALBUILDDIR" || exit
-
+ --enable-shared
     if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libfreetype" ]]; then
         if [ -f "$LOCALDESTDIR/lib/libfontconfig.a" ]; then
             echo -------------------------------------------------
@@ -597,6 +602,34 @@ buildLibs() {
             [[ ! -f "$LOCALDESTDIR/lib/pkgconfig/fontconfig.pc" ]] && cp fontconfig.pc "$LOCALDESTDIR/lib/pkgconfig/"
 
             $sd -ri "s/(Libs\:.*)/\1 -lpng16 -lbz2 -lxml2 -lz -lstdc++ $osLib -llzma -lm -lexpat -luuid/g" "$LOCALDESTDIR/lib/pkgconfig/fontconfig.pc"
+        fi
+    fi
+
+    cd "$LOCALBUILDDIR" || exit
+
+    if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libharfbuzz" ]]; then
+        do_git "https://github.com/harfbuzz/harfbuzz.git" harfbuzz-git
+
+        if [[ $compile == "true" ]]; then
+            if [[ ! -f ./configure ]]; then
+                ./autogen.sh
+            else
+                make uninstall
+                make clean
+            fi
+
+            ./configure --prefix="$LOCALDESTDIR" --enable-static=yes --enable-shared=no
+
+            make -j "$cpuCount"
+            make install
+
+            do_checkIfExist harfbuzz-git libharfbuzz.a
+
+            $sd -ri "s/(Libs\:.*)/\1 -lstdc++/g" "$LOCALDESTDIR/lib/pkgconfig/harfbuzz.pc"
+        else
+            echo -------------------------------------------------
+            echo "harfbuzz is already up to date"
+            echo -------------------------------------------------
         fi
     fi
 
@@ -996,7 +1029,7 @@ buildLibs() {
                 make clean
             fi
 
-            ./configure --prefix="$LOCALDESTDIR" --disable-shared --enable-static --disable-unit-tests --disable-docs --enable-postproc --enable-vp9-postproc --enable-runtime-cpu-detect $osFlag
+            ./configure --prefix="$LOCALDESTDIR" --disable-shared --enable-static --disable-unit-tests --disable-docs $vpxFlags $osFlag
 
             make -j "$cpuCount"
             make install
