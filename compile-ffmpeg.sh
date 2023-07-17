@@ -133,7 +133,13 @@ if [[ "$system" == "Darwin" ]]; then
     arch="--arch=$arch"
     fpic=""
     sd="gsed"
-    extraLibs=""
+
+    if [[ "$arch" == "x86_64" ]]; then
+        extraLibs="-lintl"
+    else
+        extraLibs=""
+    fi
+
 else
     osExtra="-static-libstdc++ -static-libgcc"
     osString="nix"
