@@ -651,7 +651,7 @@ buildLibs() {
                 make clean
             fi
 
-        ./configure --prefix="$LOCALDESTDIR" --disable-shared --enable-static --with-iconv="no"
+        ./configure --prefix="$LOCALDESTDIR" --disable-shared --enable-static --with-iconv=no --with-python=no
 
         make -j "$cpuCount"
         make install
