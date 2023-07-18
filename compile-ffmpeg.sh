@@ -5,9 +5,6 @@
 
 
 while [[ $# -gt 0 ]] && [[ "$1" == "--"* ]]; do
-    compile_libs_only='n'
-    compile_ffmpeg_only='n'
-    compile_extras='n'
     optimize='n'
 
     opt="$1";
@@ -31,7 +28,7 @@ if [[ $showHelp ]]; then
     echo "-------------------------------------------------------------"
     echo "compile with:"
     echo
-    echo '--libs-only=[y/n]    # compile only libs'
+    echo '--libs-only=[y/n]      # compile only libs'
     echo '--ffmpeg-only=[y/n]    # compile only ffmpeg'
     echo '--extras=[y/n]         # compile mediainfo and MP4Box'
     echo '--optimize=[y/n]       # compile system optimized version'
@@ -40,9 +37,10 @@ if [[ $showHelp ]]; then
     exit 0
 fi
 
-arch="$(uname -m)"
+arch=$(uname -m)
+system=$(uname -s)
 
-if [[ "$optimize" == "n" ]] || [[ "$arch" != "x86_64" ]]; then
+if [[ "$optimize" == "y" ]] || [[ "$arch" != "x86_64" ]]; then
     tune="native"
     onum=3
     cpuDetect=""
@@ -122,7 +120,6 @@ fi
 # --------------------------------------------------
 
 # check system
-system=$( uname -s )
 if [[ "$system" == "Darwin" ]]; then
     osExtra="-mmacosx-version-min=11"
     osString="osx"
@@ -167,11 +164,10 @@ get_options() {
 
 IFS=$'\n' read -d '' -r -a FFMPEG_LIBS < <(get_options)
 
-EXTRA_CFLAGS="-march=$tune"
-
 compile="false"
 buildFFmpeg="false"
 
+EXTRA_CFLAGS="-march=$tune"
 LOCALBUILDDIR="$PWD/build"
 LOCALDESTDIR="$PWD/local"
 export LOCALBUILDDIR LOCALDESTDIR
@@ -238,28 +234,6 @@ do_svn() {
         newRevision=$(svnversion)
 
         if [[ "$oldRevision" != "$newRevision" ]]; then
-            compile="true"
-        fi
-    fi
-}
-
-# get hg clone, or update
-do_hg() {
-    local hgURL="$1"
-    local hgFolder="$2"
-    echo -ne "\033]0;compile $hgFolder\007"
-    if [ ! -d "$hgFolder" ]; then
-        hg clone "$hgURL" "$hgFolder"
-        compile="true"
-        cd "$hgFolder" || exit
-    else
-        cd "$hgFolder" || exit
-        oldHead=$(hg id --id)
-        hg pull
-        hg update
-        newHead=$(hg id --id)
-
-        if [[ "$oldHead" != "$newHead" ]]; then
             compile="true"
         fi
     fi
@@ -1207,7 +1181,7 @@ buildLibs() {
     cd "$LOCALBUILDDIR" || exit
 
     if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libx265" ]]; then
-        do_hg "http://hg.videolan.org/x265" x265-hg
+        do_git "https://bitbucket.org/multicoreware/x265_git.git" x265-git noDepth
 
         if [[ $compile == "true" ]]; then
             cd build || exit
@@ -1466,13 +1440,11 @@ buildExtras() {
 }
 
 stripAll() {
-     cd "$LOCALDESTDIR" || exit
-
     echo -ne "\033]0;strip binaries\007"
     echo
     echo "-------------------------------------------------------------------------------"
     echo
-    FILES=$(find bin -type f -mmin -600 ! \( -name '*-config' -o -name '.DS_Store' -o -name '*.conf' -o -name '*.png' -o -name '*.desktop' -o -path 'bin/ffmpeg_shared/*' -prune \))
+    FILES=$(find "$LOCALDESTDIR/bin" -type f -mmin -600 ! \( -name '*-config' -o -name '.DS_Store' -o -name '*.conf' -o -name '*.png' -o -name '*.desktop' -o -path 'bin/ffmpeg_shared/*' -prune \))
 
     for f in $FILES; do
         strip "$f"
