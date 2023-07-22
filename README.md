@@ -7,7 +7,7 @@ It currently supports decklink and NDI from Newtek, but since NDI is not officia
 For MacOS is needed: homebrew with installed:
 
 ```
-cmake git mercurial wget curl pkg-config nasm autoconf automake libtool autogen \
+cmake git wget curl pkg-config nasm autoconf automake libtool autogen \
 gnu-sed sdl2 shtool ninja-build cargo cargo-c
 ```
 
@@ -15,7 +15,7 @@ For Linux (ubuntu/debian) is needed:
 
 ```
 sudo apt install autoconf automake build-essential libtool pkg-config texi2html \
-yasm cmake curl git mercurial wget gperf ninja-build cargo cargo-c
+yasm cmake curl git wget gperf ninja-build cargo cargo-c
 ```
 
 (debian needs sudo for install nasm to /usr/local/bin/)
@@ -25,7 +25,7 @@ For rhel based/fedora install:
 ```
 dnf group install "Development Tools"
 
-dnf install mercurial libstdc++-static libtool cmake ninja-build cargo \
+dnf install libstdc++-static libtool cmake ninja-build cargo \
 cargo-c gcc-c++ python3-devel gperf perl glibc-static binutils-devel
 ```
 
