@@ -433,21 +433,22 @@ buildLibs() {
 
     cd "$LOCALBUILDDIR" || exit
 
-    if [ -f "$LOCALDESTDIR/lib/libbzip3.a" ]; then
+    if [ -f "$LOCALDESTDIR/lib/libbz2.a" ]; then
         echo -------------------------------------------------
-        echo "bzip3-1.3.1 is already compiled"
+        echo "bzip2-1.0.8 is already compiled"
         echo -------------------------------------------------
     else
-        echo -ne "\033]0;compile bzip3 64Bit\007"
+        echo -ne "\033]0;compile bzip2 64Bit\007"
 
-        do_curl "http://distfiles.gentoo.org/distfiles/bzip3-1.3.1.tar.xz"
+        do_curl "http://distfiles.gentoo.org/distfiles/bzip2-1.0.8.tar.gz"
 
-        ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --enable-static=yes
+        if [[ "$system" == "Darwin" ]]; then
+            $sd -ri "s/^CFLAGS=-Wall/^CFLAGS=-Wall $osExtra/g" Makefile
+        fi
 
-        make -j "$cpuCount"
-        make install
+        make install PREFIX="$LOCALDESTDIR"
 
-        do_checkIfExist bzip3-1.3.1 libbzip3.a
+        do_checkIfExist bzip2-1.0.8 libbz2.a
     fi
 
     cd "$LOCALBUILDDIR" || exit
