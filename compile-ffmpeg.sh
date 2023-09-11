@@ -82,6 +82,7 @@ cat <<EOF > "$config"
 #--enable-nonfree
 #--enable-opencl
 #--enable-opengl
+#--enable-libopenjpeg
 #--enable-openssl
 #--enable-libsvtav1
 #--enable-librav1e
@@ -693,6 +694,30 @@ buildLibs() {
         else
             echo -------------------------------------------------
             echo "libzmq is already up to date"
+            echo -------------------------------------------------
+        fi
+    fi
+
+    cd "$LOCALBUILDDIR" || exit
+
+    if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libopenjpeg" ]]; then
+
+        do_git "https://github.com/uclouvain/openjpeg.git" libopenjpeg-git
+
+        if [[ $compile == "true" ]]; then
+            mkdir build
+            cd build
+
+            cmake .. -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_BINDIR="bin" -DCMAKE_INSTALL_LIBDIR="lib" -DCMAKE_INSTALL_INCLUDEDIR="include"
+
+            make -j "$cpuCount"
+            make install
+
+            do_checkIfExist libopenjpeg-git libopenjp2.a
+
+        else
+            echo -------------------------------------------------
+            echo "libopenjpeg is already up to date"
             echo -------------------------------------------------
         fi
     fi
