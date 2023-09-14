@@ -441,7 +441,7 @@ buildLibs() {
     else
         echo -ne "\033]0;compile bzip2 64Bit\007"
 
-        do_curl "https://fossies.org/linux/misc/bzip2-1.0.8.tar.gz"
+        do_curl "https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz"
 
         if [[ "$system" == "Darwin" ]]; then
             $sd -ri "s/^CFLAGS=-Wall/^CFLAGS=-Wall $osExtra/g" Makefile
