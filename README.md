@@ -25,7 +25,7 @@ For rhel based/fedora install:
 ```
 dnf group install "Development Tools"
 
-dnf install libstdc++-static libtool cmake ninja-build cargo \
+dnf install libstdc++-static libtool cmake ninja-build cargo ragel \
 cargo-c gcc-c++ python3-devel gperf perl glibc-static binutils-devel
 ```
 
