@@ -15,10 +15,8 @@ For Linux (ubuntu/debian) is needed:
 
 ```
 sudo apt install autoconf automake build-essential libtool pkg-config texi2html \
-yasm cmake curl git wget gperf ninja-build cargo cargo-c
+yasm cmake curl git wget gperf ninja-build cargo cargo-c nasm
 ```
-
-(debian needs sudo for install nasm to /usr/local/bin/)
 
 For rhel based/fedora install:
 
@@ -26,7 +24,7 @@ For rhel based/fedora install:
 dnf group install "Development Tools"
 
 dnf install libstdc++-static libtool cmake ninja-build cargo ragel \
-cargo-c gcc-c++ python3-devel gperf perl glibc-static binutils-devel
+cargo-c gcc-c++ python3-devel gperf perl glibc-static binutils-devel nasm
 ```
 
 For libdav1d install meson: `pip3 install --upgrade --user meson`.
