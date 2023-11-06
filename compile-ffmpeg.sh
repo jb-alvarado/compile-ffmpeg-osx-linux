@@ -335,28 +335,6 @@ do_checkIfExist() {
 
 buildLibs() {
     cd "$LOCALBUILDDIR" || exit
-    echo "-------------------------------------------------------------------------------"
-    echo
-    echo "compile global tools and libs"
-    echo
-    echo "-------------------------------------------------------------------------------"
-
-    if [ ! -f "/usr/local/bin/nasm" ] && [[ $compNasm == "yes" ]]; then
-        echo -ne "\033]0;compile nasm 64Bit\007"
-
-        do_curl "https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/nasm-2.15.05.tar.gz"
-        ./configure --prefix="$LOCALDESTDIR"
-
-        make -j "$cpuCount"
-        make install
-        sudo cp "$LOCALDESTDIR/bin/nasm" "$LOCALDESTDIR/bin/ndisasm" /usr/local/bin/
-    else
-        echo -------------------------------------------------
-        echo "nasm-2.15.05 is already compiled, or not needed"
-        echo -------------------------------------------------
-    fi
-
-    cd "$LOCALBUILDDIR" || exit
 
     if [[ "$system" == "Darwin" ]]; then
         if [ -f "$LOCALDESTDIR/lib/libuuid.a" ]; then
