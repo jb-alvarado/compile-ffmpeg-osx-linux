@@ -632,6 +632,7 @@ buildLibs() {
                 make clean
             fi
 
+            git submodule update --init --recursive
             ./configure --prefix="$LOCALDESTDIR" --enable-shared=no
 
             make -j "$cpuCount"
