@@ -1363,84 +1363,80 @@ buildExtras() {
 
     cd "$LOCALBUILDDIR" || exit
 
-    if [[ "$compile_mp4box" == 'y' ]]; then
-        do_git "https://github.com/gpac/gpac.git" gpac-git noDepth
-        if [[ $compile = "true"  ]] || [[ ! -f "$LOCALDESTDIR/bin/MP4Box" ]]; then
-            if [ -d "$LOCALDESTDIR/include/gpac" ]; then
-                rm -rf "$LOCALDESTDIR/bin/MP4Box $LOCALDESTDIR/lib/libgpac*"
-                rm -rf "$LOCALDESTDIR/include/gpac"
-            fi
-            [[ -f config.mak ]] && make distclean
-            ./configure --prefix="$LOCALDESTDIR" --static-bin --static-build --static-modules
-            make -j "$cpuCount"
-            make install
-            do_checkIfExist gpac-git bin/MP4Box
+    do_git "https://github.com/gpac/gpac.git" gpac-git noDepth
+    if [[ $compile = "true"  ]] || [[ ! -f "$LOCALDESTDIR/bin/MP4Box" ]]; then
+        if [ -d "$LOCALDESTDIR/include/gpac" ]; then
+            rm -rf "$LOCALDESTDIR/bin/MP4Box $LOCALDESTDIR/lib/libgpac*"
+            rm -rf "$LOCALDESTDIR/include/gpac"
         fi
+        [[ -f config.mak ]] && make distclean
+        ./configure --prefix="$LOCALDESTDIR" --static-bin --static-build --static-modules
+        make -j "$cpuCount"
+        make install
+        do_checkIfExist gpac-git bin/MP4Box
     fi
 
     cd "$LOCALBUILDDIR" || exit
 
-    if [[ "$compile_mediainfo" == 'y' ]]; then
-        do_git "https://github.com/MediaArea/ZenLib" libzen-git
-        if [[ $compile = "true" ]] || [[ ! -f "$LOCALDESTDIR/bin/mediainfo" ]]; then
-            cd Project/GNU/Library || exit
-            [[ ! -f "configure" ]] && ./autogen.sh
-            [[ -f libzen.pc ]] && make distclean
+    do_git "https://github.com/MediaArea/ZenLib" libzen-git
+    if [[ $compile = "true" ]] || [[ ! -f "$LOCALDESTDIR/bin/mediainfo" ]]; then
+        cd Project/GNU/Library || exit
+        [[ ! -f "configure" ]] && ./autogen.sh
+        [[ -f libzen.pc ]] && make distclean
 
-            if [[ -d "$LOCALDESTDIR/include/ZenLib" ]]; then
-                rm -rf "$LOCALDESTDIR/include/ZenLib $LOCALDESTDIR/bin-global/libzen-config"
-                rm -f "$LOCALDESTDIR/lib/libzen.{l,}a $LOCALDESTDIR/lib/pkgconfig/libzen.pc"
-            fi
-            ./configure --prefix="$LOCALDESTDIR" --disable-shared
-
-            make -j "$cpuCount"
-            make install
-
-            [[ -f "$LOCALDESTDIR/bin/libzen-config" ]] && rm "$LOCALDESTDIR/bin/libzen-config"
-            do_checkIfExist libzen-git libzen.a
-            buildMediaInfo="true"
+        if [[ -d "$LOCALDESTDIR/include/ZenLib" ]]; then
+            rm -rf "$LOCALDESTDIR/include/ZenLib $LOCALDESTDIR/bin-global/libzen-config"
+            rm -f "$LOCALDESTDIR/lib/libzen.{l,}a $LOCALDESTDIR/lib/pkgconfig/libzen.pc"
         fi
+        ./configure --prefix="$LOCALDESTDIR" --disable-shared
 
-        cd "$LOCALBUILDDIR" || exit
+        make -j "$cpuCount"
+        make install
 
-        do_git "https://github.com/MediaArea/MediaInfoLib" libmediainfo-git
-        if [[ $compile = "true" || $buildMediaInfo = "true" ]]; then
-            cd Project/GNU/Library || exit
-            [[ ! -f "configure" ]] && ./autogen.sh
-            [[ -f libmediainfo.pc ]] && make distclean
+        [[ -f "$LOCALDESTDIR/bin/libzen-config" ]] && rm "$LOCALDESTDIR/bin/libzen-config"
+        do_checkIfExist libzen-git libzen.a
+        buildMediaInfo="true"
+    fi
 
-            if [[ -d "$LOCALDESTDIR/include/MediaInfo" ]]; then
-                rm -rf "$LOCALDESTDIR/include/MediaInfo{,DLL}"
-                rm -f "$LOCALDESTDIR/lib/libmediainfo.{l,}a $LOCALDESTDIR/lib/pkgconfig/libmediainfo.pc"
-                rm -f "$LOCALDESTDIR/bin-global/libmediainfo-config"
-            fi
-            ./configure --prefix="$LOCALDESTDIR" --disable-shared
+    cd "$LOCALBUILDDIR" || exit
 
-            make -j "$cpuCount"
-            make install
+    do_git "https://github.com/MediaArea/MediaInfoLib" libmediainfo-git
+    if [[ $compile = "true" || $buildMediaInfo = "true" ]]; then
+        cd Project/GNU/Library || exit
+        [[ ! -f "configure" ]] && ./autogen.sh
+        [[ -f libmediainfo.pc ]] && make distclean
 
-            cp libmediainfo.pc "$LOCALDESTDIR/lib/pkgconfig/"
-            do_checkIfExist libmediainfo-git libmediainfo.a
-            buildMediaInfo="true"
+        if [[ -d "$LOCALDESTDIR/include/MediaInfo" ]]; then
+            rm -rf "$LOCALDESTDIR/include/MediaInfo{,DLL}"
+            rm -f "$LOCALDESTDIR/lib/libmediainfo.{l,}a $LOCALDESTDIR/lib/pkgconfig/libmediainfo.pc"
+            rm -f "$LOCALDESTDIR/bin-global/libmediainfo-config"
         fi
+        ./configure --prefix="$LOCALDESTDIR" --disable-shared
 
-        cd "$LOCALBUILDDIR" || exit
+        make -j "$cpuCount"
+        make install
 
-        do_git "https://github.com/MediaArea/MediaInfo" mediainfo-git
-        if [[ $compile = "true" || $buildMediaInfo = "true" ]]; then
-            cd Project/GNU/CLI || exit
-            [[ ! -f "configure" ]] && ./autogen.sh
-            [[ -f config.log ]] && make distclean
+        cp libmediainfo.pc "$LOCALDESTDIR/lib/pkgconfig/"
+        do_checkIfExist libmediainfo-git libmediainfo.a
+        buildMediaInfo="true"
+    fi
 
-            [[ -d "$LOCALDESTDIR/bin/mediainfo" ]] && rm -rf "$LOCALDESTDIR/bin/mediainfo"
+    cd "$LOCALBUILDDIR" || exit
 
-            ./configure --prefix="$LOCALDESTDIR" --disable-shared --enable-staticlibs
+    do_git "https://github.com/MediaArea/MediaInfo" mediainfo-git
+    if [[ $compile = "true" || $buildMediaInfo = "true" ]]; then
+        cd Project/GNU/CLI || exit
+        [[ ! -f "configure" ]] && ./autogen.sh
+        [[ -f config.log ]] && make distclean
 
-            make -j "$cpuCount"
-            make install
+        [[ -d "$LOCALDESTDIR/bin/mediainfo" ]] && rm -rf "$LOCALDESTDIR/bin/mediainfo"
 
-            do_checkIfExist mediainfo-git bin/mediainfo
-        fi
+        ./configure --prefix="$LOCALDESTDIR" --disable-shared --enable-staticlibs
+
+        make -j "$cpuCount"
+        make install
+
+        do_checkIfExist mediainfo-git bin/mediainfo
     fi
 }
 
