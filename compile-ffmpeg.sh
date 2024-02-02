@@ -1226,7 +1226,7 @@ buildLibs() {
         do_git "https://github.com/xiph/rav1e.git" rav1e-git noDepth
 
         if [[ $compile == "true" ]]; then
-            cargo cinstall --release --jobs "$cpuCount" --prefix=$LOCALDESTDIR --libdir=$LOCALDESTDIR/lib --includedir=$LOCALDESTDIR/include
+            cargo cinstall --release --target=x86_64-unknown-linux-musl --jobs "$cpuCount" --prefix=$LOCALDESTDIR --libdir=$LOCALDESTDIR/lib --includedir=$LOCALDESTDIR/include
 
             do_checkIfExist rav1e-git librav1e.a
 
