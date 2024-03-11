@@ -376,19 +376,19 @@ buildLibs() {
 
     if [ -f "$LOCALDESTDIR/lib/libz.a" ]; then
         echo -------------------------------------------------
-        echo "zlib-1.3 is already compiled"
+        echo "zlib-1.3.1 is already compiled"
         echo -------------------------------------------------
     else
         echo -ne "\033]0;compile libz 64Bit\007"
 
-        do_curl "https://zlib.net/zlib-1.3.tar.gz"
+        do_curl "https://zlib.net/zlib-1.3.1.tar.gz"
 
         ./configure --prefix="$LOCALDESTDIR" --static
 
         make -j "$cpuCount"
         make install
 
-        do_checkIfExist zlib-1.3 libz.a
+        do_checkIfExist zlib-1.3.1 libz.a
     fi
 
     cd "$LOCALBUILDDIR" || exit
