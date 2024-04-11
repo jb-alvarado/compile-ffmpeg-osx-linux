@@ -24,6 +24,20 @@ while [[ $# -gt 0 ]] && [[ "$1" == "--"* ]]; do
    esac
 done
 
+# ARCH="$(uname -m)"
+# VULKAN_SDK="/home/jonathan/DEV/github/compile-ffmpeg-osx-linux/vulkan-1.3.280.1/$ARCH"
+# export VULKAN_SDK
+# PATH="$VULKAN_SDK/bin:$PATH"
+# export PATH
+# LD_LIBRARY_PATH="$VULKAN_SDK/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+# export LD_LIBRARY_PATH
+# VK_ADD_LAYER_PATH="$VULKAN_SDK/share/vulkan/explicit_layer.d${VK_ADD_LAYER_PATH:+:$VK_ADD_LAYER_PATH}"
+# export VK_ADD_LAYER_PATH
+# if [ -n "${VK_LAYER_PATH-}" ]; then
+#     echo "Unsetting VK_LAYER_PATH environment variable for SDK usage"
+#     unset VK_LAYER_PATH
+# fi
+
 if [[ $showHelp ]]; then
     echo "-------------------------------------------------------------"
     echo "compile with:"
@@ -94,6 +108,9 @@ cat <<EOF > "$config"
 #--enable-libnpp
 #--enable-libndi_newtek
 #--enable-libpulse
+#--enable-vulkan
+#--enable-libplacebo
+#--enable-libshaderc
 EOF
     echo "-------------------------------------------------------------------------------"
     echo "-------------------------------------------------------------------------------"
@@ -270,7 +287,9 @@ do_curl() {
                 cd "$dirName" || exit
             ;;
             *.tar.xz)
-                dirName=$( expr "$archive" : '\(.*\)\.\(tar.xz\)$' )
+                if [[ -z $dirName ]]; then
+                    dirName=$( expr "$archive" : '\(.*\)\.\(tar.xz\)$' )
+                fi
                 #rm -rf $dirName
                 tar -xf "$archive"
                 #  rm "$archive"
@@ -1252,6 +1271,39 @@ buildLibs() {
             echo -------------------------------------------------
         fi
     fi
+
+    cd "$LOCALBUILDDIR" || exit
+
+    if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-vulkan" ]] || [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libplacebo" ]]; then
+        if [[ ! -f $LOCALDESTDIR/share/vulkan/registry/vk.xml ]]; then
+            do_curl https://sdk.lunarg.com/sdk/download/1.3.280.1/linux/vulkansdk-linux-x86_64-1.3.280.1.tar.xz vulkansdk-linux-x86_64-1.3.280.1.tar.xz "1.3.280.1"
+            rsync --remove-source-files -auv x86_64/ $LOCALDESTDIR/
+        fi
+    fi
+
+    cd "$LOCALBUILDDIR" || exit
+
+    if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libplacebo" ]]; then
+        do_git "https://code.videolan.org/videolan/libplacebo" libplacebo-git
+        git submodule update --init
+
+        if [[ $compile == "true" ]]; then
+            rm -rf build
+            mkdir build
+            cd build
+
+            meson setup -Dvulkan-registry=$LOCALDESTDIR/share/vulkan/registry/vk.xml --default-library=static --prefix "$LOCALDESTDIR" --libdir="$LOCALDESTDIR/lib" ..
+
+            ninja
+            ninja install
+
+            do_checkIfExist libplacebo-git libplacebo.a
+        else
+            echo -------------------------------------------------
+            echo "nv-codec-headers-git is already up to date"
+            echo -------------------------------------------------
+        fi
+    fi
 }
 
 buildFfmpeg() {
@@ -1313,24 +1365,27 @@ buildFfmpeg() {
         fi
 
         EXTRA_CFLAGS=$(echo $EXTRA_CFLAGS | sed "s/-march=generic //")
-        EXTRA_LD=""
+        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libplacebo" ]]; then
+            EXTRA_LD="-Wl,--copy-dt-needed-entries"
+        fi
 
         if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-nvenc" ]]; then
             export PATH="/usr/local/cuda-12.0/bin:$PATH"
             export LD_LIBRARY_PATH="/usr/local/cuda-12.0/lib64:$LD_LIBRARY_PATH"
             EXTRA_CFLAGS="$EXTRA_CFLAGS -I/usr/local/cuda/include"
-            EXTRA_LD="--extra-ldflags=-L/usr/local/cuda/lib64"
+            EXTRA_LD="$EXTRA_LD -L/usr/local/cuda/lib64"
         fi
 
         ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" $disable_ffplay \
         --disable-doc --enable-gpl --enable-version3 \
         $cpuDetect --enable-avfilter --enable-zlib "${FFMPEG_LIBS[@]}" \
-        $osFlag --extra-libs="-lm -liconv $extraLibs" --extra-cflags="$EXTRA_CFLAGS" $pkg_extra $EXTRA_LD
+        $osFlag --extra-libs="-lm -liconv $extraLibs" --extra-cflags="$EXTRA_CFLAGS" $pkg_extra --extra-ldflags="$EXTRA_LD"
 
         $sd -ri "s/--prefix=[^ ]* //g" config.h
         $sd -ri "s/ --extra-libs='.*'//g" config.h
         $sd -ri "s/ --pkg-config-flags=--static//g" config.h
         $sd -ri "s/ --extra-cflags=[a-zA-Z_'-]+//g" config.h
+        $sd -ri "s/ --extra-ldflags=[a-zA-Z_'-,]+//g" config.h
 
         make -j "$cpuCount"
         make install

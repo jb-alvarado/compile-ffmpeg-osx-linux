@@ -8,14 +8,14 @@ For MacOS is needed: homebrew with installed:
 
 ```
 cmake git wget curl pkg-config nasm autoconf automake libtool autogen \
-gnu-sed sdl2 shtool ninja-build cargo cargo-c meson
+gnu-sed sdl2 shtool ninja-build cargo cargo-c meson rsync
 ```
 
 For Linux (ubuntu/debian) is needed:
 
 ```
 sudo apt install autoconf automake build-essential libtool pkg-config texi2html \
-yasm cmake curl git wget gperf ninja-build cargo cargo-c nasm meson
+yasm cmake curl git wget gperf ninja-build cargo cargo-c nasm meson rsync
 ```
 On Ubuntu install cargo-c with `cargo install cargo-c`
 
@@ -25,7 +25,7 @@ For rhel based/fedora install:
 dnf group install "Development Tools"
 
 dnf install libstdc++-static libtool cmake ninja-build cargo ragel meson \
-cargo-c gcc-c++ python3-devel gperf perl glibc-static binutils-devel nasm 
+cargo-c gcc-c++ python3-devel gperf perl glibc-static binutils-devel nasm rsync
 ```
 
 Install `sdl2/libsdl2-dev` only if you need ffplay or opengl!
