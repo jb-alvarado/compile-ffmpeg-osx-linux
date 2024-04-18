@@ -26,7 +26,7 @@ dnf group install "Development Tools"
 
 dnf install libstdc++-static libtool cmake ninja-build cargo ragel meson \
 cargo-c gcc-c++ python3-devel gperf perl glibc-static binutils-devel nasm \
-rsync gperf
+rsync
 ```
 
 Install `sdl2/libsdl2-dev` only if you need ffplay or opengl!
