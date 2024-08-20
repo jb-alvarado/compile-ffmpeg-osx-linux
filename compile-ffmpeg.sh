@@ -97,6 +97,7 @@ cat <<EOF > "$config"
 #--enable-vulkan
 #--enable-libplacebo
 #--enable-libshaderc
+#--enable-libvmaf
 EOF
     echo "-------------------------------------------------------------------------------"
     echo "-------------------------------------------------------------------------------"
@@ -357,23 +358,6 @@ buildLibs() {
             make install
 
             do_checkIfExist uuid-1.6.2 libuuid.a
-        fi
-    else
-        if [ -f "$LOCALDESTDIR/lib/libuuid.a" ]; then
-            echo -------------------------------------------------
-            echo "libuuid-1.0.3 is already compiled"
-            echo -------------------------------------------------
-        else
-            echo -ne "\033]0;compile uuid 64Bit\007"
-
-            do_curl "http://sourceforge.net/projects/libuuid/files/libuuid-1.0.3.tar.gz"
-
-            ./configure --prefix="$LOCALDESTDIR" --disable-shared
-
-            make -j "$cpuCount"
-            make install
-
-            do_checkIfExist libuuid-1.0.3 libuuid.a
         fi
     fi
 
@@ -777,6 +761,31 @@ buildLibs() {
         else
             echo -------------------------------------------------
             echo "librist is already up to date"
+            echo -------------------------------------------------
+        fi
+    fi
+
+    cd "$LOCALBUILDDIR" || exit
+
+    if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libvmaf" ]]; then
+        do_git "https://github.com/Netflix/vmaf.git" vmaf-git
+
+        if [[ $compile == "true" ]]; then
+            cd libvmaf
+            mkdir build
+            cd build || exit
+
+            meson setup --default-library=static --buildtype release --prefix "$LOCALDESTDIR" --libdir="$LOCALDESTDIR/lib" ..
+
+            ninja
+            ninja install
+
+            $sd -ri "s/(Libs\:.*)/\1 -lstdc++/g" "$LOCALDESTDIR/lib/pkgconfig/libvmaf.pc"
+
+            do_checkIfExist vmaf-git libvmaf.a
+        else
+            echo -------------------------------------------------
+            echo "vmaf is already up to date"
             echo -------------------------------------------------
         fi
     fi
