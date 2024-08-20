@@ -775,7 +775,7 @@ buildLibs() {
             mkdir build
             cd build || exit
 
-            meson setup --default-library=static --buildtype release --prefix "$LOCALDESTDIR" --libdir="$LOCALDESTDIR/lib" ..
+            meson setup --default-library=static -Denable_avx512=true -Dbuilt_in_models=true --buildtype release --prefix "$LOCALDESTDIR" --libdir="$LOCALDESTDIR/lib" ..
 
             ninja
             ninja install
