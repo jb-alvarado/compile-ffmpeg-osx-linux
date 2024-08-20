@@ -24,20 +24,6 @@ while [[ $# -gt 0 ]] && [[ "$1" == "--"* ]]; do
    esac
 done
 
-# ARCH="$(uname -m)"
-# VULKAN_SDK="/home/jonathan/DEV/github/compile-ffmpeg-osx-linux/vulkan-1.3.280.1/$ARCH"
-# export VULKAN_SDK
-# PATH="$VULKAN_SDK/bin:$PATH"
-# export PATH
-# LD_LIBRARY_PATH="$VULKAN_SDK/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-# export LD_LIBRARY_PATH
-# VK_ADD_LAYER_PATH="$VULKAN_SDK/share/vulkan/explicit_layer.d${VK_ADD_LAYER_PATH:+:$VK_ADD_LAYER_PATH}"
-# export VK_ADD_LAYER_PATH
-# if [ -n "${VK_LAYER_PATH-}" ]; then
-#     echo "Unsetting VK_LAYER_PATH environment variable for SDK usage"
-#     unset VK_LAYER_PATH
-# fi
-
 if [[ $showHelp ]]; then
     echo "-------------------------------------------------------------"
     echo "compile with:"
@@ -355,6 +341,44 @@ do_checkIfExist() {
 buildLibs() {
     cd "$LOCALBUILDDIR" || exit
 
+    if [[ "$system" == "Darwin" ]]; then
+        if [ -f "$LOCALDESTDIR/lib/libuuid.a" ]; then
+            echo -------------------------------------------------
+            echo "uuid-1.6.2 is already compiled"
+            echo -------------------------------------------------
+        else
+            echo -ne "\033]0;compile uuid 64Bit\007"
+
+            do_curl "https://www.mirrorservice.org/sites/ftp.ossp.org/pkg/lib/uuid/uuid-1.6.2.tar.gz"
+
+            ./configure --prefix="$LOCALDESTDIR" --disable-shared
+
+            make -j "$cpuCount"
+            make install
+
+            do_checkIfExist uuid-1.6.2 libuuid.a
+        fi
+    else
+        if [ -f "$LOCALDESTDIR/lib/libuuid.a" ]; then
+            echo -------------------------------------------------
+            echo "libuuid-1.0.3 is already compiled"
+            echo -------------------------------------------------
+        else
+            echo -ne "\033]0;compile uuid 64Bit\007"
+
+            do_curl "http://sourceforge.net/projects/libuuid/files/libuuid-1.0.3.tar.gz"
+
+            ./configure --prefix="$LOCALDESTDIR" --disable-shared
+
+            make -j "$cpuCount"
+            make install
+
+            do_checkIfExist libuuid-1.0.3 libuuid.a
+        fi
+    fi
+
+    cd "$LOCALBUILDDIR" || exit
+
     if [ -f "$LOCALDESTDIR/lib/libz.a" ]; then
         echo -------------------------------------------------
         echo "zlib-1.3.1 is already compiled"
@@ -552,17 +576,13 @@ buildLibs() {
         do_git "https://github.com/harfbuzz/harfbuzz.git" harfbuzz-git
 
         if [[ $compile == "true" ]]; then
-            if [[ ! -f ./configure ]]; then
-                ./autogen.sh
-            else
-                make uninstall
-                make clean
-            fi
+            mkdir build
+            cd build
 
-            ./configure --prefix="$LOCALDESTDIR" --enable-static=yes --enable-shared=no
+            meson setup --default-library=static --prefix "$LOCALDESTDIR" --libdir="$LOCALDESTDIR/lib" ..
 
-            make -j "$cpuCount"
-            make install
+            ninja
+            ninja install
 
             do_checkIfExist harfbuzz-git libharfbuzz.a
 
@@ -1254,7 +1274,7 @@ buildLibs() {
             mkdir build
             cd build
 
-            meson setup -Dvulkan-registry=$LOCALDESTDIR/share/vulkan/registry/vk.xml --default-library=static --buildtype=release --prefix "$LOCALDESTDIR" --libdir="$LOCALDESTDIR/lib" ..
+            meson setup -Dvulkan-registry=$LOCALDESTDIR/share/vulkan/registry/vk.xml --default-library=static --prefix "$LOCALDESTDIR" --libdir="$LOCALDESTDIR/lib" ..
 
             ninja
             ninja install
