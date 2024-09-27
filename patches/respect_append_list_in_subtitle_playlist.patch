@@ -1,0 +1,70 @@
+From ff8f39e17c67883c90e751fd5a33fc52df1e6422 Mon Sep 17 00:00:00 2001
+From: Jonathan Baecker <jonbae77@gmail.com>
+Date: Fri, 27 Sep 2024 08:31:47 +0200
+Subject: [PATCH] Respect `append_list` flag in subtitle playlists
+
+Ensure that when the `-hls_flags append_list` option is set, that *.vtt files in stream_vtt.m3u8 are correctly updated. This fixes https://trac.ffmpeg.org/ticket/11208
+
+This is a bit of an ugly fix, let me know what you think.
+---
+ libavformat/hlsenc.c | 37 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 37 insertions(+)
+
+diff --git a/libavformat/hlsenc.c b/libavformat/hlsenc.c
+index 1e932b7..e93af4c 100644
+--- a/libavformat/hlsenc.c
++++ b/libavformat/hlsenc.c
+@@ -1202,6 +1202,22 @@ static int hls_append_segment(struct AVFormatContext *s, HLSContext *hls,
+     return 0;
+ }
+ 
++static int extract_number(const char *filename) {
++    const char *dot = strrchr(filename, '.');
++    const char *num_start = dot - 1;
++
++    while (num_start > filename && *num_start >= '0' && *num_start <= '9') {
++        num_start--;
++    }
++
++    num_start++;
++
++    if (num_start == dot)
++        return -1;
++
++    return atoi(num_start);
++}
++
+ static int parse_playlist(AVFormatContext *s, const char *url, VariantStream *vs)
+ {
+     HLSContext *hls = s->priv_data;
+@@ -1294,6 +1310,27 @@ static int parse_playlist(AVFormatContext *s, const char *url, VariantStream *vs
+                     ret = AVERROR(ENOMEM);
+                     goto fail;
+                 }
++                if (vs->has_subtitle) {
++                    int vtt_index = extract_number(line);
++                    char *vtt_file = av_asprintf(av_basename(vs->vtt_basename), vtt_index);
++                    char *new_vtt;
++
++                    if (!vtt_file) {
++                        ret = AVERROR(ENOMEM);
++                        goto fail;
++                    }
++
++                    new_vtt = av_strdup(vtt_file);
++                    av_free(vtt_file);
++
++                    if (!new_vtt) {
++                        ret = AVERROR(ENOMEM);
++                        goto fail;
++                    }
++
++                    ff_format_set_url(vs->vtt_avf, new_vtt);
++                }
++
+                 ff_format_set_url(vs->avf, new_file);
+                 is_segment = 0;
+                 new_start_pos = avio_tell(vs->avf->pb);
+-- 
+2.46.1
+

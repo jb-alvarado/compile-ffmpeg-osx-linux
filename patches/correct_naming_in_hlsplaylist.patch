@@ -1,0 +1,67 @@
+From 5cd15c97b3b3e381fb4fb5bb7d636fc01d1cdaa6 Mon Sep 17 00:00:00 2001
+From: jb-alvarado <jonbae77@gmail.com>
+Date: Thu, 26 Sep 2024 09:07:46 +0200
+Subject: [PATCH] avformat/hlsplaylist: set stream name according to
+ var_stream_map varname
+
+If name:* is set in var_stream_map variable, take that as NAME= variable. This helps gives better stream names in html players.
+---
+ libavformat/hlsenc.c      | 2 +-
+ libavformat/hlsplaylist.c | 9 +++++++--
+ libavformat/hlsplaylist.h | 2 +-
+ 3 files changed, 9 insertions(+), 4 deletions(-)
+
+diff --git a/libavformat/hlsenc.c b/libavformat/hlsenc.c
+index 1e932b7..8e01721 100644
+--- a/libavformat/hlsenc.c
++++ b/libavformat/hlsenc.c
+@@ -1533,7 +1533,7 @@ static int create_master_playlist(AVFormatContext *s,
+                 break;
+             }
+
+-            ff_hls_write_subtitle_rendition(hls->m3u8_out, sgroup, vtt_m3u8_rel_name, vs->language, i, hls->has_default_key ? vs->is_default : 1);
++            ff_hls_write_subtitle_rendition(hls->m3u8_out, sgroup, vtt_m3u8_rel_name, vs->language, vs->varname, i, hls->has_default_key ? vs->is_default : 1);
+         }
+
+         if (!hls->has_default_key || !hls->has_video_m3u8) {
+diff --git a/libavformat/hlsplaylist.c b/libavformat/hlsplaylist.c
+index f8a6977..2eedc32 100644
+--- a/libavformat/hlsplaylist.c
++++ b/libavformat/hlsplaylist.c
+@@ -57,13 +57,18 @@ void ff_hls_write_audio_rendition(AVIOContext *out, const char *agroup,
+
+ void ff_hls_write_subtitle_rendition(AVIOContext *out, const char *sgroup,
+                                      const char *filename, const char *language,
+-                                     int name_id, int is_default)
++                                     const char *varname, int name_id, int is_default)
+ {
+     if (!out || !filename)
+         return;
+
+     avio_printf(out, "#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID=\"%s\"", sgroup);
+-    avio_printf(out, ",NAME=\"subtitle_%d\",DEFAULT=%s,", name_id, is_default ? "YES" : "NO");
++    if (varname) {
++        avio_printf(out, ",NAME=\"%s\",", varname);
++    } else {
++        avio_printf(out, ",NAME=\"subtitle_%d\",", name_id);
++    }
++    avio_printf(out, "DEFAULT=%s,", is_default ? "YES" : "NO");
+     if (language) {
+         avio_printf(out, "LANGUAGE=\"%s\",", language);
+     }
+diff --git a/libavformat/hlsplaylist.h b/libavformat/hlsplaylist.h
+index d7aa44d..f181182 100644
+--- a/libavformat/hlsplaylist.h
++++ b/libavformat/hlsplaylist.h
+@@ -41,7 +41,7 @@ void ff_hls_write_audio_rendition(AVIOContext *out, const char *agroup,
+                                   int name_id, int is_default, int nb_channels);
+ void ff_hls_write_subtitle_rendition(AVIOContext *out, const char *sgroup,
+                                      const char *filename, const char *language,
+-                                     int name_id, int is_default);
++                                     const char *varname, int name_id, int is_default);
+ void ff_hls_write_stream_info(AVStream *st, AVIOContext *out, int bandwidth,
+                               int avg_bandwidth,
+                               const char *filename, const char *agroup,
+--
+2.46.1
+
