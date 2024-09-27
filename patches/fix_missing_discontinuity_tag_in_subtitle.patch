@@ -1,10 +1,12 @@
 From 30d92cac06dbd9d3d8e57872b12530cfc742c95a Mon Sep 17 00:00:00 2001
 From: Jonathan Baecker <jonbae77@gmail.com>
 Date: Thu, 26 Sep 2024 09:32:29 +0200
-Subject: [PATCH] avformat/hlsenc: Fix missing EXT-X-DISCONTINUITY tag in
+Subject: [PATCH v2] avformat/hlsenc: Fix missing EXT-X-DISCONTINUITY tag in
  subtitle streams
 
-The EXT-X-DISCONTINUITY tag was not being added to subtitle streams, causing synchronization issues. This patch ensures that the tag is applied consistently across video and subtitle streams.
+The EXT-X-DISCONTINUITY tag was not being added to subtitle streams,
+causing synchronization issues. This patch ensures that the tag is
+applied consistently across video and subtitle streams.
 ---
  libavformat/hlsenc.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
@@ -22,6 +24,6 @@ index 1e932b7..571d6b2 100644
                                            en->duration, 0, en->size, en->pos,
                                            hls->baseurl, en->sub_filename, NULL, 0, 0, 0);
              if (ret < 0) {
--- 
+--
 2.46.1
 

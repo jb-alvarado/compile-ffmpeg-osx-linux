@@ -1,10 +1,12 @@
 From 5cd15c97b3b3e381fb4fb5bb7d636fc01d1cdaa6 Mon Sep 17 00:00:00 2001
 From: jb-alvarado <jonbae77@gmail.com>
 Date: Thu, 26 Sep 2024 09:07:46 +0200
-Subject: [PATCH] avformat/hlsplaylist: set stream name according to
+Subject: [PATCH v2] avformat/hlsplaylist: set stream name according to
  var_stream_map varname
 
-If name:* is set in var_stream_map variable, take that as NAME= variable. This helps gives better stream names in html players.
+If name:* is set in var_stream_map variable,
+take that as NAME= variable.
+This helps gives better stream names in html players.
 ---
  libavformat/hlsenc.c      | 2 +-
  libavformat/hlsplaylist.c | 9 +++++++--
