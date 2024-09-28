@@ -1,0 +1,111 @@
+From 24f1a1818ac35de1fd2da912b91e5867d61371fd Mon Sep 17 00:00:00 2001
+From: Jonathan Baecker <jonbae77@gmail.com>
+Date: Sat, 28 Sep 2024 23:21:08 +0200
+Subject: [PATCH] libavformat/hlsplaylist: add subtitle_varname for naming
+ subtitle streams
+
+If 'sname:*' is set in the var_stream_map variable, use it as
+the NAME attribute for subtitles. This improves the naming of
+subtitle streams in HTML players, providing clearer and more
+descriptive labels for users.
+---
+ doc/muxers.texi           | 5 +++--
+ libavformat/hlsenc.c      | 7 ++++++-
+ libavformat/hlsplaylist.c | 9 +++++++--
+ libavformat/hlsplaylist.h | 2 +-
+ 4 files changed, 17 insertions(+), 6 deletions(-)
+
+diff --git a/doc/muxers.texi b/doc/muxers.texi
+index ce93ba1488..04b7f20b7e 100644
+--- a/doc/muxers.texi
++++ b/doc/muxers.texi
+@@ -2436,13 +2436,14 @@ ffmpeg -re -i in.ts -b:a:0 32k -b:a:1 64k -b:v:0 1000k \
+ @item
+ Create a single variant stream. Add the @code{#EXT-X-MEDIA} tag with
+ @code{TYPE=SUBTITLES} in the master playlist with webvtt subtitle group name
+-'subtitle'. Make sure the input file has one text subtitle stream at least.
++'subtitle' and optional subtitle name, e.g. 'English'. Make sure the input
++file has one text subtitle stream at least.
+ @example
+ ffmpeg -y -i input_with_subtitle.mkv \
+  -b:v:0 5250k -c:v h264 -pix_fmt yuv420p -profile:v main -level 4.1 \
+  -b:a:0 256k \
+  -c:s webvtt -c:a mp2 -ar 48000 -ac 2 -map 0:v -map 0:a:0 -map 0:s:0 \
+- -f hls -var_stream_map "v:0,a:0,s:0,sgroup:subtitle" \
++ -f hls -var_stream_map "v:0,a:0,s:0,sgroup:subtitle,sname:English" \
+  -master_pl_name master.m3u8 -t 300 -hls_time 10 -hls_init_time 4 -hls_list_size \
+  10 -master_pl_publish_rate 10 -hls_flags \
+  delete_segments+discont_start+split_by_time ./tmp/video.m3u8
+diff --git a/libavformat/hlsenc.c b/libavformat/hlsenc.c
+index 1e932b7b0e..7b2145f5bf 100644
+--- a/libavformat/hlsenc.c
++++ b/libavformat/hlsenc.c
+@@ -189,6 +189,7 @@ typedef struct VariantStream {
+     const char *sgroup;   /* subtitle group name */
+     const char *ccgroup;  /* closed caption group name */
+     const char *varname;  /* variant name */
++    const char *subtitle_varname;  /* subtitle variant name */
+ } VariantStream;
+
+ typedef struct ClosedCaptionsStream {
+@@ -1533,7 +1534,8 @@ static int create_master_playlist(AVFormatContext *s,
+                 break;
+             }
+
+-            ff_hls_write_subtitle_rendition(hls->m3u8_out, sgroup, vtt_m3u8_rel_name, vs->language, i, hls->has_default_key ? vs->is_default : 1);
++            ff_hls_write_subtitle_rendition(hls->m3u8_out, sgroup, vtt_m3u8_rel_name, vs->language,
++                    vs->subtitle_varname, i, hls->has_default_key ? vs->is_default : 1);
+         }
+
+         if (!hls->has_default_key || !hls->has_video_m3u8) {
+@@ -2107,6 +2109,9 @@ static int parse_variant_stream_mapstring(AVFormatContext *s)
+             } else if (av_strstart(keyval, "name:", &val)) {
+                 vs->varname  = val;
+                 continue;
++            } else if (av_strstart(keyval, "sname:", &val)) {
++                vs->subtitle_varname  = val;
++                continue;
+             } else if (av_strstart(keyval, "agroup:", &val)) {
+                 vs->agroup   = val;
+                 continue;
+diff --git a/libavformat/hlsplaylist.c b/libavformat/hlsplaylist.c
+index f8a6977702..17b93a5ef1 100644
+--- a/libavformat/hlsplaylist.c
++++ b/libavformat/hlsplaylist.c
+@@ -57,13 +57,18 @@ void ff_hls_write_audio_rendition(AVIOContext *out, const char *agroup,
+
+ void ff_hls_write_subtitle_rendition(AVIOContext *out, const char *sgroup,
+                                      const char *filename, const char *language,
+-                                     int name_id, int is_default)
++                                     const char *sname, int name_id, int is_default)
+ {
+     if (!out || !filename)
+         return;
+
+     avio_printf(out, "#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID=\"%s\"", sgroup);
+-    avio_printf(out, ",NAME=\"subtitle_%d\",DEFAULT=%s,", name_id, is_default ? "YES" : "NO");
++    if (sname) {
++        avio_printf(out, ",NAME=\"%s\",", sname);
++    } else {
++        avio_printf(out, ",NAME=\"subtitle_%d\",", name_id);
++    }
++    avio_printf(out, "DEFAULT=%s,", is_default ? "YES" : "NO");
+     if (language) {
+         avio_printf(out, "LANGUAGE=\"%s\",", language);
+     }
+diff --git a/libavformat/hlsplaylist.h b/libavformat/hlsplaylist.h
+index d7aa44d8dc..ec44e5a0ae 100644
+--- a/libavformat/hlsplaylist.h
++++ b/libavformat/hlsplaylist.h
+@@ -41,7 +41,7 @@ void ff_hls_write_audio_rendition(AVIOContext *out, const char *agroup,
+                                   int name_id, int is_default, int nb_channels);
+ void ff_hls_write_subtitle_rendition(AVIOContext *out, const char *sgroup,
+                                      const char *filename, const char *language,
+-                                     int name_id, int is_default);
++                                     const char *sname, int name_id, int is_default);
+ void ff_hls_write_stream_info(AVStream *st, AVIOContext *out, int bandwidth,
+                               int avg_bandwidth,
+                               const char *filename, const char *agroup,
+--
+2.46.1
+

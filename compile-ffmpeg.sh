@@ -1358,6 +1358,7 @@ buildFfmpeg() {
         git apply ../../patches/fix_missing_discontinuity_tag_in_subtitle.patch
         git apply ../../patches/match_omit_endlist_in_subtitle_playlist.patch
         git apply ../../patches/respect_append_list_in_subtitle_playlist.patch
+        git apply ../../patches/subtitle_varname_for_naming_subtitle_streams.patch
 
         EXTRA_CFLAGS=$(echo $EXTRA_CFLAGS | sed "s/-march=generic //")
         if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libplacebo" ]]; then
