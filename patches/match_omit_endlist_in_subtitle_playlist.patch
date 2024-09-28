@@ -1,7 +1,7 @@
 From b573649e9059673e01f8d6611f53f2a5291d6e7a Mon Sep 17 00:00:00 2001
 From: Jonathan Baecker <jonbae77@gmail.com>
 Date: Fri, 27 Sep 2024 07:22:45 +0200
-Subject: [PATCH v2] Respect `omit_endlist` flag in subtitle playlists
+Subject: [PATCH v2] avformat/hlsenc: Respect `omit_endlist` flag in subtitle playlists
 
 Ensure that when the `-hls_flags omit_endlist` option is set,
 the `#EXT-X-ENDLIST` tag is also omitted from the `stream_vtt.m3u8`

@@ -1,7 +1,7 @@
 From ff8f39e17c67883c90e751fd5a33fc52df1e6422 Mon Sep 17 00:00:00 2001
 From: Jonathan Baecker <jonbae77@gmail.com>
 Date: Fri, 27 Sep 2024 08:31:47 +0200
-Subject: [PATCH v2] Respect `append_list` flag in subtitle playlists
+Subject: [PATCH v2] avformat/hlsenc: Respect `append_list` flag in subtitle playlists
 
 Ensure that when the `-hls_flags append_list` option is set,
 that *.vtt files in stream_vtt.m3u8 are correctly updated.
