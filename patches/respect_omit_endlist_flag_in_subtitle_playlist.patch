@@ -1,8 +1,12 @@
-From b573649e9059673e01f8d6611f53f2a5291d6e7a Mon Sep 17 00:00:00 2001
+From 116596ba10e7a8bf2eafb74428ebce8a2ac978fa Mon Sep 17 00:00:00 2001
 From: Jonathan Baecker <jonbae77@gmail.com>
-Date: Fri, 27 Sep 2024 07:22:45 +0200
-Subject: [PATCH v2] avformat/hlsenc: Respect `omit_endlist` flag in subtitle playlists
+Date: Mon, 30 Sep 2024 19:25:29 +0200
+Subject: [PATCH v3] avformat/hlsenc: Respect `omit_endlist` flag in subtitle
+ playlists
 
+This modification applies Steven's suggestion.
+
+Original description was:
 Ensure that when the `-hls_flags omit_endlist` option is set,
 the `#EXT-X-ENDLIST` tag is also omitted from the `stream_vtt.m3u8`
 subtitle playlist. This maintains consistency with the behavior
@@ -12,7 +16,7 @@ in other playlists when `omit_endlist` is specified.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/libavformat/hlsenc.c b/libavformat/hlsenc.c
-index 1e932b7..528ba0f 100644
+index 571d6b2752..c258fc812d 100644
 --- a/libavformat/hlsenc.c
 +++ b/libavformat/hlsenc.c
 @@ -1676,7 +1676,7 @@ static int hls_window(AVFormatContext *s, int last, VariantStream *vs)
@@ -20,10 +24,10 @@ index 1e932b7..528ba0f 100644
          }
 
 -        if (last)
-+        if (last && (hls->flags & HLS_OMIT_ENDLIST)==0)
++        if (last && !(hls->flags & HLS_OMIT_ENDLIST))
              ff_hls_write_end_list(hls->sub_m3u8_out);
 
      }
 --
-2.46.1
+2.46.2
 
