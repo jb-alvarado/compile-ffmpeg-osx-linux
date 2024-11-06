@@ -463,17 +463,13 @@ buildLibs() {
         do_git "https://github.com/fribidi/fribidi.git" fribidi-git
 
         if [[ $compile == "true" ]]; then
-            if [[ ! -f ./configure ]]; then
-                ./autogen.sh
-            else
-                make uninstall
-                make clean
-            fi
+            rm -rf build
+            mkdir build
+            cd build
 
-            ./configure --prefix="$LOCALDESTDIR" --enable-shared=no
-
-            make -j "$cpuCount"
-            make install
+            meson setup -Ddocs=false -Dbin=false -Dtests=false --default-library=static .. --prefix "$LOCALDESTDIR" --libdir="$LOCALDESTDIR/lib"
+            ninja
+            ninja install
 
             if [[ ! -f "$LOCALDESTDIR/lib/pkgconfig/fribidi.pc" ]]; then
                 cp fribidi.pc "$LOCALDESTDIR/lib/pkgconfig/"
