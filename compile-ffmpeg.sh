@@ -40,6 +40,10 @@ fi
 arch=$(uname -m)
 system=$(uname -s)
 
+if [[ $arch == "arm64" ]]; then
+    export CXX=$(which clang++)
+fi
+
 if [[ "$optimize" == "y" ]] || [[ "$arch" != "x86_64" ]]; then
     tune="native"
     onum=3
@@ -1232,7 +1236,14 @@ buildLibs() {
         do_git "https://github.com/xiph/rav1e.git" rav1e-git noDepth
 
         if [[ $compile == "true" ]]; then
-            cargo cinstall --release --target=x86_64-unknown-linux-musl --jobs "$cpuCount" --prefix=$LOCALDESTDIR --libdir=$LOCALDESTDIR/lib --includedir=$LOCALDESTDIR/include
+            export RUSTFLAGS="-C target-cpu=native"
+            target=""
+
+            if [[ $system == "Linux" ]]; then
+                target="--target=x86_64-unknown-linux-musl"
+            fi
+
+            cargo cinstall --release $target --jobs "$cpuCount" --prefix=$LOCALDESTDIR --libdir=$LOCALDESTDIR/lib --includedir=$LOCALDESTDIR/include --library-type=staticlib --crt-static
 
             do_checkIfExist rav1e-git librav1e.a
 
@@ -1371,8 +1382,8 @@ buildFfmpeg() {
         $sd -ri "s/--prefix=[^ ]* //g" config.h
         $sd -ri "s/ --extra-libs='.*'//g" config.h
         $sd -ri "s/ --pkg-config-flags=--static//g" config.h
-        $sd -ri "s/ --extra-cflags=[a-zA-Z_'-]+//g" config.h
-        $sd -ri "s/ --extra-ldflags=[a-zA-Z_'-,]+//g" config.h
+        $sd -ri "s/ --extra-cflags=[a-zA-Z_'-]*//g" config.h
+        $sd -ri "s/ --extra-ldflags=[a-zA-Z_'-,]*//g" config.h
 
         make -j "$cpuCount"
         make install
