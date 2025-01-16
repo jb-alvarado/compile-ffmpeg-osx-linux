@@ -8,7 +8,7 @@ For MacOS is needed: homebrew with installed:
 
 ```
 cmake git wget curl pkg-config nasm autoconf automake libtool autogen \
-gnu-sed sdl2 shtool ninja-build cargo cargo-c meson rsync
+gnu-sed sdl2 shtool ninja cargo cargo-c meson rsync
 ```
 
 For Linux (ubuntu/debian) is needed:
