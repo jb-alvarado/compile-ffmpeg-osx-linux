@@ -64,7 +64,7 @@ cat <<EOF > "$config"
 #--enable-libklvanc
 #--disable-ffplay
 #--disable-sdl2
-#--enable-fontconfig
+#--enable-libfontconfig
 #--enable-libaom
 #--enable-libass
 #--enable-libbluray
