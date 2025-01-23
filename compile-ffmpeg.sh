@@ -64,7 +64,7 @@ cat <<EOF > "$config"
 #--enable-libklvanc
 #--disable-ffplay
 #--disable-sdl2
-#--enable-fontconfig
+#--enable-libfontconfig
 #--enable-libaom
 #--enable-libass
 #--enable-libbluray
@@ -490,7 +490,7 @@ buildLibs() {
 
     cd "$LOCALBUILDDIR" || exit
 
-    if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-fontconfig" ]]; then
+    if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libfontconfig" ]]; then
         if [ -f "$LOCALDESTDIR/lib/libexpat.a" ]; then
             echo -------------------------------------------------
             echo "expat2.5.0 is already compiled"
