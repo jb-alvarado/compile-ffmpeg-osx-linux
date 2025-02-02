@@ -203,6 +203,7 @@ do_git() {
     local gitFolder="$2"
     local gitDepth="$3"
     local gitBranch="$4"
+    local commit="$5"
     echo -ne "\033]0;compile $gitFolder\007"
     if [ ! -d "$gitFolder" ]; then
         if [[ $gitDepth == "noDepth" ]]; then
@@ -212,13 +213,24 @@ do_git() {
         else
             git clone --depth 1 "$gitURL" "$gitFolder"
         fi
+
         compile="true"
         cd "$gitFolder" || exit
+
+        if [[ -n $commit ]]; then
+            git checkout $commit
+        fi
     else
         cd "$gitFolder" || exit
         oldHead=$(git rev-parse HEAD)
         git reset --hard "@{u}"
-        git pull origin master
+
+        if [[ -n $commit ]]; then
+            git checkout $commit
+        else
+            git pull origin master
+        fi
+
         newHead=$(git rev-parse HEAD)
 
         if [[ "$oldHead" != "$newHead" ]]; then
@@ -932,7 +944,7 @@ buildLibs() {
     echo "-------------------------------------------------------------------------------"
 
     if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libsvtav1" ]]; then
-        do_git "https://gitlab.com/AOMediaCodec/SVT-AV1.git" libsvtav1-git
+        do_git "https://gitlab.com/AOMediaCodec/SVT-AV1.git" libsvtav1-git "noDepth" "" 71d8659cf1436f0ea522903e258a11824447df3a
 
         if [[ $compile == "true" ]]; then
             cd Build
