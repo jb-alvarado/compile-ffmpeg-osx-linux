@@ -944,7 +944,7 @@ buildLibs() {
     echo "-------------------------------------------------------------------------------"
 
     if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libsvtav1" ]]; then
-        do_git "https://gitlab.com/AOMediaCodec/SVT-AV1.git" libsvtav1-git "noDepth" "" 71d8659cf1436f0ea522903e258a11824447df3a
+        do_git "https://gitlab.com/AOMediaCodec/SVT-AV1.git" libsvtav1-git "noDepth"
 
         if [[ $compile == "true" ]]; then
             cd Build
