@@ -15,7 +15,7 @@ For Linux (ubuntu/debian) is needed:
 
 ```
 sudo apt install autoconf automake build-essential libtool pkg-config texi2html \
-yasm cmake curl git wget gperf ninja-build cargo cargo-c nasm meson rsync xxd
+yasm cmake curl git wget gperf ninja-build cargo cargo-c nasm meson rsync xxd uuid-dev
 ```
 On Ubuntu install cargo-c with `cargo install cargo-c`
 
