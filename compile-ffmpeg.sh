@@ -1322,7 +1322,7 @@ buildFfmpeg() {
     echo "compile ffmpeg"
     echo "-------------------------------------------------------------------------------"
 
-    do_git "https://github.com/FFmpeg/FFmpeg.git" ffmpeg-git noDepth $ffmpeg_branch a060b4d9a9e6ab627af5275253a1b5baa4fc2ea0
+    do_git "https://github.com/FFmpeg/FFmpeg.git" ffmpeg-git "" $ffmpeg_branch
 
     if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f "$LOCALDESTDIR/bin/ffmpeg" ]] && [[ ! -f "$LOCALDESTDIR/bin/ffmpeg_shared/bin/ffmpeg" ]]; then
         if [[ "$ffmpeg_shared" == "yes" ]]; then
