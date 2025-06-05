@@ -458,19 +458,19 @@ buildLibs() {
 
     if [ -f "$LOCALDESTDIR/lib/libpng.a" ]; then
         echo -------------------------------------------------
-        echo "libpng-1.6.47 is already compiled"
+        echo "libpng-1.6.48 is already compiled"
         echo -------------------------------------------------
     else
         echo -ne "\033]0;compile libpng 64Bit\007"
 
-        do_curl "http://prdownloads.sourceforge.net/libpng/libpng-1.6.47.tar.gz"
+        do_curl "http://prdownloads.sourceforge.net/libpng/libpng-1.6.48.tar.gz"
 
         ./configure --prefix="$LOCALDESTDIR" --disable-shared
 
         make -j "$cpuCount"
         make install
 
-        do_checkIfExist libpng-1.6.47 libpng.a
+        do_checkIfExist libpng-1.6.48 libpng.a
     fi
 
     cd "$LOCALBUILDDIR" || exit
@@ -505,19 +505,19 @@ buildLibs() {
     if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libfreetype" ]]; then
         if [ -f "$LOCALDESTDIR/lib/libexpat.a" ]; then
             echo -------------------------------------------------
-            echo "expat2.6.4 is already compiled"
+            echo "expat2.7.1 is already compiled"
             echo -------------------------------------------------
         else
             echo -ne "\033]0;compile expat 64Bit\007"
 
-            do_curl "https://github.com/libexpat/libexpat/releases/download/R_2_6_4/expat-2.6.4.tar.bz2"
+            do_curl "https://github.com/libexpat/libexpat/releases/download/R_2_7_1/expat-2.7.1.tar.bz2"
 
             ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --without-docbook
 
             make -j "$cpuCount"
             make install
 
-            do_checkIfExist expat-2.6.4 libexpat.a
+            do_checkIfExist expat-2.7.1 libexpat.a
         fi
 
         cd "$LOCALBUILDDIR" || exit
@@ -594,12 +594,12 @@ buildLibs() {
 
     if [ -f "$LOCALDESTDIR/lib/libxml2.a" ]; then
         echo -------------------------------------------------
-        echo "libxml2-2.13.6 is already compiled"
+        echo "libxml2-2.14.3 is already compiled"
         echo -------------------------------------------------
     else
         echo -ne "\033]0;compile libxml2\007"
 
-        do_curl "https://github.com/GNOME/libxml2/archive/refs/tags/v2.13.6.tar.gz" "libxml2-2.13.6.tar.gz"
+        do_curl "https://github.com/GNOME/libxml2/archive/refs/tags/v2.14.3.tar.gz" "libxml2-2.14.3.tar.gz"
 
         if [[ ! -f ./configure ]]; then
                 ./autogen.sh
@@ -613,7 +613,7 @@ buildLibs() {
         make -j "$cpuCount"
         make install
 
-        do_checkIfExist libxml2-2.13.6 libxml2.a
+        do_checkIfExist libxml2-2.14.3 libxml2.a
     fi
 
     cd "$LOCALBUILDDIR" || exit
@@ -703,7 +703,7 @@ buildLibs() {
     if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-openssl" ]] || [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libsrt" ]]; then
         if [ -f "$LOCALDESTDIR/lib/libssl.a" ]; then
             echo -------------------------------------------------
-            echo "openssl-1.1.1w is already compiled"
+            echo "openssl-3.5.0 is already compiled"
             echo -------------------------------------------------
         else
             echo -ne "\033]0;compile openssl 64Bit\007"
@@ -714,14 +714,14 @@ buildLibs() {
                 target="linux-x86_64"
             fi
 
-            do_curl "https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz"
+            do_curl "https://github.com/openssl/openssl/releases/download/openssl-3.5.0/openssl-3.5.0.tar.gz"
 
-            ./Configure --prefix=$LOCALDESTDIR --openssldir=$LOCALDESTDIR $target --libdir="$LOCALDESTDIR/lib" no-shared enable-camellia enable-idea enable-mdc2 enable-rfc3779 -mtune=$tune $osExtra
+            ./Configure --prefix=$LOCALDESTDIR --openssldir=$LOCALDESTDIR $target --libdir="$LOCALDESTDIR/lib" no-shared no-docs zlib -static -mtune=$tune $osExtra
 
             make depend all
             make install_sw
 
-            do_checkIfExist openssl-1.1.1w libssl.a
+            do_checkIfExist openssl-3.5.0 libssl.a
         fi
     fi
 
