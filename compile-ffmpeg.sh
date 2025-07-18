@@ -1286,7 +1286,7 @@ buildLibs() {
 
     if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-vulkan" ]] || [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libplacebo" ]]; then
         if [[ ! -f $LOCALDESTDIR/share/vulkan/registry/vk.xml ]]; then
-            do_curl https://sdk.lunarg.com/sdk/download/1.3.280.1/linux/vulkansdk-linux-x86_64-1.3.280.1.tar.xz vulkansdk-linux-x86_64-1.3.280.1.tar.xz "1.3.280.1"
+            do_curl https://sdk.lunarg.com/sdk/download/1.4.321.0/linux/vulkansdk-linux-x86_64-1.4.321.0.tar.xz vvulkansdk-linux-x86_64-1.4.321.0.tar.xz "1.4.321.0"
             rsync --remove-source-files -auv x86_64/ $LOCALDESTDIR/
         fi
     fi
