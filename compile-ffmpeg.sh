@@ -578,7 +578,7 @@ EOF
             make -j "$cpuCount"
             make install
 
-            do_checkIfExist f brotli-1.1.0 libbrotlienc.a
+            do_checkIfExist brotli-1.1.0 libbrotlienc.a
         fi
 
         cd "$LOCALBUILDDIR" || exit
