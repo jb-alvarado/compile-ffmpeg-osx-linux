@@ -182,11 +182,16 @@ LOCALDESTDIR="$PWD/local"
 export LOCALBUILDDIR LOCALDESTDIR
 
 PKG_CONFIG_PATH="${LOCALDESTDIR}/lib/pkgconfig"
+PKG_CONFIG_ALL_STATIC=1
+PKG_CONFIG_PREFER_STATIC=1
+
 CPPFLAGS="-I${LOCALDESTDIR}/include $fpic $osExtra"
 CFLAGS="-I${LOCALDESTDIR}/include -mtune=$tune -O$onum $osExtra $fpic"
 CXXFLAGS="${CFLAGS}"
 LDFLAGS="-L${LOCALDESTDIR}/lib -pipe $osExtra"
-export PKG_CONFIG_PATH CPPFLAGS CFLAGS CXXFLAGS LDFLAGS
+
+export PKG_CONFIG_PATH PKG_CONFIG_ALL_STATIC PKG_CONFIG_PREFER_STATIC \
+    CPPFLAGS CFLAGS CXXFLAGS LDFLAGS
 
 [ -d "$LOCALBUILDDIR" ] || mkdir "$LOCALBUILDDIR"
 [ -d "$LOCALDESTDIR" ] || mkdir "$LOCALDESTDIR"
@@ -271,7 +276,11 @@ do_curl() {
         archive=${archive##*/}
     fi
 
-    local -r response_code=$(curl --retry 20 --retry-max-time 5 -L -k -f -w "%{response_code}" -o "$archive" "$url")
+    if [[ -f "$archive" ]]; then
+        local response_code=200
+    else
+        local -r response_code=$(curl --retry 20 --retry-max-time 5 -L -k -f -w "%{response_code}" -o "$archive" "$url")
+    fi
 
     if [[ $response_code = "200" || $response_code = "226" ]]; then
         case "$archive" in
@@ -375,6 +384,22 @@ buildLibs() {
 
             do_checkIfExist uuid-1.6.2 libuuid.a
         fi
+    else
+        if [ -f "$LOCALDESTDIR/lib/libuuid.a" ]; then
+            echo -------------------------------------------------
+            echo "libuuid is already compiled"
+            echo -------------------------------------------------
+        else
+            echo -ne "\033]0;compile uuid 64Bit\007"
+
+            do_git https://github.com/gershnik/libuuid-cmake.git libuuid-cmake-git
+
+            cmake -S . -B build -DLIBUUID_SHARED=OFF -DLIBUUID_STATIC=ON -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DCMAKE_INSTALL_DATAROOTDIR=$LOCALDESTDIR/lib -DCMAKE_INSTALL_LIBDIR="lib" -DCMAKE_STATIC_LIBRARY_SUFFIX=".a" -DCMAKE_IMPORT_LIBRARY_SUFFIX=".lib"
+            cmake --build build
+            cmake --install build
+
+            do_checkIfExist libuuid libuuid.a
+        fi
     fi
 
     cd "$LOCALBUILDDIR" || exit
@@ -431,6 +456,20 @@ buildLibs() {
         fi
 
         make install PREFIX="$LOCALDESTDIR"
+
+        cat <<EOF > $LOCALDESTDIR/lib/pkgconfig/bzip2.pc
+prefix=$LOCALDESTDIR
+exec_prefix=\${prefix}
+libdir=\${exec_prefix}/lib
+includedir=\${prefix}/include
+
+Name: bzip2
+Description: High-quality block-sorting file compressor library (static)
+Version: 1.0.8
+Libs: \${libdir}/libbz2.a
+Libs.private: -lm
+Cflags: -I\${includedir}
+EOF
 
         do_checkIfExist bzip2-1.0.8 libbz2.a
     fi
@@ -518,6 +557,28 @@ buildLibs() {
             make install
 
             do_checkIfExist expat-2.7.1 libexpat.a
+        fi
+
+        cd "$LOCALBUILDDIR" || exit
+
+        if [ -f "$LOCALDESTDIR/lib/libbrotlienc.a" ]; then
+            echo -------------------------------------------------
+            echo " brotli-1.1.0 is already compiled"
+            echo -------------------------------------------------
+        else
+            echo -ne "\033]0;compile  brotli\007"
+
+            do_curl "https://github.com/google/brotli/archive/refs/tags/v1.1.0.tar.gz" brotli-1.1.0.tar.gz
+
+            mkdir build
+            cd build
+
+            cmake .. -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_BINDIR="bin" -DCMAKE_INSTALL_LIBDIR="lib" -DCMAKE_INSTALL_INCLUDEDIR="include"
+
+            make -j "$cpuCount"
+            make install
+
+            do_checkIfExist f brotli-1.1.0 libbrotlienc.a
         fi
 
         cd "$LOCALBUILDDIR" || exit
