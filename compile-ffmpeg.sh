@@ -523,7 +523,7 @@ EOF
             cd build
 
             meson setup -Ddocs=false -Dbin=false -Dtests=false --default-library=static .. --prefix "$LOCALDESTDIR" --libdir="$LOCALDESTDIR/lib"
-            ninja
+            ninja -j "$cpuCount"
             ninja install
 
             if [[ ! -f "$LOCALDESTDIR/lib/pkgconfig/fribidi.pc" ]]; then
@@ -613,7 +613,7 @@ EOF
 
             do_curl "https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.16.0.tar.xz"
 
-            ./configure --prefix="$LOCALDESTDIR" --enable-shared=no
+            ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --enable-static=yes --disable-docs --disable-cache-build
 
             make -j "$cpuCount"
             make install
@@ -638,7 +638,7 @@ EOF
 
             meson setup --buildtype=release --prefer-static --default-library=static --prefix "$LOCALDESTDIR" --libdir="$LOCALDESTDIR/lib" ..
 
-            ninja
+            ninja -j "$cpuCount"
             ninja install
 
             do_checkIfExist harfbuzz-git libharfbuzz.a
@@ -827,7 +827,7 @@ EOF
 
             meson setup --default-library=static --prefix "$LOCALDESTDIR" --libdir="$LOCALDESTDIR/lib" ..
 
-            ninja
+            ninja -j "$cpuCount"
             ninja install
 
             do_checkIfExist librist-git librist.a
