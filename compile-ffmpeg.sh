@@ -636,7 +636,7 @@ EOF
             mkdir build
             cd build
 
-            meson setup --default-library=static --prefix "$LOCALDESTDIR" --libdir="$LOCALDESTDIR/lib" ..
+            meson setup --buildtype=release --prefer-static --default-library=static --prefix "$LOCALDESTDIR" --libdir="$LOCALDESTDIR/lib" ..
 
             ninja
             ninja install
