@@ -4,6 +4,7 @@ build/
 ._*
 ._**
 .DS_Store
+*.bin
 build_config.txt
 NDI SDK for Linux
 NDI SDK for Linux/

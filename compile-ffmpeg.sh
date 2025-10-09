@@ -64,31 +64,31 @@ cat <<EOF > "$config"
 #--enable-libklvanc
 #--disable-ffplay
 #--disable-sdl2
-#--enable-libfontconfig
+--enable-libfontconfig
 #--enable-libaom
 #--enable-libass
 #--enable-libbluray
 #--enable-libfdk-aac
-#--enable-libfribidi
-#--enable-libfreetype
-#--enable-libharfbuzz
-#--enable-libmp3lame
-#--enable-libopus
+--enable-libfribidi
+--enable-libfreetype
+--enable-libharfbuzz
+--enable-libmp3lame
+--enable-libopus
 #--enable-libsoxr
 #--enable-libsrt
 #--enable-librist
 #--enable-libtwolame
-#--enable-libvpx
-#--enable-libx264
-#--enable-libx265
+--enable-libvpx
+--enable-libx264
+--enable-libx265
 #--enable-libzimg
 #--enable-libzmq
 #--enable-nonfree
 #--enable-opencl
 #--enable-opengl
-#--enable-libopenjpeg
+--enable-libopenjpeg
 #--enable-openssl
-#--enable-libsvtav1
+--enable-libsvtav1
 #--enable-librav1e
 #--enable-libdav1d
 #--enable-cuda-nvcc
@@ -102,6 +102,7 @@ cat <<EOF > "$config"
 #--enable-libplacebo
 #--enable-libshaderc
 #--enable-libvmaf
+#--enable-whisper
 EOF
     echo "-------------------------------------------------------------------------------"
     echo "-------------------------------------------------------------------------------"
@@ -859,6 +860,29 @@ EOF
         else
             echo -------------------------------------------------
             echo "vmaf is already up to date"
+            echo -------------------------------------------------
+        fi
+    fi
+
+    cd "$LOCALBUILDDIR" || exit
+
+    if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-whisper" ]]; then
+        do_git "https://github.com/ggml-org/whisper.cpp" whisper.cpp-git
+
+        if [[ $compile == "true" ]] || [[ ! -d "build" ]]; then
+            cmake . -B build -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_BINDIR="bin" -DCMAKE_INSTALL_LIBDIR="lib" -DCMAKE_INSTALL_INCLUDEDIR="include"
+
+            cmake --build build --config Release
+            make install -C build
+
+            make install
+
+            do_checkIfExist whisper.cpp-git libwhisper.a
+
+            $sd -i 's|^Libs: -L\${libdir} .*|Libs: -L${libdir} -lwhisper -lggml -lggml-base -lggml-cpu -lstdc++ -lgomp|' "$LOCALDESTDIR/lib/pkgconfig/whisper.pc"
+        else
+            echo -------------------------------------------------
+            echo "whisper.cpp is already up to date"
             echo -------------------------------------------------
         fi
     fi
