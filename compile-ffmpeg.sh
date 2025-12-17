@@ -998,19 +998,19 @@ EOF
     if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libopus" ]]; then
         if [ -f "$LOCALDESTDIR/lib/libopus.a" ]; then
             echo -------------------------------------------------
-            echo "opus-1.5.2 is already compiled"
+            echo "opus-1.6 is already compiled"
             echo -------------------------------------------------
         else
             echo -ne "\033]0;compile opus\007"
 
-            do_curl "https://github.com/xiph/opus/releases/download/v1.5.2/opus-1.5.2.tar.gz"
+            do_curl "https://downloads.xiph.org/releases/opus/opus-1.6.tar.gz"
 
             ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --enable-static --disable-doc
 
             make -j "$cpuCount"
             make install
 
-            do_checkIfExist opus-1.5.2 libopus.a
+            do_checkIfExist opus-1.6 libopus.a
         fi
     fi
 
