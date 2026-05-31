@@ -407,19 +407,19 @@ buildLibs() {
 
     if [ -f "$LOCALDESTDIR/lib/libz.a" ]; then
         echo -------------------------------------------------
-        echo "zlib-1.3.1 is already compiled"
+        echo "zlib-1.3.2 is already compiled"
         echo -------------------------------------------------
     else
         echo -ne "\033]0;compile libz 64Bit\007"
 
-        do_curl "https://zlib.net/zlib-1.3.1.tar.gz"
+        do_curl "https://zlib.net/zlib-1.3.2.tar.gz"
 
         ./configure --prefix="$LOCALDESTDIR" --static
 
         make -j "$cpuCount"
         make install
 
-        do_checkIfExist zlib-1.3.1 libz.a
+        do_checkIfExist zlib-1.3.2 libz.a
     fi
 
     cd "$LOCALBUILDDIR" || exit
@@ -975,7 +975,7 @@ EOF
             echo "soxr-0.1.3 is already compiled"
             echo -------------------------------------------------
         else
-            echo -ne "\033]0;compile soxr-0.1.1\007"
+            echo -ne "\033]0;compile soxr-0.1.3\007"
 
             do_curl "https://downloads.sourceforge.net/project/soxr/soxr-0.1.3-Source.tar.xz"
 
@@ -984,7 +984,7 @@ EOF
 
 
 
-            cmake .. -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DHAVE_WORDS_BIGENDIAN_EXITCODE=0 -DBUILD_SHARED_LIBS:bool=off -DBUILD_TESTS:BOOL=OFF -DWITH_OPENMP:BOOL=OFF -DUNIX:BOOL=on -Wno-dev
+            cmake .. -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DHAVE_WORDS_BIGENDIAN_EXITCODE=0 -DBUILD_SHARED_LIBS:bool=off -DBUILD_TESTS:BOOL=OFF -DWITH_OPENMP:BOOL=OFF -DUNIX:BOOL=on -Wno-dev -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 
             make -j "$cpuCount"
             make install
