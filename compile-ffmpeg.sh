@@ -1402,7 +1402,7 @@ EOF
     fi
 
     if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libvpl" ]]; then
-        do_git git clone https://github.com/intel/libvpl.git
+        do_git https://github.com/intel/libvpl.git libvpl-git
 
         cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=Release \
