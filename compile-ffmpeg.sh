@@ -102,6 +102,7 @@ cat <<EOF > "$config"
 #--enable-libplacebo
 #--enable-libshaderc
 #--enable-libvmaf
+# --enable-libvpl
 #--enable-whisper
 EOF
     echo "-------------------------------------------------------------------------------"
@@ -1395,9 +1396,31 @@ EOF
             do_checkIfExist libplacebo-git libplacebo.a
         else
             echo -------------------------------------------------
-            echo "nv-codec-headers-git is already up to date"
+            echo "libplacebo.a is already up to date"
             echo -------------------------------------------------
         fi
+    fi
+
+    if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libvpl" ]]; then
+        do_git git clone https://github.com/intel/libvpl.git
+
+        cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" \
+            -DCMAKE_INSTALL_LIBDIR=lib \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DBUILD_EXAMPLES=OFF \
+            -DBUILD_TESTS=OFF
+
+        cmake --build build -j"$cpuCount"
+        cmake --install build
+        $sd -i '/^Libs.private:/ s/$/ -lstdc++/' "$LOCALDESTDIR/lib/pkgconfig/vpl.pc"
+
+        do_checkIfExist libvpl-git libvpl.a
+    else
+        echo -------------------------------------------------
+        echo "libvpl is already up to date"
+        echo -------------------------------------------------
     fi
 }
 
