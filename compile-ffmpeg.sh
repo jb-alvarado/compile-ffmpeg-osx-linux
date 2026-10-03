@@ -1,11 +1,10 @@
 #!/bin/bash
 
-#ffmpeg_shared="yes"
-#ffmpeg_branch="release/4.3"
-
+ffmpeg_branch="master"
+ffmpeg_linkage="static"
+optimize='n'
 
 while [[ $# -gt 0 ]] && [[ "$1" == "--"* ]]; do
-    optimize='n'
 
     opt="$1";
     shift;
@@ -18,6 +17,10 @@ while [[ $# -gt 0 ]] && [[ "$1" == "--"* ]]; do
            compile_extras="${opt#*=}";;
         --optimize=* )
            optimize="${opt#*=}";;
+        --linkage=* )
+           ffmpeg_linkage="${opt#*=}";;
+        --ffmpeg-branch=* )
+           ffmpeg_branch="${opt#*=}";;
         --help )
            showHelp=true;;
         *);;
@@ -32,12 +35,20 @@ if [[ $showHelp ]]; then
     echo '--ffmpeg-only=[y/n]    # compile only ffmpeg'
     echo '--extras=[y/n]         # compile mediainfo and MP4Box'
     echo '--optimize=[y/n]       # compile system optimized version'
+    echo '--linkage=static|shared|both # FFmpeg linkage (default: static)'
+    echo '--ffmpeg-branch=BRANCH # FFmpeg branch (default: upstream master)'
     echo '--help                 # show this help'
 
     exit 0
 fi
 
-arch=$(uname -m)
+case "$ffmpeg_linkage" in
+    static|shared|both) ;;
+    *) echo "Invalid --linkage: $ffmpeg_linkage (use static, shared or both)" >&2; exit 1 ;;
+esac
+
+host_arch=$(uname -m)
+arch="$host_arch"
 system=$(uname -s)
 
 if [[ $arch == "arm64" ]]; then
@@ -139,7 +150,7 @@ if [[ "$system" == "Darwin" ]]; then
     osLib="-liconv"
     osFlag=""
     arch="--arch=$arch"
-    fpic=""
+    fpic="-fPIC"
     sd="gsed"
 
     if [[ "$arch" == "x86_64" ]]; then
@@ -216,7 +227,7 @@ do_git() {
         if [[ $gitDepth == "noDepth" ]]; then
             git clone "$gitURL" "$gitFolder"
         elif [[ $gitBranch != "" ]]; then
-            git clone --depth 1 --single-branch -b $gitBranch "$gitURL" "$gitFolder"
+            git clone --depth 1 --single-branch -b "$gitBranch" "$gitURL" "$gitFolder" || exit 1
         else
             git clone --depth 1 "$gitURL" "$gitFolder"
         fi
@@ -230,11 +241,16 @@ do_git() {
     else
         cd "$gitFolder" || exit
         oldHead=$(git rev-parse HEAD)
-        git reset --hard "@{u}"
+        if [[ -n $gitBranch ]]; then
+            git fetch origin "$gitBranch" || exit 1
+            git checkout -B "$gitBranch" FETCH_HEAD || exit 1
+        else
+            git reset --hard "@{u}"
+        fi
 
         if [[ -n $commit ]]; then
             git checkout $commit
-        else
+        elif [[ -z $gitBranch ]]; then
             git pull origin master
         fi
 
@@ -326,6 +342,14 @@ do_curl() {
     fi
 }
 
+# A libtool archive can exist but contain only a symbol index after a failed build.
+has_static_archive() {
+    [[ -s "$1" ]] && ar -t "$1" | awk '
+        $0 !~ /^(__\.SYMDEF|\/\/?$)/ { found = 1 }
+        END { exit !found }
+    '
+}
+
 # check if compiled file exist
 do_checkIfExist() {
     local packetName="$1"
@@ -348,7 +372,7 @@ do_checkIfExist() {
             sleep 5
         fi
     else
-        if [ -f "$LOCALDESTDIR/lib/$fileName" ]; then
+        if has_static_archive "$LOCALDESTDIR/lib/$fileName"; then
             echo -
             echo -------------------------------------------------
             echo "build $packetName done..."
@@ -356,12 +380,8 @@ do_checkIfExist() {
             echo -
             compile="false"
         else
-            echo -------------------------------------------------
-            echo "build $packetName failed..."
-            echo "delete the source folder under '$LOCALBUILDDIR' and start again,"
-            echo "or if you know there is no dependencies hit enter for continue it"
-            read -r -p ""
-            sleep 5
+            echo "Missing or empty static archive: $LOCALDESTDIR/lib/$fileName" >&2
+            exit 1
         fi
     fi
 }
@@ -453,9 +473,8 @@ buildLibs() {
 
         do_curl "https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz"
 
-        if [[ "$system" == "Darwin" ]]; then
-            $sd -ri "s/^CFLAGS=-Wall/^CFLAGS=-Wall $osExtra/g" Makefile
-        fi
+        # bzip2 ignores exported CFLAGS; its archive must also work in shared FFmpeg.
+        $sd -ri "s/^CFLAGS=-Wall/^CFLAGS=-Wall $fpic $osExtra/g" Makefile
 
         make install PREFIX="$LOCALDESTDIR"
 
@@ -468,12 +487,18 @@ includedir=\${prefix}/include
 Name: bzip2
 Description: High-quality block-sorting file compressor library (static)
 Version: 1.0.8
-Libs: \${libdir}/libbz2.a
+Libs: -L\${libdir} -lbz2
 Libs.private: -lm
 Cflags: -I\${includedir}
 EOF
 
         do_checkIfExist bzip2-1.0.8 libbz2.a
+    fi
+
+    # Also migrate metadata from older builds. A literal .a makes GNU libtool
+    # nest that archive inside FreeType/fontconfig instead of recording a dependency.
+    if [[ -f "$LOCALDESTDIR/lib/pkgconfig/bzip2.pc" ]]; then
+        $sd -i 's|^Libs:.*|Libs: -L${libdir} -lbz2|' "$LOCALDESTDIR/lib/pkgconfig/bzip2.pc"
     fi
 
     cd "$LOCALBUILDDIR" || exit
@@ -519,14 +544,16 @@ EOF
     if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libfribidi" ]] || [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libass" ]]; then
         do_git "https://github.com/fribidi/fribidi.git" fribidi-git
 
-        if [[ $compile == "true" ]]; then
+        if [[ $compile == "true" ]] || ! has_static_archive "$LOCALDESTDIR/lib/libfribidi.a" \
+            || [[ ! -f "$LOCALDESTDIR/lib/pkgconfig/fribidi.pc" ]] \
+            || [[ ! -f "$LOCALDESTDIR/include/fribidi/fribidi.h" ]]; then
             rm -rf build
             mkdir build
-            cd build
+            cd build || exit 1
 
-            meson setup -Ddocs=false -Dbin=false -Dtests=false --default-library=static .. --prefix "$LOCALDESTDIR" --libdir="$LOCALDESTDIR/lib"
-            ninja -j "$cpuCount"
-            ninja install
+            meson setup -Ddocs=false -Dbin=false -Dtests=false --default-library=static .. --prefix "$LOCALDESTDIR" --libdir="$LOCALDESTDIR/lib" || exit 1
+            ninja -j "$cpuCount" || exit 1
+            ninja install || exit 1
 
             if [[ ! -f "$LOCALDESTDIR/lib/pkgconfig/fribidi.pc" ]]; then
                 cp fribidi.pc "$LOCALDESTDIR/lib/pkgconfig/"
@@ -585,7 +612,7 @@ EOF
 
         cd "$LOCALBUILDDIR" || exit
 
-        if [ -f "$LOCALDESTDIR/lib/libfreetype.a" ]; then
+        if has_static_archive "$LOCALDESTDIR/lib/libfreetype.a"; then
             echo -------------------------------------------------
             echo "freetype-2.13.3 is already compiled"
             echo -------------------------------------------------
@@ -594,9 +621,9 @@ EOF
 
             do_curl "https://sourceforge.net/projects/freetype/files/freetype2/2.13.3/freetype-2.13.3.tar.gz"
 
-            ./configure --prefix="$LOCALDESTDIR" --disable-shared --with-harfbuzz=no
-            make -j "$cpuCount"
-            make install
+            ./configure --prefix="$LOCALDESTDIR" --disable-shared --with-harfbuzz=no || exit 1
+            make -j "$cpuCount" || exit 1
+            make install || exit 1
 
             do_checkIfExist freetype-2.13.3 libfreetype.a
 
@@ -606,7 +633,7 @@ EOF
 
     cd "$LOCALBUILDDIR" || exit
     if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libfontconfig" ]]; then
-        if [ -f "$LOCALDESTDIR/lib/libfontconfig.a" ]; then
+        if has_static_archive "$LOCALDESTDIR/lib/libfontconfig.a" && [[ -x "$LOCALDESTDIR/bin/fc-cache" ]]; then
             echo -------------------------------------------------
             echo "fontconfig-2.16.0 is already compiled"
             echo -------------------------------------------------
@@ -615,10 +642,17 @@ EOF
 
             do_curl "https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.16.0.tar.xz"
 
-            ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --enable-static=yes --disable-docs --disable-cache-build
+            # pkg-config's private dependencies are needed for static FreeType
+            # (e.g. libbrotlidec requires libbrotlicommon). Environment variables
+            # PKG_CONFIG_ALL_STATIC/PREFER_STATIC do not affect the pkg-config CLI.
+            local freetype_libs
+            freetype_libs=$(pkg-config --static --libs freetype2) || exit 1
+            FREETYPE_LIBS="$freetype_libs" ./configure --prefix="$LOCALDESTDIR" --enable-shared=no --enable-static=yes --disable-docs --disable-cache-build || exit 1
 
-            make -j "$cpuCount"
-            make install
+            # The .tar.xz extraction may reuse a tree with an empty cached archive.
+            make clean || exit 1
+            make -j "$cpuCount" || exit 1
+            make install || exit 1
 
             do_checkIfExist fontconfig-2.16.0 libfontconfig.a
 
@@ -634,14 +668,17 @@ EOF
     if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libharfbuzz" ]]; then
         do_git "https://github.com/harfbuzz/harfbuzz.git" harfbuzz-git
 
-        if [[ $compile == "true" ]]; then
-            mkdir build
-            cd build
+        if [[ $compile == "true" ]] || ! has_static_archive "$LOCALDESTDIR/lib/libharfbuzz.a"; then
+            local -a meson_reset
+            meson_reset=()
+            [[ -f build/meson-private/coredata.dat ]] && meson_reset=(--wipe)
+            mkdir -p build
+            cd build || exit 1
 
-            meson setup --buildtype=release --prefer-static --default-library=static --prefix "$LOCALDESTDIR" --libdir="$LOCALDESTDIR/lib" ..
+            meson setup "${meson_reset[@]}" --buildtype=release --prefer-static --default-library=static --prefix "$LOCALDESTDIR" --libdir="$LOCALDESTDIR/lib" .. || exit 1
 
-            ninja -j "$cpuCount"
-            ninja install
+            ninja -j "$cpuCount" || exit 1
+            ninja install || exit 1
 
             do_checkIfExist harfbuzz-git libharfbuzz.a
 
@@ -772,7 +809,14 @@ EOF
             echo -ne "\033]0;compile openssl 64Bit\007"
 
             if [[ "$system" == "Darwin" ]]; then
-                target="darwin64-x86_64-cc"
+                case "$host_arch" in
+                    arm64) target="darwin64-arm64-cc" ;;
+                    x86_64) target="darwin64-x86_64-cc" ;;
+                    *)
+                        echo "Unsupported macOS architecture: $host_arch" >&2
+                        exit 1
+                        ;;
+                esac
             else
                 target="linux-x86_64"
             fi
@@ -1425,108 +1469,96 @@ EOF
 }
 
 buildFfmpeg() {
-    cd "$LOCALBUILDDIR" || exit
+    cd "$LOCALBUILDDIR/ffmpeg-git" || exit
     echo "-------------------------------------------------------------------------------"
     echo "compile ffmpeg"
     echo "-------------------------------------------------------------------------------"
 
-    do_git "https://github.com/FFmpeg/FFmpeg.git" ffmpeg-git "" $ffmpeg_branch
-
-    if [[ $compile == "true" ]] || [[ $buildFFmpeg == "true" ]] || [[ ! -f "$LOCALDESTDIR/bin/ffmpeg" ]] && [[ ! -f "$LOCALDESTDIR/bin/ffmpeg_shared/bin/ffmpeg" ]]; then
-        if [[ "$ffmpeg_shared" == "yes" ]]; then
-            rm -rf "$LOCALDESTDIR/bin/ffmpeg_shared"
-            static_share="--enable-shared"
-            pkg_extra=""
-            prefix_extra="$LOCALDESTDIR/bin/ffmpeg_shared"
-            mkdir "$prefix_extra"
-        else
-            static_share="--disable-shared"
-            pkg_extra="--pkg-config-flags=--static"
-            prefix_extra="$LOCALDESTDIR"
-
-            if [ -f "$LOCALDESTDIR/lib/libavcodec.a" ]; then
-                rm -rf "$LOCALDESTDIR/include/libavutil"
-                rm -rf "$LOCALDESTDIR/include/libavcodec"
-                rm -rf "$LOCALDESTDIR/include/libpostproc"
-                rm -rf "$LOCALDESTDIR/include/libswresample"
-                rm -rf "$LOCALDESTDIR/include/libswscale"
-                rm -rf "$LOCALDESTDIR/include/libavdevice"
-                rm -rf "$LOCALDESTDIR/include/libavfilter"
-                rm -rf "$LOCALDESTDIR/include/libavformat"
-                rm -f "$LOCALDESTDIR/lib/libavutil.a"
-                rm -f "$LOCALDESTDIR/lib/libswresample.a"
-                rm -f "$LOCALDESTDIR/lib/libswscale.a"
-                rm -f "$LOCALDESTDIR/lib/libavcodec.a"
-                rm -f "$LOCALDESTDIR/lib/libavdevice.a"
-                rm -f "$LOCALDESTDIR/lib/libavfilter.a"
-                rm -f "$LOCALDESTDIR/lib/libavformat.a"
-                rm -f "$LOCALDESTDIR/lib/libpostproc.a"
-                rm -f "$LOCALDESTDIR/lib/pkgconfig/libavcodec.pc"
-                rm -f "$LOCALDESTDIR/lib/pkgconfig/libavutil.pc"
-                rm -f "$LOCALDESTDIR/lib/pkgconfig/libpostproc.pc"
-                rm -f "$LOCALDESTDIR/lib/pkgconfig/libswresample.pc"
-                rm -f "$LOCALDESTDIR/lib/pkgconfig/libswscale.pc"
-                rm -f "$LOCALDESTDIR/lib/pkgconfig/libavdevice.pc"
-                rm -f "$LOCALDESTDIR/lib/pkgconfig/libavfilter.pc"
-                rm -f "$LOCALDESTDIR/lib/pkgconfig/libavformat.pc"
-            fi
-        fi
-
-        if [ -f "ffbuild/config.mak" ]; then
-            # make uninstall
-            make distclean
-        fi
-
-        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libndi_newtek" ]]; then
-            git apply ../../patches/revert-libndi_newtek.patch
-            cp ../../patches/libndi/libavdevice/libndi_newtek_* libavdevice/
-        fi
-
-        EXTRA_CFLAGS=$(echo $EXTRA_CFLAGS | sed "s/-march=generic //")
-        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libplacebo" ]]; then
-            EXTRA_LD="-Wl,--copy-dt-needed-entries"
-        fi
-
-        if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-nvenc" ]]; then
-            export PATH="/usr/local/cuda-12.0/bin:$PATH"
-            export LD_LIBRARY_PATH="/usr/local/cuda-12.0/lib64:$LD_LIBRARY_PATH"
-            EXTRA_CFLAGS="$EXTRA_CFLAGS -I/usr/local/cuda/include"
-            EXTRA_LD="$EXTRA_LD -L/usr/local/cuda/lib64"
-        fi
-
-        ./configure $arch --prefix="$prefix_extra" --disable-debug "$static_share" $disable_ffplay \
-        --disable-doc --enable-gpl --enable-version3 \
-        $cpuDetect --enable-avfilter --enable-zlib "${FFMPEG_LIBS[@]}" \
-        $osFlag --extra-libs="-lm -liconv $extraLibs" --extra-cflags="$EXTRA_CFLAGS" $pkg_extra --extra-ldflags="$EXTRA_LD"
-
-        $sd -ri "s/--prefix=[^ ]* //g" config.h
-        $sd -ri "s/ --extra-libs='.*'//g" config.h
-        $sd -ri "s/ --pkg-config-flags=--static//g" config.h
-        $sd -ri "s/ --extra-cflags=[a-zA-Z_'-]*//g" config.h
-        $sd -ri "s/ --extra-ldflags=[a-zA-Z_'-,]*//g" config.h
-
-        make -j "$cpuCount"
-        make install
-
-        if [[ -z "$ffmpeg_shared" ]]; then
-            do_checkIfExist ffmpeg-git libavcodec.a
-        else
-            do_checkIfExist ffmpeg-git "bin/ffmpeg_shared/bin/ffmpeg"
-        fi
-
-        if [[ -n "$libzmq" ]]; then
-            cd tools
-            gcc -o $LOCALDESTDIR/bin/zmqsend zmqsend.c -I.. `pkg-config --libs --cflags libzmq libavutil` -DZMG_STATIC -lstdc++
-        fi
-
-        # when you copy the shared libs to /usr/local/lib
-        # run "sudo ldconfig"
-
+    local linkage="$1"
+    local prefix_extra pkg_extra library
+    local -a linkage_flags
+    if [[ "$linkage" == "shared" ]]; then
+        prefix_extra="$LOCALDESTDIR/ffmpeg-shared"
+        linkage_flags=(--enable-shared --disable-static --enable-pic --enable-rpath)
     else
-        echo -------------------------------------------------
-        echo "ffmpeg is already up to date"
-        echo -------------------------------------------------
+        prefix_extra="$LOCALDESTDIR"
+        linkage_flags=(--disable-shared --enable-static)
     fi
+    # Codec dependencies are static in both modes; include their private link flags.
+    pkg_extra="--pkg-config-flags=--static"
+    mkdir -p "$prefix_extra"
+
+    # Always reconfigure: source, options and linkage may have changed.
+    if [ -f "ffbuild/config.mak" ]; then
+        # make uninstall
+        make distclean || exit 1
+    fi
+
+    if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libndi_newtek" ]]; then
+        if ! git apply --reverse --check ../../patches/revert-libndi_newtek.patch 2>/dev/null; then
+            git apply ../../patches/revert-libndi_newtek.patch || exit 1
+        fi
+        cp ../../patches/libndi/libavdevice/libndi_newtek_* libavdevice/
+    fi
+
+    EXTRA_CFLAGS="${EXTRA_CFLAGS//-march=generic/}"
+    if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-libplacebo" ]]; then
+        EXTRA_LD="-Wl,--copy-dt-needed-entries"
+    fi
+
+    if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-nvenc" ]]; then
+        export PATH="/usr/local/cuda-12.0/bin:$PATH"
+        export LD_LIBRARY_PATH="/usr/local/cuda-12.0/lib64:$LD_LIBRARY_PATH"
+        EXTRA_CFLAGS="$EXTRA_CFLAGS -I/usr/local/cuda/include"
+        EXTRA_LD="$EXTRA_LD -L/usr/local/cuda/lib64"
+    fi
+
+    ./configure $arch --prefix="$prefix_extra" --disable-debug $disable_ffplay \
+    --disable-doc --enable-gpl --enable-version3 \
+    $cpuDetect --enable-avfilter --enable-zlib "${FFMPEG_LIBS[@]}" \
+    $osFlag --extra-libs="-lm -liconv $extraLibs" --extra-cflags="$EXTRA_CFLAGS" $pkg_extra --extra-ldflags="$EXTRA_LD" "${linkage_flags[@]}" || exit 1
+
+    $sd -ri "s/--prefix=[^ ]* //g" config.h
+    $sd -ri "s/ --extra-libs='.*'//g" config.h
+    $sd -ri "s/ --pkg-config-flags=--static//g" config.h
+    $sd -ri "s/ --extra-cflags=[a-zA-Z_'-]*//g" config.h
+    $sd -ri "s/ --extra-ldflags=[a-zA-Z_'-,]*//g" config.h
+
+    make -j "$cpuCount" || exit 1
+    make install || exit 1
+
+    if [[ "$linkage" == "shared" ]]; then
+        if [[ "$system" == "Darwin" ]]; then
+            library="$prefix_extra/lib/libavcodec.dylib"
+        else
+            library="$prefix_extra/lib/libavcodec.so"
+        fi
+    else
+        library="$prefix_extra/lib/libavcodec.a"
+    fi
+    if [[ ! -f "$library" || ! -f "$prefix_extra/lib/pkgconfig/libavcodec.pc" ]]; then
+        echo "FFmpeg $linkage installation is incomplete: $prefix_extra" >&2
+        exit 1
+    fi
+    echo "FFmpeg $linkage installed in $prefix_extra"
+
+    if [[ -n "$libzmq" ]]; then
+        cd tools
+        gcc -o $LOCALDESTDIR/bin/zmqsend zmqsend.c -I.. `pkg-config --libs --cflags libzmq libavutil` -DZMG_STATIC -lstdc++
+    fi
+
+}
+
+buildSelectedFfmpeg() {
+    cd "$LOCALBUILDDIR" || exit
+    do_git "https://github.com/FFmpeg/FFmpeg.git" ffmpeg-git "" "$ffmpeg_branch"
+    case "$ffmpeg_linkage" in
+        static|shared) buildFfmpeg "$ffmpeg_linkage" ;;
+        both)
+            buildFfmpeg static
+            buildFfmpeg shared
+            ;;
+    esac
 }
 
 buildExtras() {
@@ -1618,7 +1650,14 @@ stripAll() {
     echo
     echo "-------------------------------------------------------------------------------"
     echo
-    FILES=$(find "$LOCALDESTDIR/bin" -type f -mmin -600 ! \( -name '*-config' -o -name '.DS_Store' -o -name '*.conf' -o -name '*.png' -o -name '*.desktop' -o -path 'bin/ffmpeg_shared/*' -prune \))
+    local -a binary_dirs
+    binary_dirs=()
+    [[ -d "$LOCALDESTDIR/bin" ]] && binary_dirs+=("$LOCALDESTDIR/bin")
+    [[ -d "$LOCALDESTDIR/ffmpeg-shared/bin" ]] && binary_dirs+=("$LOCALDESTDIR/ffmpeg-shared/bin")
+    FILES=""
+    if [[ ${#binary_dirs[@]} -gt 0 ]]; then
+        FILES=$(find "${binary_dirs[@]}" -type f -mmin -600 ! \( -name '*-config' -o -name '.DS_Store' -o -name '*.conf' -o -name '*.png' -o -name '*.desktop' -o -path 'bin/ffmpeg_shared/*' -prune \))
+    fi
 
     for f in $FILES; do
         strip "$f"
@@ -1637,12 +1676,12 @@ if [[ "$compile_libs_only" == "y" ]]; then
 fi
 
 if [[ "$compile_ffmpeg_only" == "y" ]]; then
-    buildFfmpeg
+    buildSelectedFfmpeg
 fi
 
 if [[ -z "$compile_libs_only" ]] && [[ -z "$compile_ffmpeg_only" ]] && [[ -z "$compile_extras" ]]; then
     buildLibs
-    buildFfmpeg
+    buildSelectedFfmpeg
 fi
 
 if [[ "$compile_extras" == "y" ]]; then
