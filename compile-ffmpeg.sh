@@ -780,14 +780,17 @@ EOF
 
         do_git "https://github.com/uclouvain/openjpeg.git" libopenjpeg-git
 
-        if [[ $compile == "true" ]]; then
-            mkdir build
-            cd build
+        if [[ $compile == "true" ]] || ! has_static_archive "$LOCALDESTDIR/lib/libopenjp2.a" \
+            || [[ ! -f "$LOCALDESTDIR/lib/pkgconfig/libopenjp2.pc" ]]; then
+            # FFmpeg needs the library, not the CLI tools and their TIFF/JBIG dependencies.
+            cmake -S . -B build -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" \
+                -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_STATIC_LIBS=ON \
+                -DBUILD_CODEC=OFF -DBUILD_TESTING=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+                -DCMAKE_INSTALL_BINDIR="bin" -DCMAKE_INSTALL_LIBDIR="lib" \
+                -DCMAKE_INSTALL_INCLUDEDIR="include" || exit 1
 
-            cmake .. -DCMAKE_INSTALL_PREFIX="$LOCALDESTDIR" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_BINDIR="bin" -DCMAKE_INSTALL_LIBDIR="lib" -DCMAKE_INSTALL_INCLUDEDIR="include"
-
-            make -j "$cpuCount"
-            make install
+            cmake --build build --parallel "$cpuCount" || exit 1
+            cmake --install build || exit 1
 
             do_checkIfExist libopenjpeg-git libopenjp2.a
 
