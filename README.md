@@ -4,6 +4,12 @@ Build script for compiling ffmpeg under MacOS and Linux.
 
 It currently supports decklink and NDI from Newtek, but since NDI is not officially supported, there is no guarantee that the patch will work forever. To use NDI, you need the lib from the NDI SDK, which can be downloaded from [here](https://www.ndi.tv/sdk/). For using decklink, Desktop Video from [blackmagic](https://www.blackmagicdesign.com/de/support/) need to be installed.
 
+For DeckLink, keep the complete `.h` and `.cpp` SDK include files, including
+versioned compatibility interfaces, in `headers/decklink-nix/` (Linux) and
+`headers/decklink-osx/` (macOS). With `--enable-decklink` in `build_config.txt`,
+the script refreshes the platform's files in `local/include/` on each build,
+including `--ffmpeg-only=y`, so SDK updates replace previously installed headers.
+
 For MacOS is needed: homebrew with installed:
 
 ```

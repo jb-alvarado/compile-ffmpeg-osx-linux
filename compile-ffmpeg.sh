@@ -386,6 +386,28 @@ do_checkIfExist() {
     fi
 }
 
+installDecklinkHeaders() {
+    [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-decklink" ]] || return 0
+
+    local source_dir="$LOCALBUILDDIR/../headers/decklink-${osString}"
+    if [[ ! -f "$source_dir/DeckLinkAPI.h" ]]; then
+        echo "DeckLink SDK headers missing: $source_dir" >&2
+        exit 1
+    fi
+
+    mkdir -p "$LOCALDESTDIR/include" || exit 1
+    # Refresh the complete SDK set, including versioned compatibility interfaces.
+    cp "$source_dir/"*.h "$source_dir/"*.cpp "$LOCALDESTDIR/include/" || exit 1
+
+    if [[ "$osString" == "osx" ]]; then
+        # GNU sed uses -i without the empty backup argument required by BSD sed.
+        # Match whitespace and leave declarations that are already static alone.
+        $sd -E -i 's/^(void|bool)([[:space:]]+)(InitDeckLinkAPI|IsDeckLinkAPIPresent|InitBMDStreamingAPI)([[:space:]]*\()/static \1\2\3\4/' \
+            "$LOCALDESTDIR/include/DeckLinkAPIDispatch.cpp" || exit 1
+    fi
+    echo "DeckLink SDK headers updated from $source_dir"
+}
+
 buildLibs() {
     cd "$LOCALBUILDDIR" || exit
 
@@ -1248,21 +1270,7 @@ EOF
     cd "$LOCALBUILDDIR" || exit
 
     if [[ " ${FFMPEG_LIBS[@]} " =~ "--enable-decklink" ]]; then
-        if [ -f "$LOCALDESTDIR/include/DeckLinkAPI.h" ]; then
-            echo -------------------------------------------------
-            echo "DeckLinkAPI is already in place"
-            echo -------------------------------------------------
-        else
-            cd "$LOCALDESTDIR/include" || exit
-
-            cp ../../headers/decklink-${osString}/* .
-
-            if [[ $osString == "osx" ]]; then
-                $sd -i '' "s/void    InitDeckLinkAPI (void)/static void    InitDeckLinkAPI (void)/" DeckLinkAPIDispatch.cpp
-                $sd -i '' "s/bool        IsDeckLinkAPIPresent (void)/static bool        IsDeckLinkAPIPresent (void)/" DeckLinkAPIDispatch.cpp
-                $sd -i '' "s/void InitBMDStreamingAPI(void)/static void InitBMDStreamingAPI(void)/" DeckLinkAPIDispatch.cpp
-            fi
-        fi
+        installDecklinkHeaders
     fi
 
     cd "$LOCALBUILDDIR" || exit
@@ -1553,6 +1561,8 @@ buildFfmpeg() {
 }
 
 buildSelectedFfmpeg() {
+    # --ffmpeg-only must also refresh SDK headers after an SDK update.
+    installDecklinkHeaders
     cd "$LOCALBUILDDIR" || exit
     do_git "https://github.com/FFmpeg/FFmpeg.git" ffmpeg-git "" "$ffmpeg_branch"
     case "$ffmpeg_linkage" in
